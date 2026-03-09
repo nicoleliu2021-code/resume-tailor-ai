@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Sparkles, Loader, Crown, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Sparkles, Loader } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
@@ -18,7 +17,7 @@ export function Optimizer() {
   const showUpload = !resume || !jobDescription;
 
   const handleTailorResume = async () => {
-    if (!resume || !jobDescription || !jobAnalysis) return;
+    if (!resume || !jobDescription || !jobAnalysis || !resume.rawText) return;
 
     setIsTailoring(true);
     setTailorError('');
