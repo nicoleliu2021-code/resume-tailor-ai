@@ -1,0 +1,57 @@
+JOHN DOE
+john.doe@email.com | (555) 123-4567 | linkedin.com/in/johndoe | github.com/johndoe
+
+PROFESSIONAL SUMMARY
+Software Engineer with 5+ years of experience developing scalable web applications and leading technical projects. Passionate about clean code, system design, and building products that users love.
+
+EXPERIENCE
+
+Senior Software Engineer | Tech Corp | San Francisco, CA | January 2020 - Present
+• Led development of microservices architecture serving 10M+ daily active users
+• Reduced API response time by 40% through database optimization and caching strategies
+• Mentored team of 5 junior engineers on best practices and code reviews
+• Implemented CI/CD pipeline reducing deployment time from 2 hours to 15 minutes
+• Collaborated with product team on feature roadmap and technical specifications
+
+Full Stack Developer | StartupXYZ | Austin, TX | June 2018 - December 2019
+• Built responsive web applications using React, Node.js, and PostgreSQL
+• Developed RESTful APIs handling 100K+ requests per day
+• Improved application performance by 35% through code optimization
+• Worked in Agile environment with 2-week sprint cycles
+• Collaborated with design team to enhance user experience
+
+Software Engineering Intern | Innovation Labs | Boston, MA | Summer 2017
+• Developed internal tools using Python and Django
+• Created automated testing scripts reducing QA time by 50%
+• Participated in code reviews and team knowledge sharing sessions
+
+EDUCATION
+
+Bachelor of Science in Computer Science | University of Technology | May 2018
+GPA: 3.8/4.0
+Relevant Coursework: Data Structures, Algorithms, Database Systems, Software Engineering
+
+TECHNICAL SKILLS
+
+Languages: JavaScript, Python, TypeScript, Java, SQL
+Frontend: React, Vue.js, HTML/CSS, Redux, Webpack
+Backend: Node.js, Express, Django, Flask
+Databases: PostgreSQL, MongoDB, Redis, MySQL
+DevOps: Docker, Kubernetes, AWS (EC2, S3, Lambda), CI/CD, Jenkins
+Tools: Git, Jira, Postman, VS Code
+
+PROJECTS
+
+E-commerce Platform | React, Node.js, PostgreSQL, Stripe
+• Built full-stack e-commerce application with user authentication and payment processing
+• Implemented shopping cart functionality and order management system
+• Deployed on AWS with automated scaling
+
+Real-time Chat Application | Socket.io, React, MongoDB
+• Developed real-time messaging application supporting group chats and direct messages
+• Implemented user presence detection and typing indicators
+• Achieved 99.9% uptime with load balancing
+
+CERTIFICATIONS
+• AWS Certified Solutions Architect - Associate (2021)
+• MongoDB Certified Developer (2020)

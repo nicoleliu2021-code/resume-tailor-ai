@@ -1,0 +1,56 @@
+Senior Full Stack Engineer
+
+About the Role:
+We're seeking a talented Senior Full Stack Engineer to join our growing engineering team. You'll be responsible for designing and building scalable web applications that serve millions of users. This role requires strong technical skills, leadership abilities, and a passion for creating exceptional user experiences.
+
+Responsibilities:
+• Design, develop, and maintain scalable web applications using modern technologies
+• Lead technical architecture decisions and code reviews
+• Mentor junior and mid-level engineers
+• Collaborate with product managers, designers, and other stakeholders
+• Write clean, maintainable, and well-tested code
+• Participate in agile development processes
+• Optimize application performance and reliability
+• Stay current with emerging technologies and best practices
+
+Required Qualifications:
+• 5+ years of professional software development experience
+• Strong proficiency in React and Node.js
+• Experience with TypeScript and modern JavaScript (ES6+)
+• Solid understanding of RESTful APIs and microservices architecture
+• Experience with cloud platforms (AWS, GCP, or Azure)
+• Proficiency with SQL and NoSQL databases (PostgreSQL, MongoDB, etc.)
+• Experience with Docker, Kubernetes, and containerization
+• Strong understanding of software design patterns and principles
+• Excellent problem-solving and debugging skills
+• Experience with CI/CD pipelines and DevOps practices
+• Strong communication and collaboration skills
+
+Preferred Qualifications:
+• Experience with GraphQL
+• Familiarity with serverless architecture
+• Experience leading technical projects
+• Contributions to open-source projects
+• Bachelor's degree in Computer Science or related field
+
+Technical Stack:
+• Frontend: React, TypeScript, Next.js, Tailwind CSS
+• Backend: Node.js, Express, NestJS
+• Databases: PostgreSQL, Redis, MongoDB
+• Infrastructure: AWS (EC2, S3, Lambda, RDS), Docker, Kubernetes
+• Tools: Git, GitHub Actions, Jest, Webpack
+
+What We Offer:
+• Competitive salary and equity package
+• Health, dental, and vision insurance
+• 401(k) matching
+• Flexible work arrangements
+• Professional development budget
+• Collaborative and inclusive work environment
+• Opportunity to work on challenging technical problems
+• Fast-paced startup culture with growth opportunities
+
+Location: San Francisco, CA (Hybrid - 3 days in office)
+Compensation: $150,000 - $200,000 + equity
+
+We're an equal opportunity employer committed to building a diverse and inclusive team. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, national origin, disability status, protected veteran status, or any other characteristic protected by law.
