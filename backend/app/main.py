@@ -23,7 +23,7 @@ allowed_origins = [
     "http://localhost:4173",  # Vite preview
     "http://localhost:3000",
     "https://resume-tailor.vercel.app",  # Your Vercel URL
-    "https://resume-tailor-*.vercel.app",  # Preview deployments
+    "https://resume-tailor-ai-nine.vercel.app",  # Your actual Vercel URL
 ]
 
 # Allow all Vercel preview URLs in development
