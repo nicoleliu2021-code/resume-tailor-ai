@@ -106,7 +106,7 @@ export function Optimizer() {
   const showUpload = !resume || !jobDescription || !jobAnalysis;
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
       {/* Header - Hide during loading */}
       {!loadingStep && (
         <div className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 sm:px-6 lg:px-8 py-4 shadow-sm">
