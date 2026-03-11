@@ -29,7 +29,7 @@ if ('serviceWorker' in navigator) {
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                 // New service worker is available, prompt user to reload
-                if (confirm('A new version of Resume AI is available. Reload to update?')) {
+                if (confirm('A new version of RoleForge AI is available. Reload to update?')) {
                   window.location.reload();
                 }
               }

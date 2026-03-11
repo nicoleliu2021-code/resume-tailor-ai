@@ -235,7 +235,7 @@ export function CheckoutModal({ isOpen, onClose, selectedTier }: CheckoutModalPr
                   ) : (
                     <>
                       <Lock className="w-5 h-5" />
-                      Pay ${plan.price}/month
+                      Pay ${plan.price}{plan.isOneTime ? ' one-time' : '/month'}
                     </>
                   )}
                 </button>

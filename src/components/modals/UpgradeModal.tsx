@@ -147,7 +147,7 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
                     }`}
                   >
-                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Current Plan' : tier === 'onetime' ? 'Buy for $9' : 'Start Tailoring'}
+                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Current Plan' : tier === 'onetime' ? 'Get Started - $9 One-Time' : 'Upgrade to Pro'}
                   </button>
                 </div>
               );

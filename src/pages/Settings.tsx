@@ -61,7 +61,7 @@ export function Settings() {
                   onClick={() => setShowUpgradeModal(true)}
                   className="px-8 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all shadow-lg hover:shadow-xl"
                 >
-                  Start Tailoring — ${SUBSCRIPTION_PLANS.pro.price}/month
+                  Upgrade to Pro — ${SUBSCRIPTION_PLANS.pro.price}/month
                 </button>
               ) : (
                 <div className="px-8 py-4 bg-white/20 text-white rounded-xl font-bold text-lg">

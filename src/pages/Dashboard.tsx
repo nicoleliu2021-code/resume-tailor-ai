@@ -12,7 +12,7 @@ export function Dashboard() {
           </div>
 
           <h1 className="text-6xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-4">
-            Resume Tailor AI
+            RoleForge AI
           </h1>
 
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">

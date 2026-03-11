@@ -27,7 +27,7 @@ export function Sidebar() {
           <FileText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">Resume AI</h1>
+          <h1 className="text-lg font-bold">RoleForge AI</h1>
           <p className="text-xs text-purple-200">Tailor & Land</p>
         </div>
       </div>
