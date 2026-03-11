@@ -22,17 +22,17 @@ allowed_origins = [
     "http://localhost:5175",
     "http://localhost:4173",  # Vite preview
     "http://localhost:3000",
-    "https://resume-tailor.vercel.app",  # Your Vercel URL
-    "https://resume-tailor-ai-nine.vercel.app",  # Your actual Vercel URL
+    "https://resume-tailor.vercel.app",
+    "https://resume-tailor-ai-nine.vercel.app",
 ]
 
-# Allow all Vercel preview URLs in development
-if os.getenv("ENVIRONMENT") != "production":
-    allowed_origins.append("*")
+# In development, allow all origins for easier testing
+if os.getenv("ENVIRONMENT") == "development":
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=allowed_origins if os.getenv("ENVIRONMENT") == "production" else ["*"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
