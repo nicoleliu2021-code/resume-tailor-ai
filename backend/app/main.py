@@ -11,7 +11,7 @@ load_dotenv()
 app = FastAPI(
     title="Resume Tailor AI API",
     description="Backend API for Resume Optimization",
-    version="1.0.0"
+    version="1.0.1"
 )
 
 # Configure CORS
