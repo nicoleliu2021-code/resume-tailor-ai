@@ -103,7 +103,7 @@ export function ChatbotPanel() {
   ];
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-b from-white to-gray-50">
+    <div className="w-full h-full flex flex-col bg-gradient-to-b from-white to-gray-50">
       {/* Header */}
       <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-indigo-50 to-purple-50">
         <div className="flex items-center gap-3">

@@ -363,7 +363,7 @@ export function Optimizer() {
           </div>
 
           {/* Right Panel - AI Chatbot */}
-          <div className="w-full lg:w-1/4 border-t lg:border-t-0 lg:border-l border-gray-200 bg-white overflow-y-auto">
+          <div className="w-full lg:w-1/4 border-t lg:border-t-0 lg:border-l border-gray-200 bg-white flex">
             <ChatbotPanel />
           </div>
         </div>

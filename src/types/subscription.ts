@@ -32,16 +32,16 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
     name: 'Free',
     price: 0,
     limits: {
-      aiImprovements: 2,
-      exports: 1,
-      resumes: 1,
-      jobAnalysis: 1
+      aiImprovements: 50,
+      exports: 20,
+      resumes: 10,
+      jobAnalysis: 20
     },
     features: [
-      'Tailor resumes for 2 jobs',
-      '1 resume export',
-      '1 job description analysis',
-      'Save 1 resume',
+      'Tailor resumes for 50 jobs',
+      '20 resume exports',
+      '20 job description analyses',
+      'Save 10 resumes',
       'Basic editing',
       'ATS-friendly formatting'
     ]

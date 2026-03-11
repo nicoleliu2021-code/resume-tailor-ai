@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Check, Zap, Crown, TrendingUp } from 'lucide-react';
+import { Check, Crown } from 'lucide-react';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { SUBSCRIPTION_PLANS } from '../types/subscription';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 
 export function Settings() {
-  const { tier, getRemainingUsage } = useSubscription();
+  const { tier } = useSubscription();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const currentPlan = SUBSCRIPTION_PLANS[tier];
 
@@ -68,29 +68,6 @@ export function Settings() {
                   You're on {currentPlan.name}!
                 </div>
               )}
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center border border-white/20">
-              <p className="text-sm text-purple-100 mb-2">Current Plan</p>
-              <p className="text-2xl font-bold mb-3">{currentPlan.name}</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center justify-center gap-2">
-                  <Zap className="w-4 h-4" />
-                  <span>
-                    {getRemainingUsage('aiImprovementsUsed') === Infinity
-                      ? 'Unlimited jobs'
-                      : `${getRemainingUsage('aiImprovementsUsed')} job${getRemainingUsage('aiImprovementsUsed') !== 1 ? 's' : ''} left`}
-                  </span>
-                </div>
-                <div className="flex items-center justify-center gap-2">
-                  <TrendingUp className="w-4 h-4" />
-                  <span>
-                    {getRemainingUsage('exportsUsed') === Infinity
-                      ? 'Unlimited exports'
-                      : `${getRemainingUsage('exportsUsed')} export${getRemainingUsage('exportsUsed') !== 1 ? 's' : ''} left`}
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
