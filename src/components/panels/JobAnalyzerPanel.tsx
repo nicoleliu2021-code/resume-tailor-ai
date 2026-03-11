@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Briefcase, Loader, Link as LinkIcon, Globe } from 'lucide-react';
 import { useResume } from '../../contexts/ResumeContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export function JobAnalyzerPanel() {
   const { jobDescription, setJobDescription } = useResume();
   const [error, setError] = useState('');
@@ -19,7 +21,7 @@ export function JobAnalyzerPanel() {
     setError('');
 
     try {
-      const response = await fetch('/api/job/fetch-url', {
+      const response = await fetch(`${API_BASE_URL}/api/job/fetch-url`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
