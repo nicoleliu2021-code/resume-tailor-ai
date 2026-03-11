@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader, Sparkles } from 'lucide-react';
 import { useResume } from '../../contexts/ResumeContext';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 interface Message {
   id: string;
   role: 'user' | 'assistant';
@@ -48,7 +50,7 @@ export function ChatbotPanel() {
 
     try {
       // Call the real API
-      const response = await fetch('/api/chat/message', {
+      const response = await fetch(`${API_BASE_URL}/api/chat/message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,7 @@
 import type { StructuredResume, JobAnalysis } from '../types/resume';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export interface GapAnalysis {
   missingSkills: string[];
   missingKeywords: string[];
@@ -21,7 +23,7 @@ export async function analyzeGaps(
   resume: StructuredResume,
   jobAnalysis: JobAnalysis
 ): Promise<GapAnalysis> {
-  const response = await fetch('/api/resume/analyze-gaps', {
+  const response = await fetch(`${API_BASE_URL}/api/resume/analyze-gaps`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

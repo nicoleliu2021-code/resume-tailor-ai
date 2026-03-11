@@ -11,6 +11,8 @@ import { JobInsightsPanel } from '../components/panels/JobInsightsPanel';
 import { ChatbotPanel } from '../components/panels/ChatbotPanel';
 import { analyzeJobAPI } from '../services/api';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 type LoadingStep = 'analyzing-resume' | 'analyzing-job' | 'finding-discrepancies' | 'figuring-fixes' | null;
 
 export function Optimizer() {
@@ -64,7 +66,7 @@ export function Optimizer() {
           setOriginalResume(resume);
 
           // Call optimize API
-          const optimizeResponse = await fetch('/api/resume/optimize', {
+          const optimizeResponse = await fetch(`${API_BASE_URL}/api/resume/optimize`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

@@ -4,6 +4,8 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { UpgradeModal } from '../modals/UpgradeModal';
 import { Edit3, Sparkles, TrendingUp, BarChart3, CheckCircle2, AlertCircle, Save, X, Plus, Download, AlertTriangle } from 'lucide-react';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+
 export function ResumeEditorPanel() {
   const { resume, setResume, jobAnalysis, jobDescription, originalResume } = useResume();
   const { canUseFeature, incrementUsage, getRemainingUsage } = useSubscription();
@@ -813,7 +815,7 @@ export function ResumeEditorPanel() {
     setImprovingBullet({ expId, bulletIdx, action });
 
     try {
-      const response = await fetch('/api/resume/improve-bullet', {
+      const response = await fetch(`${API_BASE_URL}/api/resume/improve-bullet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
