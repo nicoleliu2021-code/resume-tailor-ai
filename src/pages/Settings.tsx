@@ -1,6 +1,14 @@
-import { Check, Zap, Crown } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Zap, Crown, TrendingUp } from 'lucide-react';
+import { useSubscription } from '../contexts/SubscriptionContext';
+import { SUBSCRIPTION_PLANS } from '../types/subscription';
+import { UpgradeModal } from '../components/modals/UpgradeModal';
 
 export function Settings() {
+  const { tier, getRemainingUsage } = useSubscription();
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const currentPlan = SUBSCRIPTION_PLANS[tier];
+
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="mb-8">
@@ -15,50 +23,73 @@ export function Settings() {
             <div>
               <div className="flex items-center gap-3 mb-3">
                 <Crown className="w-8 h-8" />
-                <h2 className="text-2xl font-bold">Upgrade to Pro</h2>
+                <h2 className="text-2xl font-bold">Tailor Your Resume to Any Job</h2>
               </div>
               <p className="text-purple-100 text-lg mb-6 max-w-2xl">
-                Get unlimited resume optimizations, advanced AI features, and priority support
+                Unlock unlimited resume tailoring and land your dream job faster
               </p>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Unlimited optimizations</span>
+                  <span>Tailor resumes for unlimited jobs</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Advanced AI rewrites</span>
+                  <span>AI bullet rewriting</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Priority processing</span>
+                  <span>ATS keyword optimization</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Export to PDF & Word</span>
+                  <span>Unlimited exports (PDF, DOCX, TXT)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Cover letter generator</span>
+                  <span>Cover letter generation</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5" />
-                  <span>Resume version history</span>
+                  <span>Priority AI processing</span>
                 </div>
               </div>
 
-              <button className="px-8 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all shadow-lg hover:shadow-xl">
-                Upgrade Now — $12/month
-              </button>
+              {tier === 'free' ? (
+                <button
+                  onClick={() => setShowUpgradeModal(true)}
+                  className="px-8 py-4 bg-white text-purple-600 rounded-xl font-bold text-lg hover:bg-purple-50 transition-all shadow-lg hover:shadow-xl"
+                >
+                  Start Tailoring — ${SUBSCRIPTION_PLANS.pro.price}/month
+                </button>
+              ) : (
+                <div className="px-8 py-4 bg-white/20 text-white rounded-xl font-bold text-lg">
+                  You're on {currentPlan.name}!
+                </div>
+              )}
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 text-center border border-white/20">
               <p className="text-sm text-purple-100 mb-2">Current Plan</p>
-              <p className="text-2xl font-bold mb-3">Free</p>
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Zap className="w-4 h-4" />
-                <span>3 credits left</span>
+              <p className="text-2xl font-bold mb-3">{currentPlan.name}</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <Zap className="w-4 h-4" />
+                  <span>
+                    {getRemainingUsage('aiImprovementsUsed') === Infinity
+                      ? 'Unlimited jobs'
+                      : `${getRemainingUsage('aiImprovementsUsed')} job${getRemainingUsage('aiImprovementsUsed') !== 1 ? 's' : ''} left`}
+                  </span>
+                </div>
+                <div className="flex items-center justify-center gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>
+                    {getRemainingUsage('exportsUsed') === Infinity
+                      ? 'Unlimited exports'
+                      : `${getRemainingUsage('exportsUsed')} export${getRemainingUsage('exportsUsed') !== 1 ? 's' : ''} left`}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -128,6 +159,12 @@ export function Settings() {
           </div>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+      />
     </div>
   );
 }

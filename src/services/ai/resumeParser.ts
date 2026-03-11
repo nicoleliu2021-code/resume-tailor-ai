@@ -26,8 +26,9 @@ Return a JSON object with this structure:
       "id": "unique-id",
       "company": "Company Name",
       "role": "Job Title",
-      "startDate": "MM/YYYY",
-      "endDate": "MM/YYYY or Present",
+      "location": "City, State (if available)",
+      "startDate": "YYYY or Month YYYY",
+      "endDate": "YYYY or Month YYYY or Present",
       "current": boolean,
       "bullets": ["Achievement 1", "Achievement 2"]
     }

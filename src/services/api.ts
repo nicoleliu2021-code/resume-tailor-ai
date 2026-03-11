@@ -3,6 +3,9 @@ import type { StructuredResume, JobAnalysis } from '../types/resume';
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export async function parseResumeAPI(resumeText: string): Promise<StructuredResume> {
+  console.log('[API] parseResumeAPI called, URL:', `${API_BASE_URL}/api/resume/parse`);
+  console.log('[API] Resume text length:', resumeText.length);
+
   const response = await fetch(`${API_BASE_URL}/api/resume/parse`, {
     method: 'POST',
     headers: {
@@ -11,12 +14,17 @@ export async function parseResumeAPI(resumeText: string): Promise<StructuredResu
     body: JSON.stringify({ resumeText }),
   });
 
+  console.log('[API] Response status:', response.status, response.ok);
+
   if (!response.ok) {
-    const error = await response.json();
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    console.error('[API] Error response:', error);
     throw new Error(error.detail || 'Failed to parse resume');
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('[API] Success! Received data:', data);
+  return data;
 }
 
 export async function analyzeJobAPI(jobDescription: string): Promise<JobAnalysis> {

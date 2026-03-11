@@ -2,7 +2,8 @@ import os
 import json
 from dotenv import load_dotenv
 from openai import OpenAI
-from app.models.schemas import StructuredResume, JobAnalysis, GapAnalysis
+from typing import List, Dict
+from app.models.schemas import StructuredResume, JobAnalysis, GapAnalysis, ChatMessage
 from app.services.mock_data import MOCK_RESUME_STRUCTURE, MOCK_JOB_ANALYSIS, MOCK_TAILORED_RESUME, MOCK_GAP_ANALYSIS
 
 load_dotenv()
@@ -237,6 +238,13 @@ CRITICAL RULES:
 - Use the candidate's actual experience IDs and role titles
 - Keep suggestions professional, concise, and achievement-focused
 
+BULLET POINT QUALITY RULES:
+- AVOID repetitive action verbs - vary your verbs (Led, Drove, Spearheaded, Architected, Established, Pioneered, Orchestrated, Championed, etc.)
+- DO NOT duplicate similar experiences - each bullet should be unique and cover different aspects
+- Each bullet should tell a different story or highlight a distinct achievement
+- Vary sentence structure and approach (metrics-first, outcome-first, method-first)
+- Use diverse power verbs: achievement verbs (Achieved, Delivered, Exceeded), leadership verbs (Directed, Guided, Mentored), innovation verbs (Pioneered, Transformed, Revolutionized), collaboration verbs (Partnered, Aligned, Facilitated)
+
 Return JSON with this structure:
 {{
   "missingSkills": ["skill1", "skill2"],
@@ -275,3 +283,283 @@ Return JSON with this structure:
         return GapAnalysis(**parsed_data)
     except Exception as e:
         raise Exception(f"Failed to analyze gaps: {str(e)}")
+
+
+async def chat_assistant(
+    user_message: str,
+    resume_text: str = None,
+    job_description: str = None,
+    job_analysis: JobAnalysis = None,
+    chat_history: List[Dict] = None
+) -> str:
+    """Chat with AI assistant about resume optimization"""
+
+    # Return mock response if mock mode is enabled
+    if MOCK_MODE:
+        return "This is a mock response. In production, I'll provide personalized advice based on your resume and job description. Try asking about specific sections like experience, skills, or how to quantify achievements!"
+
+    # Build context about the resume and job
+    context_parts = []
+
+    if resume_text:
+        context_parts.append(f"USER'S RESUME:\n{resume_text[:2000]}")  # Limit to avoid token limits
+
+    if job_description:
+        context_parts.append(f"\nTARGET JOB DESCRIPTION:\n{job_description[:1500]}")
+
+    if job_analysis:
+        context_parts.append(f"\nKEY JOB REQUIREMENTS:")
+        context_parts.append(f"- Role: {job_analysis.roleTitle}")
+        context_parts.append(f"- Skills needed: {', '.join(job_analysis.technicalSkills[:8])}")
+        context_parts.append(f"- Important keywords: {', '.join(job_analysis.atsKeywords[:10])}")
+
+    context = "\n".join(context_parts)
+
+    # Build system prompt
+    system_prompt = """You are an expert resume coach and career advisor. You help job seekers optimize their resumes for specific positions.
+
+Your role:
+- Provide specific, actionable advice based on the user's actual resume and target job
+- Help rewrite bullet points to be more impactful with action verbs and metrics
+- Identify missing keywords and suggest how to naturally incorporate them
+- Give honest feedback on weak areas and how to strengthen them
+- Keep responses concise, practical, and encouraging
+
+Guidelines:
+- Always reference specific content from their resume when giving advice
+- Suggest realistic improvements based on what they already have
+- Never fabricate experience or skills
+- Use bullet points and formatting for clarity
+- Be supportive and constructive"""
+
+    # Build messages for the API
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # Add context as first message if available
+    if context:
+        messages.append({
+            "role": "system",
+            "content": f"Context for this conversation:\n{context}"
+        })
+
+    # Add chat history
+    if chat_history:
+        for msg in chat_history[-6:]:  # Keep last 6 messages for context
+            messages.append({
+                "role": msg.get("role"),
+                "content": msg.get("content")
+            })
+
+    # Add current user message
+    messages.append({"role": "user", "content": user_message})
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=messages,
+            temperature=0.7,
+            max_tokens=500
+        )
+
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        raise Exception(f"Failed to get chat response: {str(e)}")
+
+
+async def optimize_resume_structure(resume: StructuredResume, job_analysis: JobAnalysis):
+    """Optimize the structured resume based on job analysis - returns improved structured resume"""
+
+    # Return mock optimized resume if mock mode is enabled
+    if MOCK_MODE:
+        # Just add some mock changes
+        optimized = resume.model_copy(deep=True)
+        if optimized.experience and len(optimized.experience) > 0:
+            # Add metrics to first bullet if missing
+            first_exp = optimized.experience[0]
+            if first_exp.bullets and len(first_exp.bullets) > 0:
+                first_exp.bullets[0] = first_exp.bullets[0] + " - increased efficiency by 40%"
+
+        changes = [
+            "Added metrics to experience bullets",
+            "Incorporated ATS keywords from job description",
+            "Strengthened action verbs in experience section"
+        ]
+        return optimized, changes
+
+    # Build optimization prompt
+    prompt = f"""You are an expert resume optimizer. Optimize this resume for the target job by improving bullets, summary, and skills while keeping all information truthful.
+
+TARGET JOB:
+- Role: {job_analysis.roleTitle} ({job_analysis.seniorityLevel})
+- Industry: {job_analysis.industry}
+- Required Skills: {', '.join(job_analysis.technicalSkills[:10])}
+- ATS Keywords: {', '.join(job_analysis.atsKeywords[:10])}
+- Core Responsibilities: {', '.join(job_analysis.coreResponsibilities[:5])}
+
+CURRENT RESUME:
+Summary: {resume.summary}
+
+Experience:
+{chr(10).join([f"- {exp.role} at {exp.company}: {chr(10).join(['  * ' + b for b in exp.bullets])}" for exp in resume.experience])}
+
+Skills: {', '.join([skill.name for skill in resume.skills])}
+
+OPTIMIZATION INSTRUCTIONS:
+1. Improve the professional summary to align with the {job_analysis.roleTitle} role
+2. Enhance each experience bullet point by:
+   - Adding metrics where plausible based on the role
+   - Incorporating relevant ATS keywords naturally: {', '.join(job_analysis.atsKeywords[:8])}
+   - Using stronger action verbs (Led, Drove, Architected, etc.)
+   - Emphasizing accomplishments that match: {', '.join(job_analysis.coreResponsibilities[:3])}
+3. Add missing technical skills from requirements if applicable: {', '.join([s for s in job_analysis.technicalSkills if s not in [skill.name for skill in resume.skills]][:5])}
+4. Keep all changes realistic and truthful - only extrapolate what's reasonable from existing experience
+5. Maintain the exact structure with same IDs
+
+CRITICAL QUALITY REQUIREMENTS:
+- VARY ACTION VERBS: Don't repeat "Led" or "Managed" in multiple bullets. Use diverse verbs: Spearheaded, Orchestrated, Championed, Architected, Pioneered, Drove, Directed, Established, Transformed, Delivered, Executed, etc.
+- AVOID DUPLICATE EXPERIENCES: Each bullet should highlight a DIFFERENT achievement or responsibility
+- ENSURE UNIQUENESS: No two bullets should tell the same story or use similar phrasing
+- MIX SENTENCE STRUCTURES: Vary how you start bullets (action verb, metric-first, outcome-first)
+- BE SPECIFIC: Generic bullets like "Led team to deliver project" are too vague - add specifics about what, how, and impact
+
+Return JSON with:
+{{
+  "summary": "optimized professional summary",
+  "experience": [
+    {{
+      "id": "same-id-as-input",
+      "company": "same",
+      "role": "same",
+      "startDate": "same",
+      "endDate": "same",
+      "current": same,
+      "bullets": ["optimized bullet 1", "optimized bullet 2", ...]
+    }}
+  ],
+  "skills": [
+    {{
+      "id": "same-or-new-for-added",
+      "name": "skill name",
+      "category": "technical/soft/tool"
+    }}
+  ],
+  "education": {json.dumps([e.model_dump() for e in resume.education])},
+  "projects": {json.dumps([p.model_dump() for p in resume.projects])},
+  "changes": ["Summary: Added focus on X", "Experience 1: Added metric about Y", "Skills: Added Z"]
+}}"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert resume optimizer who improves resumes for specific jobs while keeping all information truthful. Always return valid JSON."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.6,
+            response_format={"type": "json_object"}
+        )
+
+        content = response.choices[0].message.content
+        parsed_data = json.loads(content)
+
+        # Extract changes list
+        changes = parsed_data.pop('changes', [])
+
+        # Keep original rawText
+        parsed_data['rawText'] = resume.rawText
+
+        optimized_resume = StructuredResume(**parsed_data)
+        return optimized_resume, changes
+
+    except Exception as e:
+        raise Exception(f"Failed to optimize resume: {str(e)}")
+
+
+async def improve_bullet_point(
+    bullet: str,
+    action: str,
+    experience_context: str,
+    job_description: str = None,
+    job_analysis: JobAnalysis = None
+) -> str:
+    """Improve a single bullet point based on action type"""
+
+    # Return mock improved bullet if mock mode is enabled
+    if MOCK_MODE:
+        if action == 'add-metrics':
+            return f"{bullet} - achieved 35% increase in efficiency and reduced costs by $50K"
+        elif action == 'rewrite':
+            return f"Spearheaded {bullet.lower()} resulting in measurable business impact"
+        else:  # improve
+            return f"Led {bullet.lower()} driving significant results across the organization"
+
+    # Build context
+    context_parts = []
+    if job_analysis:
+        context_parts.append(f"Target Role: {job_analysis.roleTitle}")
+        context_parts.append(f"Key Skills: {', '.join(job_analysis.technicalSkills[:8])}")
+        context_parts.append(f"ATS Keywords: {', '.join(job_analysis.atsKeywords[:8])}")
+
+    context = "\n".join(context_parts) if context_parts else ""
+
+    # Build prompt based on action
+    if action == 'add-metrics':
+        instruction = """Add quantifiable metrics to this bullet point. Make it measurable and impactful.
+Examples:
+- Add percentages (increased by 40%)
+- Add dollar amounts ($2M revenue)
+- Add team sizes (team of 8)
+- Add time savings (reduced from 5 days to 2 days)
+Keep the improvement realistic based on the role."""
+
+    elif action == 'rewrite':
+        instruction = """Completely rewrite this bullet point to be more impactful.
+- Start with a UNIQUE action verb - avoid overused ones like "Led" or "Managed". Try: Orchestrated, Spearheaded, Architected, Championed, Pioneered, Transformed, Delivered, Executed, Established, Drove, Directed
+- Focus on achievements and results, not just tasks
+- Make it concise and powerful (1-2 lines max)
+- Include metrics if the original has any
+- Naturally incorporate relevant keywords
+- Make it stand out from typical resume bullets"""
+
+    else:  # improve
+        instruction = """Improve this bullet point by:
+- Using a stronger action verb if needed (AVOID overused verbs like "Led" or "Managed" - use Spearheaded, Orchestrated, Architected, Championed, Drove, Pioneered, etc.)
+- Making the language more impactful and professional
+- Adding or enhancing any metrics present
+- Ensuring it highlights achievements over responsibilities
+- Incorporating relevant keywords naturally
+- Making it distinct from typical resume bullets - be specific and unique"""
+
+    prompt = f"""You are an expert resume writer.
+
+CONTEXT:
+{experience_context}
+
+{context}
+
+CURRENT BULLET:
+"{bullet}"
+
+TASK:
+{instruction}
+
+Return ONLY the improved bullet point text. No explanations or meta-commentary."""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert resume writer who creates impactful, ATS-friendly bullet points. Always be concise and professional."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+
+        improved = response.choices[0].message.content.strip()
+        # Remove quotes if AI added them
+        improved = improved.strip('"').strip("'")
+        return improved
+
+    except Exception as e:
+        raise Exception(f"Failed to improve bullet: {str(e)}")

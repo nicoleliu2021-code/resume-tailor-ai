@@ -87,3 +87,35 @@ class FetchJobUrlRequest(BaseModel):
     model_config = ConfigDict(str_strip_whitespace=True)
 
     url: str
+
+class ChatMessage(BaseModel):
+    role: str  # 'user' or 'assistant'
+    content: str
+
+class ChatRequest(BaseModel):
+    message: str
+    resumeText: Optional[str] = None
+    jobDescription: Optional[str] = None
+    jobAnalysis: Optional[JobAnalysis] = None
+    chatHistory: Optional[List[ChatMessage]] = []
+
+class ChatResponse(BaseModel):
+    message: str
+
+class OptimizeResumeRequest(BaseModel):
+    resume: StructuredResume
+    jobAnalysis: JobAnalysis
+
+class OptimizeResumeResponse(BaseModel):
+    optimizedResume: StructuredResume
+    changes: List[str]  # Summary of changes made
+
+class ImproveBulletRequest(BaseModel):
+    bullet: str
+    action: str  # 'improve', 'add-metrics', 'rewrite'
+    experienceContext: str  # Role and company for context
+    jobDescription: Optional[str] = None
+    jobAnalysis: Optional[JobAnalysis] = None
+
+class ImproveBulletResponse(BaseModel):
+    improvedBullet: str

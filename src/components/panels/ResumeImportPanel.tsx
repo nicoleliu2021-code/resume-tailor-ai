@@ -23,16 +23,25 @@ export function ResumeImportPanel({ onComplete }: Props) {
     setFileName(file.name);
 
     try {
+      console.log('[ResumeImport] Starting file parsing:', file.name, file.type);
+
       // Step 1: Extract text from file
       const text = await parseResumeFile(file);
+      console.log('[ResumeImport] Extracted text length:', text.length);
 
       // Step 2: Parse into structured resume via backend API
+      console.log('[ResumeImport] Calling parseResumeAPI...');
       const structured = await parseResumeAPI(text);
+      console.log('[ResumeImport] Received structured resume:', structured);
+
       setResume(structured);
+      console.log('[ResumeImport] Resume set in context');
 
       onComplete?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to parse resume');
+      console.error('[ResumeImport] Error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to parse resume';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }

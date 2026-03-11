@@ -2,8 +2,10 @@ import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { StructuredResume, JobAnalysis, MatchScore, KeywordGap, SkillCoverage } from '../types/resume';
 
 interface ResumeContextType {
-  resume: StructuredResume | null;
+  resume: StructuredResume | null;  // This will be the optimized version
   setResume: (resume: StructuredResume | null) => void;
+  originalResume: StructuredResume | null;  // Store original for comparison
+  setOriginalResume: (resume: StructuredResume | null) => void;
   jobDescription: string;
   setJobDescription: (job: string) => void;
   jobAnalysis: JobAnalysis | null;
@@ -21,7 +23,8 @@ interface ResumeContextType {
 const ResumeContext = createContext<ResumeContextType | undefined>(undefined);
 
 export function ResumeProvider({ children }: { children: ReactNode }) {
-  const [resume, setResume] = useState<StructuredResume | null>(null);
+  const [resume, setResume] = useState<StructuredResume | null>(null);  // Optimized version
+  const [originalResume, setOriginalResume] = useState<StructuredResume | null>(null);  // Original uploaded
   const [jobDescription, setJobDescription] = useState('');
   const [jobAnalysis, setJobAnalysis] = useState<JobAnalysis | null>(null);
   const [matchScore, setMatchScore] = useState<MatchScore | null>(null);
@@ -34,6 +37,8 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
       value={{
         resume,
         setResume,
+        originalResume,
+        setOriginalResume,
         jobDescription,
         setJobDescription,
         jobAnalysis,

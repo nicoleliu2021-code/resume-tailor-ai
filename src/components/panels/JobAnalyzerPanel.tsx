@@ -1,15 +1,9 @@
 import { useState } from 'react';
 import { Briefcase, Loader, Link as LinkIcon, Globe } from 'lucide-react';
 import { useResume } from '../../contexts/ResumeContext';
-import { analyzeJobAPI } from '../../services/api';
 
-interface Props {
-  onComplete?: () => void;
-}
-
-export function JobAnalyzerPanel({ onComplete }: Props) {
-  const { jobDescription, setJobDescription, setJobAnalysis } = useResume();
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+export function JobAnalyzerPanel() {
+  const { jobDescription, setJobDescription } = useResume();
   const [error, setError] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
@@ -46,34 +40,6 @@ export function JobAnalyzerPanel({ onComplete }: Props) {
       setError(err instanceof Error ? err.message : 'Failed to fetch job description from URL. Try copying the text manually.');
     } finally {
       setIsFetchingUrl(false);
-    }
-  };
-
-  const handleAnalyze = async () => {
-    console.log('[JobAnalyzer] handleAnalyze called');
-    console.log('[JobAnalyzer] jobDescription length:', jobDescription.length);
-
-    if (!jobDescription.trim()) {
-      setError('Please enter a job description');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setError('');
-
-    try {
-      console.log('[JobAnalyzer] Calling analyzeJobAPI...');
-      const analysis = await analyzeJobAPI(jobDescription);
-      console.log('[JobAnalyzer] Received analysis:', analysis);
-      setJobAnalysis(analysis);
-      console.log('[JobAnalyzer] Set job analysis in context');
-      onComplete?.();
-      console.log('[JobAnalyzer] Analysis complete!');
-    } catch (err) {
-      console.error('[JobAnalyzer] Error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to analyze job');
-    } finally {
-      setIsAnalyzing(false);
     }
   };
 
@@ -121,7 +87,6 @@ export function JobAnalyzerPanel({ onComplete }: Props) {
           onChange={(e) => setJobDescription(e.target.value)}
           placeholder="Paste the complete job description including requirements, responsibilities, and qualifications..."
           className="w-full h-80 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-sm"
-          disabled={isAnalyzing}
         />
       ) : (
         <div className="space-y-4">
@@ -172,23 +137,6 @@ export function JobAnalyzerPanel({ onComplete }: Props) {
           <span>{jobDescription.split(/\s+/).length} words • {jobDescription.length} characters</span>
         </div>
       )}
-
-      <button
-        onClick={handleAnalyze}
-        disabled={isAnalyzing || !jobDescription.trim()}
-        className="mt-4 w-full bg-purple-600 text-white py-3 px-4 rounded-xl font-semibold
-          hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed
-          transition-colors flex items-center justify-center gap-2"
-      >
-        {isAnalyzing ? (
-          <>
-            <Loader className="w-5 h-5 animate-spin" />
-            Analyzing Job...
-          </>
-        ) : (
-          'Analyze Job Description'
-        )}
-      </button>
 
       {error && (
         <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">

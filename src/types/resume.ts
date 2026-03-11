@@ -2,6 +2,7 @@ export interface Experience {
   id: string;
   company: string;
   role: string;
+  location?: string; // City, State format
   startDate: string;
   endDate: string;
   current: boolean;
@@ -34,6 +35,11 @@ export interface Project {
 }
 
 export interface StructuredResume {
+  name?: string;
+  email?: string;
+  phone?: string;
+  linkedin?: string;
+  location?: string;
   summary: string;
   experience: Experience[];
   education: Education[];
