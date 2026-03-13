@@ -1,9 +1,8 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
-// Configure PDF.js worker - try multiple CDN sources for better mobile compatibility
-const workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+// Configure PDF.js worker - use unpkg CDN which is most reliable
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 export async function parsePDF(file: File): Promise<string> {
   try {
@@ -11,12 +10,8 @@ export async function parsePDF(file: File): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     console.log('[PDF Parser] ArrayBuffer created, size:', arrayBuffer.byteLength);
 
-    // Configure loading parameters with worker disabled for mobile compatibility
     const loadingTask = pdfjsLib.getDocument({
       data: arrayBuffer,
-      useWorkerFetch: false,
-      isEvalSupported: false,
-      useSystemFonts: true
     });
 
     const pdf = await loadingTask.promise;
