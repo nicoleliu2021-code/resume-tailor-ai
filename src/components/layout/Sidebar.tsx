@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings, Sparkles } from 'lucide-react';
+import { Home, FileText, Settings, Sparkles, HelpCircle } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { UpgradeModal } from '../modals/UpgradeModal';
@@ -8,7 +8,7 @@ import { UpgradeModal } from '../modals/UpgradeModal';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Resume Optimizer', href: '/optimizer', icon: Sparkles },
-  { name: 'Format Advisor', href: '/format-advisor', icon: FileText },
+  { name: 'How It Works', href: '/how-it-works', icon: HelpCircle },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
