@@ -1,13 +1,26 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 
-// Configure PDF.js worker - use unpkg as fallback
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker - try multiple CDN sources for better mobile compatibility
+const workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
 
 export async function parsePDF(file: File): Promise<string> {
   try {
+    console.log('[PDF Parser] Starting PDF parse, file size:', file.size);
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    console.log('[PDF Parser] ArrayBuffer created, size:', arrayBuffer.byteLength);
+
+    // Configure loading parameters with worker disabled for mobile compatibility
+    const loadingTask = pdfjsLib.getDocument({
+      data: arrayBuffer,
+      useWorkerFetch: false,
+      isEvalSupported: false,
+      useSystemFonts: true
+    });
+
+    const pdf = await loadingTask.promise;
+    console.log('[PDF Parser] PDF loaded, pages:', pdf.numPages);
 
     let fullText = '';
 
@@ -19,11 +32,13 @@ export async function parsePDF(file: File): Promise<string> {
         .map((item: any) => item.str)
         .join(' ');
       fullText += pageText + '\n';
+      console.log('[PDF Parser] Extracted page', i, 'length:', pageText.length);
     }
 
+    console.log('[PDF Parser] Total text length:', fullText.length);
     return fullText.trim();
   } catch (error) {
-    console.error('Error parsing PDF:', error);
+    console.error('[PDF Parser] Error:', error);
     throw new Error('Failed to parse PDF file. Please ensure it is a valid PDF.');
   }
 }
