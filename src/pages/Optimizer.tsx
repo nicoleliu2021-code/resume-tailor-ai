@@ -8,7 +8,7 @@ import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { analyzeJobAPI } from '../services/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
 type LoadingStep = 'analyzing' | 'optimizing' | null;
 type ViewMode = 'upload' | 'score' | 'optimized';

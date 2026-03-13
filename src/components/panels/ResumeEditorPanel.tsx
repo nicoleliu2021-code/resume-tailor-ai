@@ -4,7 +4,7 @@ import { useSubscription } from '../../contexts/SubscriptionContext';
 import { UpgradeModal } from '../modals/UpgradeModal';
 import { Edit3, Sparkles, TrendingUp, BarChart3, CheckCircle2, AlertCircle, Save, X, Plus, Download, AlertTriangle, Copy, Check } from 'lucide-react';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
 export function ResumeEditorPanel() {
   const { resume, setResume, jobAnalysis, jobDescription, originalResume } = useResume();

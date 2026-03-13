@@ -1,7 +1,4 @@
 {
-  "env": {
-    "VITE_API_URL": "https://resume-tailor-ai-production-1944.up.railway.app"
-  },
   "rewrites": [
     {
       "source": "/(.*)",

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Briefcase, Loader, Link as LinkIcon, Globe } from 'lucide-react';
 import { useResume } from '../../contexts/ResumeContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
 export function JobAnalyzerPanel() {
   const { jobDescription, setJobDescription } = useResume();
