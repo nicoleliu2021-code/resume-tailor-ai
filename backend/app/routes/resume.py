@@ -8,24 +8,46 @@ router = APIRouter()
 
 @router.post("/parse-pdf")
 async def parse_pdf_file(file: UploadFile = File(...)):
-    """Parse PDF file and extract text (for mobile devices)"""
+    """Parse PDF file and extract text (optimized for mobile devices)"""
     try:
+        # Validate file type
+        if not file.filename or not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="File must be a PDF")
+
         # Read file contents
         contents = await file.read()
 
-        # Parse PDF using pypdf
+        # Check file size (10MB limit)
+        if len(contents) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large. Maximum size is 10MB.")
+
+        # Parse PDF using pypdf (fast and lightweight)
         pdf_reader = PdfReader(io.BytesIO(contents))
-        text = ""
+        text_parts = []
 
-        # Extract text from all pages
-        for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+        # Extract text from all pages (optimized)
+        for page_num, page in enumerate(pdf_reader.pages, 1):
+            try:
+                page_text = page.extract_text()
+                if page_text:
+                    text_parts.append(page_text)
+            except Exception as e:
+                print(f"Warning: Could not extract text from page {page_num}: {str(e)}")
+                continue
 
-        if not text.strip():
-            raise HTTPException(status_code=400, detail="Could not extract text from PDF. The PDF may be scanned or image-based.")
+        text = "\n".join(text_parts).strip()
 
-        return {"text": text.strip()}
+        if not text:
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from PDF. The file may be scanned, encrypted, or image-based. Try uploading a different version."
+            )
+
+        return {"text": text}
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"PDF parsing error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {str(e)}")
 
 @router.post("/parse", response_model=StructuredResume)

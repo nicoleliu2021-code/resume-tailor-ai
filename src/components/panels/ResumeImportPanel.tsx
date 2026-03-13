@@ -8,28 +8,45 @@ interface Props {
   onComplete?: () => void;
 }
 
+// Detect mobile device
+const isMobileDevice = () => {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 0 && navigator.maxTouchPoints > 2);
+};
+
 export function ResumeImportPanel({ onComplete }: Props) {
   const { setResume } = useResume();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [fileName, setFileName] = useState('');
+  const [loadingStep, setLoadingStep] = useState<'uploading' | 'parsing' | 'structuring'>('uploading');
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check file size (10MB limit)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (file.size > maxSize) {
+      setError('File too large. Please upload a file under 10MB.');
+      return;
+    }
+
     setIsLoading(true);
     setError('');
     setFileName(file.name);
+    setLoadingStep('uploading');
 
     try {
       console.log('[ResumeImport] Starting file parsing:', file.name, file.type);
 
       // Step 1: Extract text from file
+      setLoadingStep('parsing');
       const text = await parseResumeFile(file);
       console.log('[ResumeImport] Extracted text length:', text.length);
 
       // Step 2: Parse into structured resume via backend API
+      setLoadingStep('structuring');
       console.log('[ResumeImport] Calling parseResumeAPI...');
       const structured = await parseResumeAPI(text);
       console.log('[ResumeImport] Received structured resume:', structured);
@@ -76,8 +93,26 @@ export function ResumeImportPanel({ onComplete }: Props) {
         {isLoading ? (
           <div className="flex flex-col items-center gap-3">
             <Loader className="w-14 h-14 text-indigo-600 animate-spin" />
-            <p className="text-base font-semibold text-gray-700">Parsing {fileName}...</p>
-            <p className="text-xs text-gray-500">This usually takes 5-10 seconds</p>
+            <p className="text-base font-semibold text-gray-700">
+              {loadingStep === 'uploading' && 'Uploading file...'}
+              {loadingStep === 'parsing' && `Extracting text from ${fileName}...`}
+              {loadingStep === 'structuring' && 'Analyzing your experience...'}
+            </p>
+            <p className="text-xs text-gray-500">
+              {isMobileDevice() && loadingStep === 'parsing'
+                ? 'Mobile devices may take 15-30 seconds for PDFs'
+                : 'This usually takes 5-10 seconds'}
+            </p>
+            {/* Progress indicator */}
+            <div className="w-64 h-2 bg-gray-200 rounded-full overflow-hidden mt-2">
+              <div
+                className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500 ease-out"
+                style={{
+                  width: loadingStep === 'uploading' ? '33%' :
+                         loadingStep === 'parsing' ? '66%' : '100%'
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div className="pointer-events-none">
@@ -96,8 +131,22 @@ export function ResumeImportPanel({ onComplete }: Props) {
               <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg">
                 <FileText className="w-4 h-4 text-blue-500" />
                 <span className="text-xs font-medium text-gray-700">DOCX</span>
+                {isMobileDevice() && (
+                  <span className="ml-1 px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded">
+                    FASTER
+                  </span>
+                )}
               </div>
             </div>
+
+            {/* Mobile tip */}
+            {isMobileDevice() && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-800 font-medium">
+                  💡 <strong>Mobile Tip:</strong> DOCX files upload 3x faster than PDFs
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -111,6 +160,13 @@ export function ResumeImportPanel({ onComplete }: Props) {
             <div className="flex-1">
               <p className="text-sm font-semibold text-red-900 mb-1">Upload Failed</p>
               <p className="text-sm text-red-700">{error}</p>
+              {isMobileDevice() && fileName.toLowerCase().endsWith('.pdf') && (
+                <div className="mt-3 p-2 bg-blue-100 border border-blue-300 rounded">
+                  <p className="text-xs text-blue-900 font-semibold">
+                    💡 Try converting to DOCX for faster mobile uploads
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
