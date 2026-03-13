@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
-import { Target, CheckCircle2, GripVertical, Briefcase, ChevronDown, ChevronUp, Sparkles, Loader } from 'lucide-react';
+import { Target, CheckCircle2, GripVertical, Briefcase, ChevronDown, ChevronUp, Sparkles, Loader, Copy, Check } from 'lucide-react';
 import { analyzeGaps, type GapAnalysis } from '../../services/gapAnalysis';
 
 interface DraggableRecommendation {
@@ -19,6 +19,7 @@ export function JobInsightsPanel() {
   const [showKeyQualifications, setShowKeyQualifications] = useState(false);
   const [showSkills, setShowSkills] = useState(false);
   const [showKeywords, setShowKeywords] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Debug logging
   console.log('[JobInsightsPanel] jobAnalysis:', jobAnalysis);
@@ -120,6 +121,16 @@ export function JobInsightsPanel() {
     e.dataTransfer.effectAllowed = 'copy';
   };
 
+  const handleCopy = async (text: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   if (!jobAnalysis) {
     return (
       <div className="p-6">
@@ -178,17 +189,31 @@ export function JobInsightsPanel() {
                   key={rec.id}
                   draggable
                   onDragStart={(e) => handleDragStart(e, rec)}
-                  className="p-3 bg-white border-2 border-amber-300 rounded-lg cursor-move hover:shadow-lg hover:border-amber-500 transition-all group"
+                  className="p-3 bg-white border-2 border-amber-300 rounded-lg cursor-move hover:shadow-lg hover:border-amber-500 transition-all group relative"
                 >
                   <div className="flex items-start gap-2">
                     <GripVertical className="w-4 h-4 text-amber-400 mt-0.5 flex-shrink-0 group-hover:text-amber-600" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs text-gray-900 mb-1 leading-relaxed">{rec.content}</p>
+                      <p className="text-xs text-gray-900 mb-1 leading-relaxed pr-8">{rec.content}</p>
                       <p className="text-xs text-amber-700 italic flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
                         {rec.reason}
                       </p>
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleCopy(rec.content, rec.id);
+                      }}
+                      className="absolute top-3 right-3 p-1.5 bg-amber-100 hover:bg-amber-200 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+                      title="Copy to clipboard"
+                    >
+                      {copiedId === rec.id ? (
+                        <Check className="w-3.5 h-3.5 text-green-600" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-amber-700" />
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}

@@ -48,18 +48,23 @@ export function ResumeImportPanel({ onComplete }: Props) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+    <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-xl transition-shadow">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-          <FileText className="w-5 h-5 text-indigo-600" />
+        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md">
+          <FileText className="w-6 h-6 text-white" />
         </div>
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">Upload Resume</h2>
-          <p className="text-sm text-gray-600">PDF or DOCX format</p>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <h2 className="text-lg font-bold text-gray-900">Step 1: Upload Resume</h2>
+            <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
+              Required
+            </span>
+          </div>
+          <p className="text-sm text-gray-600 mt-0.5">We'll analyze your experience and optimize it</p>
         </div>
       </div>
 
-      <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-indigo-400 transition-colors">
+      <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-indigo-500 hover:bg-indigo-50/30 transition-all cursor-pointer group">
         <input
           type="file"
           accept=".pdf,.docx,.doc"
@@ -70,32 +75,68 @@ export function ResumeImportPanel({ onComplete }: Props) {
 
         {isLoading ? (
           <div className="flex flex-col items-center gap-3">
-            <Loader className="w-12 h-12 text-indigo-600 animate-spin" />
-            <p className="text-sm text-gray-600">Parsing {fileName}...</p>
+            <Loader className="w-14 h-14 text-indigo-600 animate-spin" />
+            <p className="text-base font-semibold text-gray-700">Parsing {fileName}...</p>
+            <p className="text-xs text-gray-500">This usually takes 5-10 seconds</p>
           </div>
         ) : (
           <div className="pointer-events-none">
-            <Upload className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-gray-700">
+            <Upload className="w-14 h-14 text-gray-400 group-hover:text-indigo-500 mx-auto mb-4 transition-colors" />
+            <p className="text-base font-semibold text-gray-800 mb-1">
               Click to upload or drag and drop
             </p>
-            <p className="text-xs text-gray-500 mt-1">PDF or DOCX (MAX. 10MB)</p>
+            <p className="text-sm text-gray-500 mb-4">PDF or DOCX format (MAX. 10MB)</p>
+
+            {/* File format indicators */}
+            <div className="flex items-center justify-center gap-3 mt-4">
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg">
+                <FileText className="w-4 h-4 text-red-500" />
+                <span className="text-xs font-medium text-gray-700">PDF</span>
+              </div>
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg">
+                <FileText className="w-4 h-4 text-blue-500" />
+                <span className="text-xs font-medium text-gray-700">DOCX</span>
+              </div>
+            </div>
           </div>
         )}
       </div>
 
       {error && (
-        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-sm text-red-800">{error}</p>
+        <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+          <div className="flex items-start gap-2">
+            <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-xs font-bold">!</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-red-900 mb-1">Upload Failed</p>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {fileName && !error && !isLoading && (
-        <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-          <FileText className="w-4 h-4 text-green-600" />
-          <p className="text-sm text-green-800 font-medium">{fileName} uploaded successfully</p>
+        <div className="mt-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-white text-lg font-bold">✓</span>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-green-900">{fileName}</p>
+              <p className="text-xs text-green-700 mt-0.5">Successfully uploaded and parsed</p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Trust signal */}
+      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span className="font-medium">Your resume is never stored. Everything stays private.</span>
+      </div>
     </div>
   );
 }

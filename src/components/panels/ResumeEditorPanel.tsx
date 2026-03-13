@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useResume } from '../../contexts/ResumeContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { UpgradeModal } from '../modals/UpgradeModal';
-import { Edit3, Sparkles, TrendingUp, BarChart3, CheckCircle2, AlertCircle, Save, X, Plus, Download, AlertTriangle } from 'lucide-react';
+import { Edit3, Sparkles, TrendingUp, BarChart3, CheckCircle2, AlertCircle, Save, X, Plus, Download, AlertTriangle, Copy, Check } from 'lucide-react';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
@@ -20,6 +20,7 @@ export function ResumeEditorPanel() {
   const [modifiedBullets, setModifiedBullets] = useState<Set<string>>(new Set());
   const [editingSkills, setEditingSkills] = useState(false);
   const [newSkillName, setNewSkillName] = useState('');
+  const [copiedBulletId, setCopiedBulletId] = useState<string | null>(null);
 
   // Debug logging
   console.log('[ResumeEditorPanel] resume:', resume);
@@ -796,6 +797,16 @@ export function ResumeEditorPanel() {
     setResume(updated);
   };
 
+  const handleCopyBullet = async (bullet: string, bulletId: string) => {
+    try {
+      await navigator.clipboard.writeText(bullet);
+      setCopiedBulletId(bulletId);
+      setTimeout(() => setCopiedBulletId(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   const handleImproveBullet = async (expId: string, bulletIdx: number, action: string) => {
     if (!resume) return;
 
@@ -1393,7 +1404,24 @@ export function ResumeEditorPanel() {
                                   )}
                                 </div>
 
-                                <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
+                                  <button
+                                    onClick={() => handleCopyBullet(bullet, `${exp.id}-${idx}`)}
+                                    className="flex items-center gap-1 px-2 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+                                    title="Copy to clipboard"
+                                  >
+                                    {copiedBulletId === `${exp.id}-${idx}` ? (
+                                      <>
+                                        <Check className="w-3 h-3" />
+                                        Copied!
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Copy className="w-3 h-3" />
+                                        Copy
+                                      </>
+                                    )}
+                                  </button>
                                   <button
                                     onClick={() => handleImproveBullet(exp.id, idx, 'improve')}
                                     disabled={improvingBullet?.expId === exp.id && improvingBullet?.bulletIdx === idx}
