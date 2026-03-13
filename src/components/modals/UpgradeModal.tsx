@@ -60,8 +60,8 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
 
         {/* Pricing Cards */}
         <div className="p-8">
-          <div className="grid md:grid-cols-3 gap-6">
-            {(['free', 'onetime', 'pro'] as SubscriptionTier[]).map((tier) => {
+          <div className="grid md:grid-cols-4 gap-6">
+            {(['free', 'onetime', 'pro', 'premium'] as SubscriptionTier[]).map((tier) => {
               const plan = SUBSCRIPTION_PLANS[tier];
               const isCurrent = tier === currentTier;
               const isRecommended = plan.popular || false;
@@ -147,7 +147,7 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
                     }`}
                   >
-                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Current Plan' : tier === 'onetime' ? 'Get Started - $9 One-Time' : 'Upgrade to Pro'}
+                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Current Plan' : tier === 'onetime' ? `Get Started - $${plan.price} One-Time` : tier === 'premium' ? 'Upgrade to Premium' : 'Upgrade to Pro'}
                   </button>
                 </div>
               );

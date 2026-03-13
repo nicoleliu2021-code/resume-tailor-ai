@@ -63,6 +63,18 @@ export function Settings() {
                 >
                   Upgrade to Pro — ${SUBSCRIPTION_PLANS.pro.price}/month
                 </button>
+              ) : tier === 'onetime' ? (
+                <div className="space-y-3">
+                  <div className="px-8 py-4 bg-white/20 text-white rounded-xl font-bold text-lg">
+                    You're on {currentPlan.name}!
+                  </div>
+                  <button
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="px-8 py-4 bg-white text-purple-600 rounded-xl font-bold hover:bg-purple-50 transition-all"
+                  >
+                    Upgrade to Unlimited Pro
+                  </button>
+                </div>
               ) : (
                 <div className="px-8 py-4 bg-white/20 text-white rounded-xl font-bold text-lg">
                   You're on {currentPlan.name}!

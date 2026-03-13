@@ -1,4 +1,4 @@
-export type SubscriptionTier = 'free' | 'pro' | 'onetime';
+export type SubscriptionTier = 'free' | 'pro' | 'premium' | 'onetime';
 
 export interface SubscriptionLimits {
   aiImprovements: number; // per month
@@ -49,8 +49,8 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
   pro: {
     tier: 'pro',
     name: 'Pro',
-    price: 19,
-    annualPrice: 144,
+    price: 24,
+    annualPrice: 199,
     popular: true,
     limits: {
       aiImprovements: -1, // unlimited
@@ -59,34 +59,56 @@ export const SUBSCRIPTION_PLANS: Record<SubscriptionTier, SubscriptionPlan> = {
       jobAnalysis: -1
     },
     features: [
-      'Tailor resumes for unlimited jobs',
-      'Unlimited exports (PDF, DOCX, TXT)',
-      'Unlimited job description matching',
-      'AI bullet rewriting',
+      'Unlimited AI improvements',
+      'Unlimited exports (PDF, DOCX)',
+      'Unlimited job description analyses',
+      'Priority AI processing (GPT-4o)',
+      'Advanced AI controls',
       'ATS keyword optimization',
-      'Cover letter generation',
-      'Unlimited saved resumes',
-      'Priority AI processing'
+      'Resume versioning',
+      'Batch optimization'
+    ]
+  },
+  premium: {
+    tier: 'premium',
+    name: 'Premium',
+    price: 39,
+    annualPrice: 349,
+    limits: {
+      aiImprovements: -1, // unlimited
+      exports: -1,
+      resumes: -1,
+      jobAnalysis: -1
+    },
+    features: [
+      'Everything in Pro',
+      'Recruiter 6-second scan simulation',
+      'Interview readiness scoring',
+      'AI career coach (unlimited)',
+      'Resume impact scoring',
+      'Job application tracker',
+      'Resume version analytics',
+      'Priority support'
     ]
   },
   onetime: {
     tier: 'onetime',
-    name: 'Single Resume Tailor',
-    price: 9,
+    name: 'Quick Win',
+    price: 12,
     isOneTime: true,
     limits: {
-      aiImprovements: 10, // Enough to tailor one resume well
-      exports: 1,
+      aiImprovements: -1, // Unlimited for 7 days
+      exports: 5,
       resumes: 1,
-      jobAnalysis: 1
+      jobAnalysis: -1 // Unlimited for 7 days
     },
     features: [
-      'Tailor one resume to a specific job',
-      '1 professional resume export',
-      'Full AI optimization for one job',
-      'ATS keyword optimization',
-      'Valid for 7 days',
-      'No subscription required'
+      'Complete optimization of 1 resume',
+      'Unlimited AI improvements (7 days)',
+      '5 exports (PDF, DOCX)',
+      'Full Pro features (7-day access)',
+      'GPT-4o AI model',
+      'No recurring charges'
     ]
   }
 };
