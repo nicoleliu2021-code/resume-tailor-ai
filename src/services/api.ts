@@ -77,3 +77,27 @@ export async function tailorResumeAPI(
   const data = await response.json();
   return data.tailoredResume;
 }
+
+export async function parsePDFAPI(file: File): Promise<string> {
+  console.log('[API] parsePDFAPI called for mobile, file size:', file.size);
+
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/api/resume/parse-pdf`, {
+    method: 'POST',
+    body: formData,
+  });
+
+  console.log('[API] Response status:', response.status, response.ok);
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Failed to parse PDF' }));
+    console.error('[API] Error response:', error);
+    throw new Error(error.detail || 'Failed to parse PDF file');
+  }
+
+  const data = await response.json();
+  console.log('[API] Success! Text length:', data.text?.length);
+  return data.text;
+}

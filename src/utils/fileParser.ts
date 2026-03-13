@@ -1,5 +1,6 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
+import { parsePDFAPI } from '../services/api';
 
 // Configure PDF.js worker - use local bundled worker for reliability
 // Vite will handle bundling this properly
@@ -8,8 +9,22 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).href;
 
+// Detect if user is on mobile device
+function isMobileDevice(): boolean {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
+    (navigator.maxTouchPoints > 0 && navigator.maxTouchPoints > 2);
+}
+
 export async function parsePDF(file: File): Promise<string> {
+  // Use backend API for mobile devices to avoid performance issues
+  if (isMobileDevice()) {
+    console.log('[PDF Parser] Mobile device detected, using backend API');
+    return await parsePDFAPI(file);
+  }
+
+  // Use client-side parsing for desktop
   try {
+    console.log('[PDF Parser] Desktop detected, using client-side parsing');
     console.log('[PDF Parser] Starting PDF parse, file size:', file.size);
     const arrayBuffer = await file.arrayBuffer();
     console.log('[PDF Parser] ArrayBuffer created, size:', arrayBuffer.byteLength);
