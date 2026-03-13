@@ -5,6 +5,7 @@ from openai import OpenAI
 from typing import List, Dict
 from app.models.schemas import StructuredResume, JobAnalysis, GapAnalysis, ChatMessage
 from app.services.mock_data import MOCK_RESUME_STRUCTURE, MOCK_JOB_ANALYSIS, MOCK_TAILORED_RESUME, MOCK_GAP_ANALYSIS
+from app.services.elite_prompt import ELITE_SYSTEM_PROMPT, ELITE_OPTIMIZATION_INSTRUCTIONS
 
 load_dotenv()
 
@@ -367,7 +368,7 @@ Guidelines:
 
 
 async def optimize_resume_structure(resume: StructuredResume, job_analysis: JobAnalysis):
-    """Optimize the structured resume based on job analysis - returns improved structured resume"""
+    """Optimize the structured resume based on job analysis using elite-level optimization - returns improved structured resume"""
 
     # Return mock optimized resume if mock mode is enabled
     if MOCK_MODE:
@@ -386,76 +387,84 @@ async def optimize_resume_structure(resume: StructuredResume, job_analysis: JobA
         ]
         return optimized, changes
 
-    # Build optimization prompt
-    prompt = f"""You are an expert resume optimizer. Optimize this resume for the target job by improving bullets, summary, and skills while keeping all information truthful.
+    # Build comprehensive context for elite optimization
+    user_prompt = f"""Apply your elite resume optimization expertise to transform this resume for the target role.
 
-TARGET JOB:
-- Role: {job_analysis.roleTitle} ({job_analysis.seniorityLevel})
-- Industry: {job_analysis.industry}
-- Required Skills: {', '.join(job_analysis.technicalSkills[:10])}
-- ATS Keywords: {', '.join(job_analysis.atsKeywords[:10])}
-- Core Responsibilities: {', '.join(job_analysis.coreResponsibilities[:5])}
+## JOB DESCRIPTION ANALYSIS
 
-CURRENT RESUME:
-Summary: {resume.summary}
+**Target Role:** {job_analysis.roleTitle} ({job_analysis.seniorityLevel})
+**Industry:** {job_analysis.industry}
 
-Experience:
-{chr(10).join([f"- {exp.role} at {exp.company}: {chr(10).join(['  * ' + b for b in exp.bullets])}" for exp in resume.experience])}
+**Must-Have Technical Skills:** {', '.join(job_analysis.technicalSkills[:12])}
+**Key Soft Skills:** {', '.join(job_analysis.softSkills[:8])}
+**Core Responsibilities:** {', '.join(job_analysis.coreResponsibilities[:6])}
+**Critical ATS Keywords:** {', '.join(job_analysis.atsKeywords[:15])}
+**Hiring Signals:** {', '.join(job_analysis.hiringSignals[:5])}
 
-Skills: {', '.join([skill.name for skill in resume.skills])}
+## CURRENT RESUME TO OPTIMIZE
 
-OPTIMIZATION INSTRUCTIONS:
-1. Improve the professional summary to align with the {job_analysis.roleTitle} role
-2. Enhance each experience bullet point by:
-   - Adding metrics where plausible based on the role
-   - Incorporating relevant ATS keywords naturally: {', '.join(job_analysis.atsKeywords[:8])}
-   - Using stronger action verbs (Led, Drove, Architected, etc.)
-   - Emphasizing accomplishments that match: {', '.join(job_analysis.coreResponsibilities[:3])}
-3. Add missing technical skills from requirements if applicable: {', '.join([s for s in job_analysis.technicalSkills if s not in [skill.name for skill in resume.skills]][:5])}
-4. Keep all changes realistic and truthful - only extrapolate what's reasonable from existing experience
-5. Maintain the exact structure with same IDs
+**Professional Summary:**
+{resume.summary}
 
-CRITICAL QUALITY REQUIREMENTS:
-- VARY ACTION VERBS: Don't repeat "Led" or "Managed" in multiple bullets. Use diverse verbs: Spearheaded, Orchestrated, Championed, Architected, Pioneered, Drove, Directed, Established, Transformed, Delivered, Executed, etc.
-- AVOID DUPLICATE EXPERIENCES: Each bullet should highlight a DIFFERENT achievement or responsibility
-- ENSURE UNIQUENESS: No two bullets should tell the same story or use similar phrasing
-- MIX SENTENCE STRUCTURES: Vary how you start bullets (action verb, metric-first, outcome-first)
-- BE SPECIFIC: Generic bullets like "Led team to deliver project" are too vague - add specifics about what, how, and impact
+**Professional Experience:**
+{chr(10).join([f'''
+{exp.role} at {exp.company}
+{exp.startDate} - {exp.endDate if not exp.current else "Present"}
+Current bullets:
+{chr(10).join(['• ' + b for b in exp.bullets])}
+''' for exp in resume.experience])}
 
-Return JSON with:
+**Current Skills:** {', '.join([skill.name for skill in resume.skills])}
+
+**Education:** {chr(10).join([f"{edu.degree} in {edu.field} from {edu.school}" for edu in resume.education])}
+
+## YOUR OPTIMIZATION TASK
+
+{ELITE_OPTIMIZATION_INSTRUCTIONS}
+
+## OUTPUT FORMAT
+
+Return ONLY valid JSON with this exact structure:
 {{
-  "summary": "optimized professional summary",
+  "summary": "Elite-optimized professional summary (3-4 sentences with metrics and keywords)",
   "experience": [
     {{
-      "id": "same-id-as-input",
-      "company": "same",
-      "role": "same",
-      "startDate": "same",
-      "endDate": "same",
-      "current": same,
-      "bullets": ["optimized bullet 1", "optimized bullet 2", ...]
+      "id": "keep-original-id",
+      "company": "keep-same",
+      "role": "keep-same",
+      "startDate": "keep-same",
+      "endDate": "keep-same",
+      "current": keep-same-boolean,
+      "bullets": ["Transformed bullet 1 with ACTION VERB + IMPACT + METRICS + CONTEXT", "bullet 2...", ...]
     }}
   ],
   "skills": [
     {{
-      "id": "same-or-new-for-added",
+      "id": "original-or-new-id",
       "name": "skill name",
-      "category": "technical/soft/tool"
+      "category": "technical" | "soft" | "tool" | "language"
     }}
   ],
   "education": {json.dumps([e.model_dump() for e in resume.education])},
   "projects": {json.dumps([p.model_dump() for p in resume.projects])},
-  "changes": ["Summary: Added focus on X", "Experience 1: Added metric about Y", "Skills: Added Z"]
-}}"""
+  "changes": [
+    "Summary: Specific change made",
+    "Experience - [Company]: Specific improvements made",
+    "Skills: What was added/enhanced",
+    "Overall: High-level impact of optimization"
+  ]
+}}
+
+CRITICAL: Every bullet must follow [ACTION VERB] + [WHAT] + [MEASURABLE IMPACT] + [BUSINESS CONTEXT] formula. No exceptions."""
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",  # Upgraded to full GPT-4 for elite-quality optimization
             messages=[
-                {"role": "system", "content": "You are an expert resume optimizer who improves resumes for specific jobs while keeping all information truthful. Always return valid JSON."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": ELITE_SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt}
             ],
-            temperature=0.6,
+            temperature=0.5,  # Slightly lower for more consistent, professional output
             response_format={"type": "json_object"}
         )
 
@@ -482,7 +491,7 @@ async def improve_bullet_point(
     job_description: str = None,
     job_analysis: JobAnalysis = None
 ) -> str:
-    """Improve a single bullet point based on action type"""
+    """Improve a single bullet point using elite resume optimization standards"""
 
     # Return mock improved bullet if mock mode is enabled
     if MOCK_MODE:
@@ -494,65 +503,115 @@ async def improve_bullet_point(
             return f"Led {bullet.lower()} driving significant results across the organization"
 
     # Build context
-    context_parts = []
+    context_parts = [f"**Experience Context:** {experience_context}"]
     if job_analysis:
-        context_parts.append(f"Target Role: {job_analysis.roleTitle}")
-        context_parts.append(f"Key Skills: {', '.join(job_analysis.technicalSkills[:8])}")
-        context_parts.append(f"ATS Keywords: {', '.join(job_analysis.atsKeywords[:8])}")
+        context_parts.append(f"**Target Role:** {job_analysis.roleTitle} ({job_analysis.seniorityLevel})")
+        context_parts.append(f"**Key Technical Skills to Emphasize:** {', '.join(job_analysis.technicalSkills[:8])}")
+        context_parts.append(f"**Critical ATS Keywords:** {', '.join(job_analysis.atsKeywords[:10])}")
+        context_parts.append(f"**Core Responsibilities:** {', '.join(job_analysis.coreResponsibilities[:4])}")
 
-    context = "\n".join(context_parts) if context_parts else ""
+    context = "\n".join(context_parts)
 
-    # Build prompt based on action
+    # Build elite-level instruction based on action
     if action == 'add-metrics':
-        instruction = """Add quantifiable metrics to this bullet point. Make it measurable and impactful.
-Examples:
-- Add percentages (increased by 40%)
-- Add dollar amounts ($2M revenue)
-- Add team sizes (team of 8)
-- Add time savings (reduced from 5 days to 2 days)
-Keep the improvement realistic based on the role."""
+        instruction = """Apply elite resume standards to add powerful, specific metrics to this bullet.
+
+**Elite Metrics Examples:**
+- Percentages: "grew engagement 156%", "increased retention 34%", "reduced churn by 28%"
+- Dollar amounts: "$2.3M annual revenue", "saved $450K", "$8.2M expansion"
+- Scale: "500K+ users", "12 markets", "team of 15 engineers"
+- Time: "within 6 months", "reduced from 5 days to 2 hours", "90-day sprint"
+- Volume: "50M+ data points", "10K qualified leads", "2M transactions"
+
+**Your Task:**
+Transform the bullet using [ACTION VERB] + [WHAT YOU DID] + [MEASURABLE IMPACT] + [BUSINESS CONTEXT]
+
+Keep metrics realistic and plausible based on the role level. Make every word count."""
 
     elif action == 'rewrite':
-        instruction = """Completely rewrite this bullet point to be more impactful.
-- Start with a UNIQUE action verb - avoid overused ones like "Led" or "Managed". Try: Orchestrated, Spearheaded, Architected, Championed, Pioneered, Transformed, Delivered, Executed, Established, Drove, Directed
-- Focus on achievements and results, not just tasks
-- Make it concise and powerful (1-2 lines max)
-- Include metrics if the original has any
-- Naturally incorporate relevant keywords
-- Make it stand out from typical resume bullets"""
+        instruction = """Completely rewrite this bullet to elite, recruiter-level quality.
+
+**Elite Transformation Standards:**
+
+1. **Start with a UNIQUE power verb** - Never use "Led" or "Managed"
+   - Leadership: Orchestrated, Spearheaded, Championed, Directed, Pioneered
+   - Achievement: Delivered, Exceeded, Accelerated, Drove, Achieved
+   - Innovation: Architected, Transformed, Revolutionized, Engineered, Built
+   - Collaboration: Partnered, Facilitated, Aligned, Coordinated
+
+2. **Include ALL components:** [ACTION VERB] + [SPECIFIC ACTION] + [MEASURABLE IMPACT] + [BUSINESS CONTEXT]
+
+3. **Add specificity:**
+   - Team size, timeframe, scope, budget
+   - Concrete metrics (%, $, team size, users, time saved)
+
+4. **Under 25 words** - recruiters scan, don't read
+
+5. **Naturally incorporate relevant ATS keywords**
+
+**Example Transformation:**
+❌ WEAK: "Worked with team to improve product features"
+✅ ELITE: "Orchestrated cross-functional roadmap for 3 features with engineering and design, increasing user retention 34% and reducing churn by $2.3M annually"
+
+Make this bullet stand out in a 6-second resume scan."""
 
     else:  # improve
-        instruction = """Improve this bullet point by:
-- Using a stronger action verb if needed (AVOID overused verbs like "Led" or "Managed" - use Spearheaded, Orchestrated, Architected, Championed, Drove, Pioneered, etc.)
-- Making the language more impactful and professional
-- Adding or enhancing any metrics present
-- Ensuring it highlights achievements over responsibilities
-- Incorporating relevant keywords naturally
-- Making it distinct from typical resume bullets - be specific and unique"""
+        instruction = """Elevate this bullet to elite, world-class quality.
 
-    prompt = f"""You are an expert resume writer.
+**Elite Enhancement Standards:**
 
-CONTEXT:
-{experience_context}
+1. **Strengthen the action verb** - Use powerful, varied verbs:
+   - Spearheaded, Orchestrated, Architected, Championed, Pioneered, Transformed
+   - Drove, Delivered, Exceeded, Accelerated, Established, Directed
+   - NEVER repeat verbs from other bullets in this experience
 
-{context}
+2. **Apply the formula:** [ACTION VERB] + [WHAT] + [MEASURABLE IMPACT] + [BUSINESS CONTEXT]
 
-CURRENT BULLET:
+3. **Add/enhance metrics** with:
+   - Percentages (45% increase)
+   - Dollar amounts ($1.2M saved)
+   - Scale (500K+ users, 12 markets)
+   - Time (within 90 days, 40% faster)
+   - Team size (team of 8)
+
+4. **Make it specific** - eliminate vague words like "various", "multiple", "several"
+
+5. **Naturally incorporate ATS keywords** from the target role
+
+6. **Keep under 25 words** for scannability
+
+Transform this into a bullet that proves clear business impact."""
+
+    elite_system = """You are a world-class resume optimization expert with 15+ years of experience at Fortune 500 companies and top startups. You've reviewed 50,000+ resumes and know exactly what hiring managers look for in elite candidates.
+
+Every bullet point you create answers: "So what? What impact did this have on the business?"
+
+You follow the strict formula: [STRONG ACTION VERB] + [WHAT YOU DID] + [MEASURABLE IMPACT] + [BUSINESS CONTEXT]
+
+You never use weak phrases like "responsible for," "worked on," "helped with," or "assisted." You make every word count."""
+
+    prompt = f"""{context}
+
+**CURRENT BULLET:**
 "{bullet}"
 
-TASK:
+**YOUR TASK:**
 {instruction}
 
-Return ONLY the improved bullet point text. No explanations or meta-commentary."""
+**CRITICAL RULES:**
+- Return ONLY the improved bullet point text (no quotes, no explanations)
+- Must be under 25 words
+- Must sound authentic and credible, never generic or AI-written
+- Must include measurable impact"""
 
     try:
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",  # Upgraded for elite-quality individual bullet improvements
             messages=[
-                {"role": "system", "content": "You are an expert resume writer who creates impactful, ATS-friendly bullet points. Always be concise and professional."},
+                {"role": "system", "content": elite_system},
                 {"role": "user", "content": prompt}
             ],
-            temperature=0.7,
+            temperature=0.6,
             max_tokens=150
         )
 
