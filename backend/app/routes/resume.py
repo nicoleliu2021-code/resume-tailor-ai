@@ -1,8 +1,32 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from app.models.schemas import ParseResumeRequest, StructuredResume, TailorResumeRequest, AnalyzeGapsRequest, GapAnalysis, OptimizeResumeRequest, OptimizeResumeResponse, ImproveBulletRequest, ImproveBulletResponse
 from app.services.openai_service import parse_resume_structure, tailor_resume, analyze_resume_gaps, optimize_resume_structure, improve_bullet_point
+from pypdf import PdfReader
+import io
 
 router = APIRouter()
+
+@router.post("/parse-pdf")
+async def parse_pdf_file(file: UploadFile = File(...)):
+    """Parse PDF file and extract text (for mobile devices)"""
+    try:
+        # Read file contents
+        contents = await file.read()
+
+        # Parse PDF using pypdf
+        pdf_reader = PdfReader(io.BytesIO(contents))
+        text = ""
+
+        # Extract text from all pages
+        for page in pdf_reader.pages:
+            text += page.extract_text() + "\n"
+
+        if not text.strip():
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF. The PDF may be scanned or image-based.")
+
+        return {"text": text.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {str(e)}")
 
 @router.post("/parse", response_model=StructuredResume)
 async def parse_resume(request: ParseResumeRequest):
