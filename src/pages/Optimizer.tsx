@@ -133,6 +133,8 @@ export function Optimizer() {
 
   // One-click optimize
   const handleOptimizeNow = async () => {
+    if (!resume || !jobAnalysis) return;
+
     try {
       setLoadingStep('optimizing');
 
@@ -163,11 +165,21 @@ export function Optimizer() {
 
       await new Promise(resolve => setTimeout(resolve, 800));
 
-      // Set optimized resume
-      setResume(optimizeData.optimizedResume);
+      // Merge contact info from original resume with optimized content
+      const mergedResume = {
+        ...optimizeData.optimizedResume,
+        name: resume.name,
+        email: resume.email,
+        phone: resume.phone,
+        linkedin: resume.linkedin,
+        location: resume.location
+      };
+
+      // Set optimized resume with contact info
+      setResume(mergedResume);
 
       // Recalculate score
-      const newScore = calculateResumeScore(optimizeData.optimizedResume, jobAnalysis);
+      const newScore = calculateResumeScore(mergedResume, jobAnalysis);
       setResumeScore(newScore);
 
       setLoadingStep(null);
