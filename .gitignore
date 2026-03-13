@@ -44,3 +44,4 @@ backend/.env
 .tmp/
 node_modules/.tmp/
 node_modules/.vite/
+.vercel
