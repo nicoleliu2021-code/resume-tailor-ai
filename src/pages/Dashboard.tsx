@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Sparkles, FileText, Target, Zap, Lock, Clock, CheckCircle2, TrendingUp, Edit3, Download } from 'lucide-react';
+import { Sparkles, FileText, Target, Zap, Lock, CheckCircle2, TrendingUp, Edit3, Download } from 'lucide-react';
 
 export function Dashboard() {
   return (
@@ -13,16 +13,16 @@ export function Dashboard() {
 
           {/* Main Headline */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-4 px-4">
-            Get Your Resume Past ATS and{' '}
+            Optimize Your Resume{' '}
             <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-              Into Interviews
+              in 30 Seconds
             </span>
           </h1>
 
           {/* Subheadline */}
           <p className="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed mb-8 px-4">
-            Our AI rewrites your resume to match job descriptions perfectly—adding keywords,
-            optimizing bullets, and fixing gaps that keep you from getting callbacks.
+            AI analyzes your resume against job descriptions and optimizes it automatically.
+            One click. 30 seconds. Ready to apply.
           </p>
 
           {/* Main CTA */}
@@ -45,12 +45,12 @@ export function Dashboard() {
           {/* Trust Bar */}
           <div className="mt-6 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-sm text-gray-600 px-4">
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-green-600" />
-              <span className="font-medium">Private & Secure</span>
+              <Zap className="w-4 h-4 text-indigo-600" />
+              <span className="font-medium">Optimized in 30 Seconds</span>
             </div>
             <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-blue-600" />
-              <span className="font-medium">Results in 90 Seconds</span>
+              <Lock className="w-4 h-4 text-green-600" />
+              <span className="font-medium">Private & Secure</span>
             </div>
             <div className="flex items-center gap-2">
               <Edit3 className="w-4 h-4 text-purple-600" />
@@ -68,11 +68,11 @@ export function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-4xl mx-auto">
             <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200 hover:shadow-lg transition-shadow">
               <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
-                <Sparkles className="w-6 h-6 text-indigo-600" />
+                <Zap className="w-6 h-6 text-indigo-600" />
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">AI-Rewritten Bullets</h3>
+              <h3 className="font-bold text-gray-900 mb-2">One-Click Optimization</h3>
               <p className="text-sm text-gray-600">
-                Transform weak bullets into powerful achievement statements with metrics and keywords
+                AI automatically optimizes your resume in 30 seconds. No manual work required.
               </p>
             </div>
 
@@ -159,9 +159,9 @@ export function Dashboard() {
               <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-pink-500 to-pink-600 text-white font-bold text-xl mb-4 shadow-lg">
                 3
               </div>
-              <h3 className="font-bold text-gray-900 mb-2">Get Tailored Results</h3>
+              <h3 className="font-bold text-gray-900 mb-2">Get Optimized Resume</h3>
               <p className="text-sm text-gray-600">
-                AI optimizes your resume in 90 seconds. Edit and export instantly.
+                AI optimizes your resume in 30 seconds. One click. Ready to export.
               </p>
             </div>
           </div>
