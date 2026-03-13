@@ -5,7 +5,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Optimizer } from './pages/Optimizer';
 import { Settings } from './pages/Settings';
-import { FormatAdvisor } from './components/FormatAdvisor';
+import { HowItWorks } from './pages/HowItWorks';
 import './App.css';
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
             <Route path="/" element={<AppLayout />}>
               <Route index element={<Dashboard />} />
               <Route path="optimizer" element={<Optimizer />} />
-              <Route path="format-advisor" element={<FormatAdvisor />} />
+              <Route path="how-it-works" element={<HowItWorks />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>
