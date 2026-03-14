@@ -9,39 +9,50 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Register Service Worker for PWA functionality
+// EMERGENCY FIX: Unregister all service workers that might be causing issues
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/service-worker.js')
-      .then((registration) => {
-        console.log('[PWA] Service Worker registered successfully:', registration.scope);
-
-        // Check for updates periodically
-        setInterval(() => {
-          registration.update();
-        }, 60000); // Check every minute
-
-        // Listen for updates
-        registration.addEventListener('updatefound', () => {
-          const newWorker = registration.installing;
-          if (newWorker) {
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New service worker is available, prompt user to reload
-                if (confirm('A new version of RoleForge AI is available. Reload to update?')) {
-                  window.location.reload();
-                }
-              }
-            });
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('[PWA] Service Worker registration failed:', error);
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) {
+      registration.unregister().then(() => {
+        console.log('[PWA] Service worker unregistered');
       });
+    }
   });
 }
+
+// Register Service Worker for PWA functionality - TEMPORARILY DISABLED
+// if ('serviceWorker' in navigator) {
+//   window.addEventListener('load', () => {
+//     navigator.serviceWorker
+//       .register('/service-worker.js')
+//       .then((registration) => {
+//         console.log('[PWA] Service Worker registered successfully:', registration.scope);
+
+//         // Check for updates periodically
+//         setInterval(() => {
+//           registration.update();
+//         }, 60000); // Check every minute
+
+//         // Listen for updates
+//         registration.addEventListener('updatefound', () => {
+//           const newWorker = registration.installing;
+//           if (newWorker) {
+//             newWorker.addEventListener('statechange', () => {
+//               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+//                 // New service worker is available, prompt user to reload
+//                 if (confirm('A new version of RoleForge AI is available. Reload to update?')) {
+//                   window.location.reload();
+//                 }
+//               }
+//             });
+//           }
+//         });
+//       })
+//       .catch((error) => {
+//         console.error('[PWA] Service Worker registration failed:', error);
+//       });
+//   });
+// }
 
 // Handle install prompt
 let deferredPrompt: any;
