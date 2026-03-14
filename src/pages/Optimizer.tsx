@@ -82,7 +82,6 @@ export function Optimizer() {
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [swappingJob, setSwappingJob] = useState(false);
-  const [selectedJobTitle, setSelectedJobTitle] = useState('');
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -401,7 +400,6 @@ export function Optimizer() {
                     currentJobAnalysis={jobAnalysis}
                     currentMatchScore={resumeScore}
                     onSelectJob={(jobTitle) => {
-                      setSelectedJobTitle(jobTitle);
                       setSwappingJob(true);
                       // Open job search in new tab
                       const searchUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`;
