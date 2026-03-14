@@ -1,6 +1,13 @@
 from fastapi import APIRouter, HTTPException
-from app.models.schemas import AnalyzeJobRequest, JobAnalysis, FetchJobUrlRequest
-from app.services.openai_service import analyze_job_description
+from app.models.schemas import (
+    AnalyzeJobRequest,
+    JobAnalysis,
+    FetchJobUrlRequest,
+    JobRecommendationsRequest,
+    JobRecommendationsResponse,
+    RecommendedJob
+)
+from app.services.openai_service import analyze_job_description, get_job_recommendations
 import requests
 from bs4 import BeautifulSoup
 
@@ -75,4 +82,36 @@ async def fetch_job_url(request: FetchJobUrlRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Error processing the page. Error: {str(e)}"
+        )
+
+@router.post("/recommendations", response_model=JobRecommendationsResponse)
+async def recommend_jobs(request: JobRecommendationsRequest):
+    """
+    Recommend alternative jobs when current job match score is low.
+    Uses AI to suggest better-fit roles based on user's skills and experience.
+    """
+    try:
+        print(f"[DEBUG] Generating job recommendations for match score: {request.currentMatchScore}")
+
+        # Only recommend if match score is below 60%
+        if request.currentMatchScore >= 60:
+            return JobRecommendationsResponse(
+                recommendations=[],
+                reasoning="Your current job match score is good (60% or higher). No alternative recommendations needed."
+            )
+
+        result = await get_job_recommendations(
+            resume=request.resume,
+            current_job=request.currentJobAnalysis,
+            match_score=request.currentMatchScore
+        )
+
+        print(f"[DEBUG] Generated {len(result['recommendations'])} recommendations")
+        return result
+
+    except Exception as e:
+        print(f"[ERROR] Failed to generate job recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate job recommendations: {str(e)}"
         )

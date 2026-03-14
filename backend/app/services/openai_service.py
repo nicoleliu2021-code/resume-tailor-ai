@@ -622,3 +622,120 @@ You never use weak phrases like "responsible for," "worked on," "helped with," o
 
     except Exception as e:
         raise Exception(f"Failed to improve bullet: {str(e)}")
+
+
+async def get_job_recommendations(
+    resume: StructuredResume,
+    current_job: JobAnalysis,
+    match_score: int
+) -> Dict:
+    """
+    Generate alternative job recommendations when current match score is low.
+    Uses AI to suggest better-fit roles based on user's skills and experience.
+    """
+
+    # Return mock data if mock mode is enabled
+    if MOCK_MODE:
+        return {
+            "recommendations": [
+                {
+                    "title": "Senior Frontend Engineer",
+                    "reason": "Your React and TypeScript skills are a perfect match",
+                    "matchScore": 85,
+                    "keywords": ["React", "TypeScript", "JavaScript", "CSS", "Redux"]
+                },
+                {
+                    "title": "Full Stack Developer",
+                    "reason": "Your combination of frontend and backend experience aligns well",
+                    "matchScore": 80,
+                    "keywords": ["Node.js", "React", "PostgreSQL", "API Design"]
+                }
+            ],
+            "reasoning": "These roles better match your core technical skills and experience level."
+        }
+
+    # Extract user's top skills and experience
+    top_skills = [skill.name for skill in resume.skills[:15]]
+    experience_summary = "\n".join([
+        f"- {exp.role} at {exp.company} ({exp.startDate} - {exp.endDate})"
+        for exp in resume.experience[:3]
+    ])
+
+    prompt = f"""You are a career advisor analyzing why a candidate has a LOW match score ({match_score}%) with their target role.
+
+## CANDIDATE PROFILE
+
+**Recent Experience:**
+{experience_summary}
+
+**Top Skills:**
+{', '.join(top_skills)}
+
+**Education:**
+{', '.join([f"{edu.degree} in {edu.field}" for edu in resume.education])}
+
+## CURRENT TARGET ROLE (LOW MATCH)
+
+**Role:** {current_job.roleTitle}
+**Seniority:** {current_job.seniorityLevel}
+**Industry:** {current_job.industry}
+**Required Skills:** {', '.join(current_job.technicalSkills[:10])}
+**Key Responsibilities:** {', '.join(current_job.coreResponsibilities[:5])}
+
+**Match Score:** {match_score}/100 ⚠️ (Below threshold)
+
+## YOUR TASK
+
+Recommend 3-5 alternative job titles/roles that would be a BETTER fit for this candidate based on their actual skills and experience.
+
+For each recommendation, provide:
+1. **Job Title** - Specific role name (e.g., "Senior Product Manager", "DevOps Engineer")
+2. **Match Reason** - WHY this role is a better fit (be specific about skill alignment)
+3. **Estimated Match Score** - Realistic score 70-95% based on their profile
+4. **Key Keywords** - 4-6 critical skills/keywords for this role
+
+**IMPORTANT GUIDELINES:**
+- Recommend roles at appropriate seniority level (don't overshoot or undershoot)
+- Focus on roles that match their PROVEN skills and experience
+- Consider adjacent roles that leverage their existing strengths
+- Be realistic about match scores (70-85% is realistic, 95%+ is unrealistic)
+- Prioritize roles where they can succeed immediately
+
+Return ONLY valid JSON in this format:
+{{
+  "recommendations": [
+    {{
+      "title": "Specific Job Title",
+      "reason": "Why this role matches their skills better (be specific)",
+      "matchScore": 75,
+      "keywords": ["Skill1", "Skill2", "Skill3", "Skill4"]
+    }}
+  ],
+  "reasoning": "1-2 sentence summary of why these alternatives were recommended over the current low-match role"
+}}"""
+
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",  # Cost-efficient for recommendations
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are an expert career advisor who helps candidates find roles that match their actual skills and experience. You give realistic, actionable recommendations."
+                },
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+
+        content = response.choices[0].message.content
+        result = json.loads(content)
+
+        # Validate and cap recommendations at 5
+        if len(result.get('recommendations', [])) > 5:
+            result['recommendations'] = result['recommendations'][:5]
+
+        return result
+
+    except Exception as e:
+        raise Exception(f"Failed to generate job recommendations: {str(e)}")

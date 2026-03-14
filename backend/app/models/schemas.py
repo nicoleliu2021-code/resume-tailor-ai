@@ -119,3 +119,18 @@ class ImproveBulletRequest(BaseModel):
 
 class ImproveBulletResponse(BaseModel):
     improvedBullet: str
+
+class RecommendedJob(BaseModel):
+    title: str
+    reason: str
+    matchScore: int  # Estimated match score 0-100
+    keywords: List[str]  # Key skills/keywords for this role
+
+class JobRecommendationsRequest(BaseModel):
+    resume: StructuredResume
+    currentJobAnalysis: JobAnalysis
+    currentMatchScore: int  # Current match score to understand the gap
+
+class JobRecommendationsResponse(BaseModel):
+    recommendations: List[RecommendedJob]
+    reasoning: str  # Why these alternatives were recommended
