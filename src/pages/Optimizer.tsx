@@ -6,7 +6,7 @@ import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ExportMenu } from '../components/ExportMenu';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
-import { RecommendedJobsPanel } from '../components/panels/RecommendedJobsPanel';
+// import { RecommendedJobsPanel } from '../components/panels/RecommendedJobsPanel';
 import { analyzeJobAPI } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
@@ -81,7 +81,7 @@ export function Optimizer() {
   const [viewMode, setViewMode] = useState<ViewMode>('upload');
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
-  const [swappingJob, setSwappingJob] = useState(false);
+  // const [swappingJob, setSwappingJob] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -392,8 +392,8 @@ export function Optimizer() {
                 </div>
               </div>
 
-              {/* Recommended Jobs Panel (if score is very low) */}
-              {resumeScore < 60 && resume && jobAnalysis && !swappingJob && (
+              {/* Recommended Jobs Panel (if score is very low) - TEMPORARILY DISABLED */}
+              {/* {resumeScore < 60 && resume && jobAnalysis && !swappingJob && (
                 <div className="mb-8">
                   <RecommendedJobsPanel
                     resume={resume}
@@ -413,7 +413,7 @@ export function Optimizer() {
                     }}
                   />
                 </div>
-              )}
+              )} */}
 
               {/* Missing Elements (if score is low) */}
               {resumeScore < 75 && jobAnalysis && (
