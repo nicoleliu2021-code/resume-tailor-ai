@@ -15,7 +15,7 @@ app = FastAPI(
 )
 
 # Configure CORS
-# Allow localhost for development and Vercel domains for production
+# Allow localhost for development and production domains
 allowed_origins = [
     "http://localhost:5173",
     "http://localhost:5174",
@@ -24,7 +24,9 @@ allowed_origins = [
     "http://localhost:3000",
     "https://resume-tailor.vercel.app",
     "https://resume-tailor-ai-nine.vercel.app",
-    "https://resume-tailor-nu-six.vercel.app",  # Current deployment
+    "https://resume-tailor-nu-six.vercel.app",
+    "https://v0-resume-tailor-ai.vercel.app",  # Vercel deployment
+    "https://resumeoptimizer-ai.netlify.app",  # Netlify deployment
 ]
 
 # In development, allow all origins for easier testing
