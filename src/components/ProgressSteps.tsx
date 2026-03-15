@@ -22,7 +22,6 @@ export function ProgressSteps({ currentStep }: ProgressStepsProps) {
             const Icon = step.icon;
             const isCompleted = index < currentIndex;
             const isCurrent = index === currentIndex;
-            const isUpcoming = index > currentIndex;
 
             return (
               <div key={step.id} className="flex items-center flex-1">
