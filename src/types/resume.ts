@@ -95,6 +95,7 @@ export interface JobTemplate {
   industry: string;
   tools: string[];
   salary?: string;
+  jobUrl?: string;
 }
 
 export interface JobMatch {
