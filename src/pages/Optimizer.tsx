@@ -268,6 +268,22 @@ export function Optimizer() {
                 )}
               </button>
 
+              {/* Apply Now Button - only show in optimized view if job URL exists */}
+              {showOptimized && currentJobUrl && (
+                <a
+                  href={currentJobUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm shadow-md hover:shadow-lg"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  <span className="hidden sm:inline">Apply Now</span>
+                  <span className="sm:hidden">Apply</span>
+                </a>
+              )}
+
               {!showUpload && (
                 <button
                   onClick={handleStartOver}
@@ -508,7 +524,7 @@ export function Optimizer() {
             <div className="max-w-6xl mx-auto">
               {/* Success Header */}
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 mb-6">
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
                     <div className="w-14 h-14 bg-green-500 rounded-full flex items-center justify-center shadow-lg">
                       <CheckCircle2 className="w-8 h-8 text-white" />
@@ -518,9 +534,27 @@ export function Optimizer() {
                     <h2 className="text-2xl font-bold text-green-900 mb-1">
                       Optimization Complete!
                     </h2>
-                    <p className="text-green-700">
+                    <p className="text-green-700 mb-3">
                       Your resume has been optimized and is ready to export. Score improved from {resumeScore - 18} to <span className="font-bold">{resumeScore}</span>.
                     </p>
+                    {currentJobUrl && (
+                      <div className="flex flex-wrap gap-3">
+                        <a
+                          href={currentJobUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                          <span>Apply to This Job Now</span>
+                        </a>
+                        <p className="text-xs text-green-700 self-center">
+                          Opens job posting on LinkedIn
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
