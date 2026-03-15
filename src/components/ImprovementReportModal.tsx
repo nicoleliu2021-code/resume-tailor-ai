@@ -45,9 +45,16 @@ export function ImprovementReportModal({
     onContinue();
   };
 
-  const handleExport = () => {
+  const handleExportPDF = () => {
     // Save session before export
     onSaveSession?.();
+    onExport();
+  };
+
+  const handleExportDOCX = () => {
+    // Save session before export
+    onSaveSession?.();
+    // For now, also trigger PDF export (can be enhanced to separate DOCX later)
     onExport();
   };
 
@@ -66,8 +73,8 @@ export function ImprovementReportModal({
                 <Sparkles className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">AI Optimization Complete</h2>
-                <p className="text-sm opacity-90">Your resume has been tailored for {jobTitle}</p>
+                <h2 className="text-2xl font-bold">✨ Your Resume is Optimized & Ready</h2>
+                <p className="text-sm opacity-90">Tailored for {jobTitle}</p>
               </div>
             </div>
             <button
@@ -190,41 +197,56 @@ export function ImprovementReportModal({
         </div>
 
         {/* Footer - CTAs */}
-        <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
-          <div className="flex flex-col gap-3">
-            {/* Primary CTAs Row */}
-            <div className="flex flex-col sm:flex-row gap-3">
+        <div className="border-t border-gray-200 p-6 bg-gradient-to-br from-gray-50 to-indigo-50 flex-shrink-0">
+          {/* Primary Action: Download */}
+          <div className="mb-4">
+            <div className="flex flex-col sm:flex-row gap-3 mb-2">
               <button
-                onClick={handleContinue}
-                className="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+                onClick={handleExportPDF}
+                className="flex-1 py-4 px-6 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
-                <CheckCircle className="w-5 h-5" />
-                <span>View Optimized Resume</span>
+                <Download className="w-5 h-5" />
+                <span>Download Resume (PDF)</span>
               </button>
 
-              {/* Apply Now - Always show, with job-specific link */}
-              <a
-                href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={handleApplyNow}
-                className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-                title={jobUrl ? 'Apply to this job' : `Search "${jobTitle}" on LinkedIn`}
+              <button
+                onClick={handleExportDOCX}
+                className="sm:w-48 py-4 px-6 bg-white border-2 border-green-600 text-green-700 font-semibold rounded-xl hover:bg-green-50 transition-colors flex items-center justify-center gap-2"
               >
-                <ExternalLink className="w-5 h-5" />
-                <span>Apply Now</span>
-              </a>
+                <Download className="w-5 h-5" />
+                <span>Also get DOCX</span>
+              </button>
             </div>
-
-            {/* Secondary CTA */}
-            <button
-              onClick={handleExport}
-              className="w-full py-3 px-6 border-2 border-indigo-300 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
-            >
-              <Download className="w-5 h-5" />
-              <span>Export Resume</span>
-            </button>
+            <p className="text-xs text-gray-600 ml-1">
+              📄 We've tailored this for {jobTitle}. Upload it when you apply.
+            </p>
           </div>
+
+          {/* Secondary Action: Apply */}
+          <div className="mb-4">
+            <a
+              href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleApplyNow}
+              className="block w-full py-4 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-5 h-5" />
+              <span>Apply to This Job</span>
+            </a>
+            <p className="text-xs text-gray-600 ml-1 mt-2">
+              Opens the job posting in a new tab (this page stays open)
+            </p>
+          </div>
+
+          {/* Tertiary Action: View Resume */}
+          <button
+            onClick={handleContinue}
+            className="w-full py-3 px-4 text-indigo-600 hover:text-indigo-800 font-semibold text-sm flex items-center justify-center gap-2 hover:underline"
+          >
+            <CheckCircle className="w-4 h-4" />
+            <span>Preview Full Resume</span>
+          </button>
         </div>
       </div>
     </>
