@@ -181,7 +181,7 @@ export function BatchGenerateModal({ selectedJobs, resume, onClose, onComplete }
 
           {/* Resume List */}
           <div className="space-y-3">
-            {generatedResumes.map((generated, idx) => (
+            {generatedResumes.map((generated) => (
               <div
                 key={generated.jobId}
                 className={`p-4 rounded-xl border-2 transition-all ${
