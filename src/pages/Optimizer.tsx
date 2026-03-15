@@ -7,9 +7,8 @@ import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
 import { RecentOptimizations } from '../components/RecentOptimizations';
 import { ProgressSteps } from '../components/ProgressSteps';
-import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
+import { JobSelectionSection } from '../components/JobSelectionSection';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
-import { JobsPanel } from '../components/jobs/JobsPanel';
 import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
 import { ApplicationTracker } from '../components/jobs/ApplicationTracker';
 import { analyzeJobAPI } from '../services/api';
@@ -96,6 +95,7 @@ export function Optimizer() {
   const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
   const [showImprovementReport, setShowImprovementReport] = useState(false);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   // Update saved jobs count
   useEffect(() => {
@@ -428,49 +428,61 @@ export function Optimizer() {
               </div>
             ) : (
               // Upload Panels
-              <div className="max-w-6xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              <div className="max-w-7xl mx-auto space-y-8">
+                {/* Step 1: Upload Resume */}
+                <div className="max-w-2xl mx-auto">
                   <ResumeImportPanel />
-                  <JobAnalyzerPanel />
-
-                  {analysisError && (
-                    <div className="col-span-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                      <p className="text-sm text-red-800 font-medium">{analysisError}</p>
-                      <button
-                        onClick={() => setAnalysisError('')}
-                        className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  )}
                 </div>
 
-                {/* Jobs Discovery Panel - Shows after resume upload */}
+                {/* Step 2: Choose Job - Shows after resume upload */}
                 {resume && (
-                  <div className="mt-6">
-                    <JobsPanel
+                  <>
+                    <JobSelectionSection
                       resume={resume}
-                      onJobSelect={(jobDescription, jobTitle, jobUrl) => {
+                      selectedJobId={selectedJobId}
+                      onJobSelect={(jobDescription: string, jobTitle: string, jobUrl?: string, jobId?: string) => {
                         console.log('[Optimizer] Job selected:', jobTitle);
                         setJobDescription(jobDescription);
                         setCurrentJobTitle(jobTitle);
                         setJobUrl(jobUrl || '');
-                        // Scroll to job description panel
+                        setSelectedJobId(jobId || null);
+                        // Scroll to optimize button when ready
                         setTimeout(() => {
-                          const element = document.querySelector('[data-job-panel]');
-                          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 100);
+                          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                        }, 300);
                       }}
-                      isCollapsed={jobsPanelCollapsed}
-                      onToggle={() => setJobsPanelCollapsed(!jobsPanelCollapsed)}
+                      jobsPanelCollapsed={jobsPanelCollapsed}
+                      onJobsPanelToggle={() => setJobsPanelCollapsed(!jobsPanelCollapsed)}
+                      hasJobDescription={!!jobDescription}
+                      onOptimize={async () => {
+                        // First analyze the job
+                        await handleAnalyze();
+                        // Then immediately optimize
+                        setTimeout(() => {
+                          handleOptimizeNow();
+                        }, 1000);
+                      }}
+                      isOptimizing={!!loadingStep}
                     />
+                  </>
+                )}
+
+                {/* Error Display */}
+                {analysisError && (
+                  <div className="max-w-2xl mx-auto p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                    <p className="text-sm text-red-800 font-medium">{analysisError}</p>
+                    <button
+                      onClick={() => setAnalysisError('')}
+                      className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline"
+                    >
+                      Dismiss
+                    </button>
                   </div>
                 )}
 
                 {/* Recent Optimizations - Shows when there are saved sessions */}
                 {recentSessions.length > 0 && (
-                  <div className="mt-6">
+                  <div className="max-w-4xl mx-auto">
                     <RecentOptimizations onRestore={handleRestoreSession} />
                   </div>
                 )}
