@@ -319,10 +319,9 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
       )}
 
       {/* Mobile Job Sheet */}
-      {showMobileSheet && isMobile && jobs.length > 0 && resume && (
+      {showMobileSheet && isMobile && jobs.length > 0 && (
         <MobileJobSheet
           jobs={jobs}
-          resume={resume}
           onJobSelect={(jobDescription, jobTitle) => {
             onJobSelect(jobDescription, jobTitle);
             setShowMobileSheet(false);
