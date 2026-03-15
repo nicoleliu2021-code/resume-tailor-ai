@@ -504,7 +504,7 @@ function generateVersionName(jobTitle: string, company?: string): string {
   return `${roleAbbr}_${Date.now().toString(36)}`;
 }
 
-function generateTags(jobTitle: string, jobDescription: string): string[] {
+function generateTags(jobTitle: string, _jobDescription: string): string[] {
   const tags: string[] = [];
 
   // Role level
@@ -542,7 +542,7 @@ function calculateEstimatedMatch(
   return Math.round(avgExpScore * 0.4 + avgAchScore * 0.3 + avgSkillScore * 0.3);
 }
 
-function calculateFallbackScore(experience: MasterExperience, jobTitle: string): number {
+function calculateFallbackScore(experience: MasterExperience, _jobTitle: string): number {
   let score = 50;
 
   // Recency bonus
