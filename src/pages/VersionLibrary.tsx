@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare, BarChart3 } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats, updateVersion } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import { getPreferredTemplate } from '../services/templatePreference';
 import { TemplateRenderer } from '../components/templates/TemplateRenderer';
+import { VersionAnalytics } from '../components/version-library/VersionAnalytics';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
 import type { ExportProgress } from '../services/exportService';
 import type { ResumeTemplate } from '../types/template';
@@ -33,6 +34,7 @@ export function VersionLibrary() {
   const [editedContent, setEditedContent] = useState<any>(null);
   const [compareVersions, setCompareVersions] = useState<[ResumeVersion | null, ResumeVersion | null]>([null, null]);
   const [isCompareMode, setIsCompareMode] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   useEffect(() => {
     loadVersions();
@@ -147,6 +149,18 @@ export function VersionLibrary() {
 
   const deselectAllVersions = () => {
     setSelectedVersionIds(new Set());
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedVersionIds.size === 0) return;
+
+    if (window.confirm(`Are you sure you want to delete ${selectedVersionIds.size} version(s)? This action cannot be undone.`)) {
+      selectedVersionIds.forEach(id => {
+        deleteVersion(id);
+      });
+      setSelectedVersionIds(new Set());
+      loadVersions();
+    }
   };
 
   const handleBatchExport = async (templateId: string) => {
@@ -313,16 +327,42 @@ export function VersionLibrary() {
             </div>
             <div className="flex items-center gap-2">
               {isBatchMode && selectedVersionIds.size > 0 && (
-                <button
-                  onClick={() => {
-                    setSelectedVersionForExport(null);
-                    setShowTemplateSelector(true);
-                  }}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
-                >
-                  <Download className="w-5 h-5" />
-                  Export Selected ({selectedVersionIds.size})
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setSelectedVersionForExport(null);
+                      setShowTemplateSelector(true);
+                    }}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                  >
+                    <Download className="w-5 h-5" />
+                    Export Selected ({selectedVersionIds.size})
+                  </button>
+                  <div className="relative">
+                    <select
+                      onChange={(e) => {
+                        const newStatus = e.target.value as ResumeVersion['status'];
+                        if (newStatus && window.confirm(`Update ${selectedVersionIds.size} version(s) to "${newStatus}" status?`)) {
+                          selectedVersionIds.forEach(id => {
+                            updateVersion(id, { status: newStatus, updatedAt: new Date() });
+                          });
+                          loadVersions();
+                          setSelectedVersionIds(new Set());
+                        }
+                        e.target.value = '';
+                      }}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors appearance-none pr-8"
+                      defaultValue=""
+                    >
+                      <option value="" disabled>Update Status...</option>
+                      <option value="draft">Draft</option>
+                      <option value="optimized">Optimized</option>
+                      <option value="exported">Exported</option>
+                      <option value="applied">Applied</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                </>
               )}
               {isCompareMode && compareVersions[0] && compareVersions[1] && (
                 <button
@@ -414,17 +454,18 @@ export function VersionLibrary() {
                 </div>
               </div>
 
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+              <button
+                onClick={() => setShowAnalytics(true)}
+                className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg shadow-sm border-2 border-indigo-400 p-4 hover:from-indigo-600 hover:to-purple-700 transition-all group"
+              >
                 <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600">Avg Match Score</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {stats.averageMatchScore > 0 ? `${Math.round(stats.averageMatchScore)}%` : 'N/A'}
-                    </p>
+                  <div className="text-left">
+                    <p className="text-sm text-white font-medium">View Analytics</p>
+                    <p className="text-xl font-bold text-white">Insights</p>
                   </div>
-                  <TrendingUp className="w-8 h-8 text-blue-600" />
+                  <BarChart3 className="w-8 h-8 text-white group-hover:scale-110 transition-transform" />
                 </div>
-              </div>
+              </button>
             </div>
           )}
         </div>
@@ -496,6 +537,15 @@ export function VersionLibrary() {
             >
               Deselect All
             </button>
+            {selectedVersionIds.size > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="px-3 py-1 bg-red-100 text-red-700 rounded text-sm font-medium hover:bg-red-200 transition-colors flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" />
+                Delete Selected ({selectedVersionIds.size})
+              </button>
+            )}
           </div>
         )}
 
@@ -1266,6 +1316,14 @@ export function VersionLibrary() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Analytics Modal */}
+        {showAnalytics && (
+          <VersionAnalytics
+            versions={versions}
+            onClose={() => setShowAnalytics(false)}
+          />
         )}
       </div>
     </div>
