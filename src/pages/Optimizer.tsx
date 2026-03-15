@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList, ExternalLink } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ExportMenu } from '../components/ExportMenu';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
+import { RecentOptimizations } from '../components/RecentOptimizations';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { JobsPanel } from '../components/jobs/JobsPanel';
@@ -12,6 +14,7 @@ import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
 import { ApplicationTracker } from '../components/jobs/ApplicationTracker';
 import { analyzeJobAPI } from '../services/api';
 import { getSavedJobs } from '../services/savedJobs';
+import type { OptimizationSession } from '../services/optimizationSession';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -79,6 +82,7 @@ function QuickFixCard({ icon, title, impact, time, onClick }: QuickFixProps) {
 export function Optimizer() {
   const { resume, originalResume, setOriginalResume, jobDescription, jobUrl, jobAnalysis, setResume, setJobDescription, setJobUrl, setJobAnalysis } = useResume();
   const { canUseFeature, incrementUsage } = useSubscription();
+  const { saveSession, loadSession, recentSessions, activeSessionId } = useOptimizationSession();
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [analysisError, setAnalysisError] = useState('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -91,6 +95,7 @@ export function Optimizer() {
   const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
   const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
   const [showImprovementReport, setShowImprovementReport] = useState(false);
+  const [hasRestoredSession, setHasRestoredSession] = useState(false);
 
   // Update saved jobs count
   useEffect(() => {
@@ -111,6 +116,101 @@ export function Optimizer() {
       setResumeScore(score);
     }
   }, [resume, jobAnalysis]);
+
+  // Auto-restore active session on page load
+  useEffect(() => {
+    if (!hasRestoredSession && activeSessionId && !resume) {
+      const session = loadSession(activeSessionId);
+      if (session) {
+        console.log('[Optimizer] Restoring session:', activeSessionId);
+        setOriginalResume(session.originalResume);
+        setResume(session.optimizedResume);
+        setJobDescription(session.jobDescription);
+        setJobUrl(session.jobUrl);
+        setCurrentJobTitle(session.jobTitle);
+        setViewMode('optimized');
+        setHasRestoredSession(true);
+      }
+    }
+  }, [activeSessionId, hasRestoredSession, resume, loadSession, setOriginalResume, setResume, setJobDescription, setJobUrl]);
+
+  // Handler to restore a session from recent optimizations
+  const handleRestoreSession = (session: OptimizationSession) => {
+    console.log('[Optimizer] Manually restoring session:', session.id);
+    setOriginalResume(session.originalResume);
+    setResume(session.optimizedResume);
+    setJobDescription(session.jobDescription);
+    setJobUrl(session.jobUrl);
+    setCurrentJobTitle(session.jobTitle);
+    setViewMode('optimized');
+    setShowImprovementReport(false);
+  };
+
+  // Handler to save current optimization session
+  const handleSaveSession = () => {
+    if (!originalResume || !resume || !jobDescription) {
+      console.warn('[Optimizer] Cannot save session: missing data');
+      return;
+    }
+
+    // Calculate metrics for the session
+    const bulletsBefore = originalResume.experience.reduce((sum, exp) => sum + exp.bullets.length, 0);
+    const bulletsAfter = resume.experience.reduce((sum, exp) => sum + exp.bullets.length, 0);
+
+    const originalWords = new Set(
+      originalResume.experience
+        .flatMap(exp => exp.bullets)
+        .join(' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+    );
+
+    const optimizedWords = new Set(
+      resume.experience
+        .flatMap(exp => exp.bullets)
+        .join(' ')
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(w => w.length > 3)
+    );
+
+    const newWords = [...optimizedWords].filter(w => !originalWords.has(w));
+
+    const quantifiers = /\d+%|\d+x|\d+\+|increased|reduced|improved|achieved|delivered|generated/gi;
+    const optimizedQuantified = (resume.experience.flatMap(exp => exp.bullets).join(' ').match(quantifiers) || []).length;
+    const impactScore = Math.min(95, 60 + Math.floor((optimizedQuantified / Math.max(1, bulletsAfter)) * 100));
+
+    const hasStructuredExperience = resume.experience.length > 0;
+    const hasSkills = resume.skills.length > 0;
+    const hasEducation = resume.education.length > 0;
+    const readabilityScore = Math.min(98, 65 + (hasStructuredExperience ? 15 : 0) + (hasSkills ? 10 : 0) + (hasEducation ? 8 : 0));
+
+    const impactSummary = {
+      bulletPoints: {
+        before: bulletsBefore,
+        after: bulletsAfter,
+        change: Math.max(0, bulletsAfter - bulletsBefore),
+      },
+      keywords: {
+        added: Math.min(newWords.length, 25),
+        enhanced: Math.floor(newWords.length * 0.6),
+      },
+      impactScore,
+      readabilityScore,
+    };
+
+    const sessionId = saveSession(
+      originalResume,
+      resume,
+      jobDescription,
+      jobUrl,
+      currentJobTitle || jobAnalysis?.roleTitle || 'Untitled Position',
+      impactSummary
+    );
+
+    console.log('[Optimizer] Saved session:', sessionId);
+  };
 
   const handleStartOver = () => {
     if (confirm('Start over? All progress will be lost.')) {
@@ -276,17 +376,21 @@ export function Optimizer() {
 
               {/* Apply Now Button - always show in optimized view */}
               {showOptimized && (
-                <a
-                  href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <button
+                  onClick={() => {
+                    // Save session before applying
+                    handleSaveSession();
+                    // Open job URL in new tab
+                    const url = jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`;
+                    window.open(url, '_blank');
+                  }}
                   className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm shadow-md hover:shadow-lg"
                   title={jobUrl ? 'Apply to this job' : 'Search for this job on LinkedIn'}
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span className="hidden sm:inline">Apply Now</span>
                   <span className="sm:hidden">Apply</span>
-                </a>
+                </button>
               )}
 
               {!showUpload && (
@@ -383,6 +487,13 @@ export function Optimizer() {
                       isCollapsed={jobsPanelCollapsed}
                       onToggle={() => setJobsPanelCollapsed(!jobsPanelCollapsed)}
                     />
+                  </div>
+                )}
+
+                {/* Recent Optimizations - Shows when there are saved sessions */}
+                {recentSessions.length > 0 && (
+                  <div className="mt-6">
+                    <RecentOptimizations onRestore={handleRestoreSession} />
                   </div>
                 )}
               </div>
@@ -685,6 +796,7 @@ export function Optimizer() {
           originalResume={originalResume}
           optimizedResume={resume}
           jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
+          jobDescription={jobDescription}
           jobUrl={jobUrl}
           onContinue={() => {
             setShowImprovementReport(false);
@@ -711,6 +823,7 @@ export function Optimizer() {
             setShowImprovementReport(false);
             setViewMode('optimized');
           }}
+          onSaveSession={handleSaveSession}
         />
       )}
 
