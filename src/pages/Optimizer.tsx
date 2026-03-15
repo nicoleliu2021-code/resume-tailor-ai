@@ -5,6 +5,7 @@ import { useSubscription } from '../contexts/SubscriptionContext';
 import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
+import { InsightsModal } from '../components/insights/InsightsModal';
 import { RecentOptimizations } from '../components/RecentOptimizations';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { JobSelectionSection } from '../components/JobSelectionSection';
@@ -13,7 +14,9 @@ import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
 import { ApplicationTracker } from '../components/jobs/ApplicationTracker';
 import { analyzeJobAPI } from '../services/api';
 import { getSavedJobs } from '../services/savedJobs';
+import { generateOptimizationInsights } from '../services/insights';
 import type { OptimizationSession } from '../services/optimizationSession';
+import type { OptimizationInsights } from '../types/insights';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -94,6 +97,8 @@ export function Optimizer() {
   const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
   const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
   const [showImprovementReport, setShowImprovementReport] = useState(false);
+  const [showInsightsModal, setShowInsightsModal] = useState(false);
+  const [optimizationInsights, setOptimizationInsights] = useState<OptimizationInsights | null>(null);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
@@ -307,10 +312,18 @@ export function Optimizer() {
       const newScore = calculateResumeScore(mergedResume, jobAnalysis);
       setResumeScore(newScore);
 
+      // Generate AI insights
+      const insights = generateOptimizationInsights(
+        resume,
+        mergedResume,
+        currentJobTitle || jobAnalysis?.roleTitle || 'this position'
+      );
+      setOptimizationInsights(insights);
+
       setLoadingStep(null);
 
-      // Show improvement report modal
-      setShowImprovementReport(true);
+      // Show insights modal first
+      setShowInsightsModal(true);
 
       console.log('[Optimizer] Optimization complete!', optimizeData.changes);
     } catch (err) {
@@ -780,7 +793,23 @@ export function Optimizer() {
         featureName="Resume Optimization"
       />
 
-      {/* Improvement Report Modal */}
+      {/* AI Insights Modal - Shows first after optimization */}
+      {showInsightsModal && optimizationInsights && (
+        <InsightsModal
+          insights={optimizationInsights}
+          onContinue={() => {
+            setShowInsightsModal(false);
+            setShowImprovementReport(true);
+          }}
+          onViewComparison={() => {
+            setShowInsightsModal(false);
+            setViewMode('optimized');
+            setShowBefore(true);
+          }}
+        />
+      )}
+
+      {/* Improvement Report Modal - Shows after insights */}
       {showImprovementReport && originalResume && resume && (
         <ImprovementReportModal
           originalResume={originalResume}

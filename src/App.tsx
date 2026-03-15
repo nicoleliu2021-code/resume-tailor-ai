@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ResumeProvider } from './contexts/ResumeContext';
 import { SubscriptionProvider } from './contexts/SubscriptionContext';
+import { ApplicationsProvider } from './contexts/ApplicationsContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Optimizer } from './pages/Optimizer';
+import { Applications } from './pages/Applications';
 import { Settings } from './pages/Settings';
 import { HowItWorks } from './pages/HowItWorks';
 import { Pricing } from './pages/Pricing';
@@ -13,17 +15,20 @@ function App() {
   return (
     <BrowserRouter>
       <SubscriptionProvider>
-        <ResumeProvider>
-          <Routes>
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Dashboard />} />
-              <Route path="optimizer" element={<Optimizer />} />
-              <Route path="how-it-works" element={<HowItWorks />} />
-              <Route path="pricing" element={<Pricing />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-          </Routes>
-        </ResumeProvider>
+        <ApplicationsProvider>
+          <ResumeProvider>
+            <Routes>
+              <Route path="/" element={<AppLayout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="optimizer" element={<Optimizer />} />
+                <Route path="applications" element={<Applications />} />
+                <Route path="how-it-works" element={<HowItWorks />} />
+                <Route path="pricing" element={<Pricing />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+            </Routes>
+          </ResumeProvider>
+        </ApplicationsProvider>
       </SubscriptionProvider>
     </BrowserRouter>
   );
