@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, Loader, ArrowRight, Database, Target, FileText } from 'lucide-react';
 import { getMasterResume } from '../services/masterResume';
 import { generateSelectionRecommendation } from '../services/aiSelectionEngine';
@@ -10,6 +11,7 @@ import type { MasterResume } from '../types/masterResume';
 type ViewMode = 'input' | 'analyzing' | 'recommendations';
 
 export function SmartSelector() {
+  const navigate = useNavigate();
   const [viewMode, setViewMode] = useState<ViewMode>('input');
   const [jobTitle, setJobTitle] = useState('');
   const [jobCompany, setJobCompany] = useState('');
@@ -114,8 +116,10 @@ export function SmartSelector() {
       });
 
       console.log('[SmartSelector] Created version:', versionId);
-      // TODO: Navigate to version library or optimizer
-      alert('Resume version created successfully! (Navigation coming soon)');
+
+      // Navigate to version library
+      alert(`Resume version "${recommendation.suggestedVersionName}" created successfully!`);
+      navigate('/versions');
     } catch (err) {
       console.error('[SmartSelector] Error creating version:', err);
       setError(err instanceof Error ? err.message : 'Failed to create version');

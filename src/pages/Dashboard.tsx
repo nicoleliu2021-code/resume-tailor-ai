@@ -1,10 +1,65 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, FileText, Target, Zap, Lock, CheckCircle2, TrendingUp, Edit3, Download } from 'lucide-react';
+import { Sparkles, FileText, Target, Zap, Lock, CheckCircle2, TrendingUp, Edit3, Download, Database, FolderOpen, ArrowRight, Briefcase } from 'lucide-react';
+import { getMasterResume, getStats } from '../services/masterResume';
+import { getAllVersions } from '../services/resumeVersions';
+import type { MasterResumeStats } from '../types/masterResume';
 
 export function Dashboard() {
+  const [stats, setStats] = useState<MasterResumeStats | null>(null);
+  const [versionCount, setVersionCount] = useState(0);
+  const [hasMasterResume, setHasMasterResume] = useState(false);
+
+  useEffect(() => {
+    const masterResume = getMasterResume();
+    if (masterResume) {
+      setHasMasterResume(true);
+      const resumeStats = getStats();
+      setStats(resumeStats);
+    }
+    const versions = getAllVersions();
+    setVersionCount(versions.length);
+  }, []);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 sm:p-8">
-      <div className="max-w-5xl w-full">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Quick Stats Bar - Shows if user has master resume */}
+        {hasMasterResume && stats && (
+          <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                <Database className="w-4 h-4 text-indigo-600" />
+                Your Master Resume
+              </h2>
+              <Link
+                to="/master-resume"
+                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+              >
+                View →
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-xs text-gray-600">Experiences</p>
+                <p className="text-xl font-bold text-gray-900">{stats.totalExperiences}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Skills</p>
+                <p className="text-xl font-bold text-gray-900">{stats.totalSkills}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Versions</p>
+                <p className="text-xl font-bold text-gray-900">{versionCount}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-600">Profile Strength</p>
+                <p className="text-xl font-bold text-indigo-600">{stats.completionScore}%</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 shadow-lg animate-pulse">
@@ -58,6 +113,84 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Quick Actions - Shows for users with master resume */}
+        {hasMasterResume && (
+          <div className="mb-12 px-4">
+            <p className="text-center text-sm text-gray-500 uppercase tracking-wider font-semibold mb-6">
+              Quick Actions
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+              <Link
+                to="/master-resume"
+                className="group bg-white rounded-xl p-6 shadow-md border-2 border-gray-200 hover:border-indigo-400 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                    <Database className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                    Master Resume
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  Update your complete work history and skills database
+                </p>
+                <div className="flex items-center gap-1 text-sm font-medium text-indigo-600">
+                  Manage
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              <Link
+                to="/smart-selector"
+                className="group bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 shadow-md border-2 border-green-200 hover:border-green-400 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 group-hover:text-green-600 transition-colors">
+                      Smart Selector
+                    </h3>
+                    <span className="px-2 py-0.5 bg-green-600 text-white text-[10px] rounded-full font-semibold">
+                      NEW
+                    </span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  AI selects the best experiences for each job
+                </p>
+                <div className="flex items-center gap-1 text-sm font-medium text-green-600">
+                  Try Now
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              <Link
+                to="/versions"
+                className="group bg-white rounded-xl p-6 shadow-md border-2 border-gray-200 hover:border-purple-400 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <FolderOpen className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">
+                    Version Library
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  {versionCount > 0 ? `Manage your ${versionCount} tailored resume${versionCount !== 1 ? 's' : ''}` : 'View and manage your tailored resumes'}
+                </p>
+                <div className="flex items-center gap-1 text-sm font-medium text-purple-600">
+                  View Library
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Value Preview Section */}
         <div className="mb-16 px-4">
@@ -127,6 +260,69 @@ export function Dashboard() {
             </div>
           </div>
         </div>
+
+        {/* Master Resume CTA - Shows for users without master resume */}
+        {!hasMasterResume && (
+          <div className="mb-16 px-4">
+            <div className="max-w-4xl mx-auto bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border-2 border-indigo-200 shadow-lg">
+              <div className="text-center mb-6">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
+                  <Database className="w-8 h-8 text-white" />
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Want Better Results? Create Your Master Resume
+                </h2>
+                <p className="text-gray-700 max-w-2xl mx-auto">
+                  Store all your experiences, achievements, and skills in one place. Then use our <strong>Smart Selector</strong> to let AI intelligently choose the best content for each job application.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Database className="w-4 h-4 text-indigo-600" />
+                    <h4 className="font-semibold text-gray-900 text-sm">One Source of Truth</h4>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Never start from scratch again. Store everything once.
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles className="w-4 h-4 text-purple-600" />
+                    <h4 className="font-semibold text-gray-900 text-sm">AI Selection</h4>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    AI picks the most relevant content per job automatically.
+                  </p>
+                </div>
+                <div className="bg-white rounded-lg p-4 border border-indigo-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Briefcase className="w-4 h-4 text-green-600" />
+                    <h4 className="font-semibold text-gray-900 text-sm">Multiple Versions</h4>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Create tailored resumes for different companies easily.
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-center">
+                <Link
+                  to="/master-resume"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
+                >
+                  <Database className="w-5 h-5" />
+                  Create Master Resume
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+                <p className="text-xs text-gray-600 mt-2">
+                  Takes 5-10 minutes • Free forever
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* How It Works Section */}
         <div className="px-4">
