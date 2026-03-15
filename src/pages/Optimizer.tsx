@@ -4,6 +4,7 @@ import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ExportMenu } from '../components/ExportMenu';
+import { ImprovementReportModal } from '../components/ImprovementReportModal';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { JobsPanel } from '../components/jobs/JobsPanel';
@@ -89,6 +90,8 @@ export function Optimizer() {
   const [savedJobsCount, setSavedJobsCount] = useState(0);
   const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
   const [currentJobUrl, setCurrentJobUrl] = useState<string | undefined>(undefined);
+  const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
+  const [showImprovementReport, setShowImprovementReport] = useState(false);
 
   // Update saved jobs count
   useEffect(() => {
@@ -204,7 +207,9 @@ export function Optimizer() {
       setResumeScore(newScore);
 
       setLoadingStep(null);
-      setViewMode('optimized');
+
+      // Show improvement report modal
+      setShowImprovementReport(true);
 
       console.log('[Optimizer] Optimization complete!', optimizeData.changes);
     } catch (err) {
@@ -367,6 +372,7 @@ export function Optimizer() {
                       onJobSelect={(jobDescription, jobTitle, jobUrl) => {
                         console.log('[Optimizer] Job selected:', jobTitle);
                         setJobDescription(jobDescription);
+                        setCurrentJobTitle(jobTitle);
                         setCurrentJobUrl(jobUrl);
                         // Scroll to job description panel
                         setTimeout(() => {
@@ -673,6 +679,41 @@ export function Optimizer() {
         featureName="Resume Optimization"
       />
 
+      {/* Improvement Report Modal */}
+      {showImprovementReport && originalResume && resume && (
+        <ImprovementReportModal
+          originalResume={originalResume}
+          optimizedResume={resume}
+          jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
+          jobUrl={currentJobUrl}
+          onContinue={() => {
+            setShowImprovementReport(false);
+            setViewMode('optimized');
+          }}
+          onApplyNow={() => {
+            setShowImprovementReport(false);
+            if (currentJobUrl) {
+              window.open(currentJobUrl, '_blank');
+            }
+          }}
+          onExport={() => {
+            setShowImprovementReport(false);
+            setViewMode('optimized');
+            // Scroll to export button and trigger click
+            setTimeout(() => {
+              const exportButton = document.querySelector('[data-export-button]') as HTMLButtonElement;
+              if (exportButton) {
+                exportButton.click();
+              }
+            }, 300);
+          }}
+          onClose={() => {
+            setShowImprovementReport(false);
+            setViewMode('optimized');
+          }}
+        />
+      )}
+
       {/* Saved Jobs Panel */}
       <SavedJobsPanel
         isOpen={savedJobsPanelOpen}
@@ -682,8 +723,9 @@ export function Optimizer() {
           const saved = getSavedJobs();
           setSavedJobsCount(saved.length);
         }}
-        onJobSelect={(jobDescription, _jobTitle, jobUrl) => {
+        onJobSelect={(jobDescription, jobTitle, jobUrl) => {
           setJobDescription(jobDescription);
+          setCurrentJobTitle(jobTitle);
           setCurrentJobUrl(jobUrl);
           setViewMode('upload');
           setTimeout(() => {
