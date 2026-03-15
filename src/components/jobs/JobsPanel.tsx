@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare } from 'lucide-react';
 import { JobCard } from './JobCard';
 import { JobPreviewModal } from './JobPreviewModal';
+import { BatchGenerateModal } from './BatchGenerateModal';
 import { discoverJobsAPI } from '../../services/api';
 import type { StructuredResume, JobMatch } from '../../types/resume';
 
@@ -18,6 +19,9 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
   const [error, setError] = useState('');
   const [showAll, setShowAll] = useState(false);
   const [previewJob, setPreviewJob] = useState<JobMatch | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
+  const [showBatchModal, setShowBatchModal] = useState(false);
 
   // Auto-load jobs when resume is available
   useEffect(() => {
@@ -47,6 +51,35 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
   const handleTailorClick = (job: JobMatch) => {
     console.log('[JobsPanel] Tailoring resume for:', job.job.title);
     onJobSelect(job.job.description, job.job.title);
+  };
+
+  const handleToggleSelection = (jobId: string) => {
+    setSelectedJobs((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleSelectionMode = () => {
+    if (selectionMode) {
+      // Exiting selection mode - clear selections
+      setSelectedJobs(new Set());
+    }
+    setSelectionMode(!selectionMode);
+  };
+
+  const handleBatchGenerate = () => {
+    if (selectedJobs.size === 0) return;
+    setShowBatchModal(true);
+  };
+
+  const getSelectedJobMatches = () => {
+    return jobs.filter((job) => selectedJobs.has(job.job.id));
   };
 
   // Don't show panel if no resume
@@ -80,18 +113,37 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
           </div>
           <div>
             <h2 className="text-lg font-bold text-gray-900">Jobs For You</h2>
-            <p className="text-xs text-gray-600">Based on your resume</p>
+            <p className="text-xs text-gray-600">
+              {selectionMode
+                ? `${selectedJobs.size} selected`
+                : 'Based on your resume'}
+            </p>
           </div>
         </div>
-        {onToggle && (
-          <button
-            onClick={onToggle}
-            className="p-2 hover:bg-white/50 rounded-lg transition-colors"
-            title="Hide jobs panel"
-          >
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!loading && jobs.length > 1 && (
+            <button
+              onClick={handleToggleSelectionMode}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                selectionMode
+                  ? 'bg-indigo-600 text-white'
+                  : 'bg-white border border-indigo-300 text-indigo-700 hover:bg-indigo-50'
+              }`}
+            >
+              <CheckSquare className="w-3.5 h-3.5" />
+              {selectionMode ? 'Cancel' : 'Select'}
+            </button>
+          )}
+          {onToggle && (
+            <button
+              onClick={onToggle}
+              className="p-2 hover:bg-white/50 rounded-lg transition-colors"
+              title="Hide jobs panel"
+            >
+              <X className="w-5 h-5 text-gray-600" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Loading State */}
@@ -146,12 +198,21 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
       {!loading && !error && jobs.length > 0 && (
         <>
           {/* Summary */}
-          <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
-            <p className="text-xs text-indigo-900 font-medium">
-              ✨ <strong>Found {jobs.length} roles</strong> that match your profile.
-              Click "Tailor Resume" to generate a custom resume for each job.
-            </p>
-          </div>
+          {!selectionMode ? (
+            <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
+              <p className="text-xs text-indigo-900 font-medium">
+                ✨ <strong>Found {jobs.length} roles</strong> that match your profile.
+                Click "Tailor Resume" to generate a custom resume for each job.
+              </p>
+            </div>
+          ) : (
+            <div className="mb-4 p-3 bg-purple-100 border border-purple-300 rounded-lg">
+              <p className="text-xs text-purple-900 font-medium">
+                ⚡ <strong>Batch Mode Active:</strong> Select multiple jobs to generate
+                tailored resumes all at once.
+              </p>
+            </div>
+          )}
 
           {/* Job Cards */}
           <div className="space-y-4 mb-4">
@@ -161,6 +222,9 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
                 jobMatch={jobMatch}
                 onTailorClick={() => handleTailorClick(jobMatch)}
                 onPreviewClick={() => setPreviewJob(jobMatch)}
+                selectionMode={selectionMode}
+                isSelected={selectedJobs.has(jobMatch.job.id)}
+                onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
               />
             ))}
           </div>
@@ -176,12 +240,25 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
             </button>
           )}
 
+          {/* Batch Generate Button */}
+          {selectionMode && selectedJobs.size > 0 && (
+            <button
+              onClick={handleBatchGenerate}
+              className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            >
+              <Zap className="w-5 h-5" />
+              <span>Generate {selectedJobs.size} Resumes</span>
+            </button>
+          )}
+
           {/* Footer Tip */}
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-xs text-blue-900">
-              <strong>💡 Tip:</strong> Each job shows why it matches your background and which skills are missing.
-            </p>
-          </div>
+          {!selectionMode && (
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-900">
+                <strong>💡 Tip:</strong> Each job shows why it matches your background and which skills are missing.
+              </p>
+            </div>
+          )}
         </>
       )}
 
@@ -193,6 +270,22 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
           onTailorClick={() => {
             handleTailorClick(previewJob);
             setPreviewJob(null);
+          }}
+        />
+      )}
+
+      {/* Batch Generate Modal */}
+      {showBatchModal && resume && (
+        <BatchGenerateModal
+          selectedJobs={getSelectedJobMatches()}
+          resume={resume}
+          onClose={() => {
+            setShowBatchModal(false);
+            setSelectionMode(false);
+            setSelectedJobs(new Set());
+          }}
+          onComplete={() => {
+            console.log('[JobsPanel] Batch generation complete');
           }}
         />
       )}
