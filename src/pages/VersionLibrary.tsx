@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import { getPreferredTemplate } from '../services/templatePreference';
+import { TemplateRenderer } from '../components/templates/TemplateRenderer';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
 import type { ExportProgress } from '../services/exportService';
+import type { ResumeTemplate } from '../types/template';
 
 type StatusFilter = 'all' | ResumeVersion['status'];
 
@@ -21,6 +23,12 @@ export function VersionLibrary() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf');
   const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
+  const [previewVersion, setPreviewVersion] = useState<ResumeVersion | null>(null);
+  const [previewTemplate, setPreviewTemplate] = useState<ResumeTemplate | null>(null);
+  const [selectedVersionIds, setSelectedVersionIds] = useState<Set<string>>(new Set());
+  const [isBatchMode, setIsBatchMode] = useState(false);
+  const [batchExporting, setBatchExporting] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentVersion: string } | null>(null);
 
   useEffect(() => {
     loadVersions();
@@ -55,7 +63,89 @@ export function VersionLibrary() {
     setShowTemplateSelector(true);
   };
 
+  const handlePreview = (version: ResumeVersion) => {
+    setPreviewVersion(version);
+    // Use preferred template or default to first one
+    const template = RESUME_TEMPLATES.find(t => t.id === preferredTemplateId) || RESUME_TEMPLATES[0];
+    setPreviewTemplate(template);
+  };
+
+  const toggleVersionSelection = (versionId: string) => {
+    setSelectedVersionIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(versionId)) {
+        newSet.delete(versionId);
+      } else {
+        newSet.add(versionId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllVersions = () => {
+    setSelectedVersionIds(new Set(filteredVersions.map(v => v.id)));
+  };
+
+  const deselectAllVersions = () => {
+    setSelectedVersionIds(new Set());
+  };
+
+  const handleBatchExport = async (templateId: string) => {
+    if (selectedVersionIds.size === 0) return;
+
+    setBatchExporting(true);
+    const versionsToExport = versions.filter(v => selectedVersionIds.has(v.id));
+    let successCount = 0;
+
+    try {
+      for (let i = 0; i < versionsToExport.length; i++) {
+        const version = versionsToExport[i];
+        setBatchProgress({
+          current: i + 1,
+          total: versionsToExport.length,
+          currentVersion: version.name,
+        });
+
+        try {
+          if (exportFormat === 'pdf') {
+            await exportToPDF(version, templateId, () => {});
+          } else {
+            await exportToDOCX(version, templateId, () => {});
+          }
+          successCount++;
+          // Small delay between exports to prevent browser overload
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error(`[VersionLibrary] Failed to export ${version.name}:`, error);
+        }
+      }
+
+      // Close modal and reset
+      setShowTemplateSelector(false);
+      setSelectedVersionForExport(null);
+      setBatchExporting(false);
+      setBatchProgress(null);
+      setExportFormat('pdf');
+      setIsBatchMode(false);
+      setSelectedVersionIds(new Set());
+
+      alert(`Successfully exported ${successCount} out of ${versionsToExport.length} resumes`);
+      loadVersions();
+    } catch (error) {
+      console.error('[VersionLibrary] Batch export error:', error);
+      setBatchExporting(false);
+      setBatchProgress(null);
+    }
+  };
+
   const handleTemplateSelect = async (templateId: string) => {
+    // Handle batch export
+    if (isBatchMode && selectedVersionIds.size > 0) {
+      await handleBatchExport(templateId);
+      return;
+    }
+
+    // Handle single export
     if (!selectedVersionForExport) return;
 
     setIsExporting(true);
@@ -157,16 +247,49 @@ export function VersionLibrary() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Resume Versions</h1>
               <p className="text-gray-600 mt-1">
-                Manage your tailored resumes for different jobs
+                {isBatchMode
+                  ? `${selectedVersionIds.size} version${selectedVersionIds.size !== 1 ? 's' : ''} selected`
+                  : 'Manage your tailored resumes for different jobs'}
               </p>
             </div>
-            <a
-              href="/smart-selector"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
-            >
-              <Plus className="w-5 h-5" />
-              Create New Version
-            </a>
+            <div className="flex items-center gap-2">
+              {isBatchMode && selectedVersionIds.size > 0 && (
+                <button
+                  onClick={() => {
+                    setSelectedVersionForExport(null);
+                    setShowTemplateSelector(true);
+                  }}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-5 h-5" />
+                  Export Selected ({selectedVersionIds.size})
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  setIsBatchMode(!isBatchMode);
+                  if (isBatchMode) {
+                    setSelectedVersionIds(new Set());
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                  isBatchMode
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                {isBatchMode ? 'Cancel Batch Mode' : 'Batch Select'}
+              </button>
+              {!isBatchMode && (
+                <a
+                  href="/smart-selector"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                >
+                  <Plus className="w-5 h-5" />
+                  Create New Version
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Stats Bar */}
@@ -269,29 +392,65 @@ export function VersionLibrary() {
           )}
         </div>
 
+        {/* Batch Selection Controls */}
+        {isBatchMode && filteredVersions.length > 0 && (
+          <div className="mb-4 flex items-center gap-2">
+            <button
+              onClick={selectAllVersions}
+              className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded text-sm font-medium hover:bg-indigo-200 transition-colors"
+            >
+              Select All ({filteredVersions.length})
+            </button>
+            <button
+              onClick={deselectAllVersions}
+              className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              Deselect All
+            </button>
+          </div>
+        )}
+
         {/* Versions Grid */}
         {filteredVersions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredVersions.map((version) => (
-              <div
-                key={version.id}
-                className="bg-white rounded-lg shadow-sm border-2 border-gray-200 hover:border-indigo-300 transition-all"
-              >
-                {/* Card Header */}
-                <div className="p-4 border-b border-gray-200">
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 text-lg mb-1">{version.name}</h3>
-                      <p className="text-sm text-indigo-600">{version.targetRole}</p>
-                      {version.targetCompany && (
-                        <p className="text-sm text-gray-600">{version.targetCompany}</p>
-                      )}
+            {filteredVersions.map((version) => {
+              const isSelected = selectedVersionIds.has(version.id);
+              return (
+                <div
+                  key={version.id}
+                  className={`bg-white rounded-lg shadow-sm border-2 hover:border-indigo-300 transition-all ${
+                    isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'
+                  }`}
+                >
+                  {/* Card Header */}
+                  <div className="p-4 border-b border-gray-200">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-start gap-2 flex-1">
+                        {isBatchMode && (
+                          <button
+                            onClick={() => toggleVersionSelection(version.id)}
+                            className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                              isSelected
+                                ? 'bg-indigo-600 border-indigo-600'
+                                : 'border-gray-300 hover:border-indigo-400'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-4 h-4 text-white" />}
+                          </button>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900 text-lg mb-1">{version.name}</h3>
+                          <p className="text-sm text-indigo-600">{version.targetRole}</p>
+                          {version.targetCompany && (
+                            <p className="text-sm text-gray-600">{version.targetCompany}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${getStatusColor(version.status)}`}>
+                        {getStatusIcon(version.status)}
+                        {version.status}
+                      </div>
                     </div>
-                    <div className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${getStatusColor(version.status)}`}>
-                      {getStatusIcon(version.status)}
-                      {version.status}
-                    </div>
-                  </div>
 
                   {/* Tags */}
                   {version.tags && version.tags.length > 0 && (
@@ -353,7 +512,7 @@ export function VersionLibrary() {
                     Export
                   </button>
                   <button
-                    onClick={() => alert('View functionality coming soon!')}
+                    onClick={() => handlePreview(version)}
                     className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
                     title="View"
                   >
@@ -375,7 +534,8 @@ export function VersionLibrary() {
                   </button>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         ) : (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
@@ -403,7 +563,7 @@ export function VersionLibrary() {
         )}
 
         {/* Template Selector Modal */}
-        {showTemplateSelector && selectedVersionForExport && (
+        {showTemplateSelector && (selectedVersionForExport || (isBatchMode && selectedVersionIds.size > 0)) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
@@ -413,19 +573,24 @@ export function VersionLibrary() {
                       Choose Template
                     </h2>
                     <p className="text-gray-600">
-                      Select a template for "{selectedVersionForExport.name}"
+                      {isBatchMode && selectedVersionIds.size > 0
+                        ? `Batch export ${selectedVersionIds.size} resume${selectedVersionIds.size !== 1 ? 's' : ''}`
+                        : selectedVersionForExport
+                        ? `Select a template for "${selectedVersionForExport.name}"`
+                        : 'Select a template'}
                     </p>
                   </div>
                   <button
                     onClick={() => {
-                      if (!isExporting) {
+                      if (!isExporting && !batchExporting) {
                         setShowTemplateSelector(false);
                         setSelectedVersionForExport(null);
                         setExportProgress(null);
+                        setBatchProgress(null);
                         setExportFormat('pdf');
                       }
                     }}
-                    disabled={isExporting}
+                    disabled={isExporting || batchExporting}
                     className="text-gray-400 hover:text-gray-600 text-2xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     ×
@@ -440,7 +605,7 @@ export function VersionLibrary() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => setExportFormat('pdf')}
-                      disabled={isExporting}
+                      disabled={isExporting || batchExporting}
                       className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         exportFormat === 'pdf'
                           ? 'bg-indigo-600 text-white'
@@ -451,7 +616,7 @@ export function VersionLibrary() {
                     </button>
                     <button
                       onClick={() => setExportFormat('docx')}
-                      disabled={isExporting}
+                      disabled={isExporting || batchExporting}
                       className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                         exportFormat === 'docx'
                           ? 'bg-indigo-600 text-white'
@@ -495,6 +660,29 @@ export function VersionLibrary() {
                   </div>
                 )}
 
+                {/* Batch Export Progress */}
+                {batchProgress && (
+                  <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Loader className="w-5 h-5 text-blue-600 animate-spin" />
+                      <div className="flex-1">
+                        <span className="font-medium text-gray-900">
+                          Exporting {batchProgress.current} of {batchProgress.total}
+                        </span>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Current: {batchProgress.currentVersion}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 transition-all duration-300"
+                        style={{ width: `${(batchProgress.current / batchProgress.total) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {[...RESUME_TEMPLATES]
                     .sort((a, b) => {
@@ -509,7 +697,7 @@ export function VersionLibrary() {
                         <button
                           key={template.id}
                           onClick={() => handleTemplateSelect(template.id)}
-                          disabled={isExporting}
+                          disabled={isExporting || batchExporting}
                           className={`text-left bg-white border-2 rounded-lg p-4 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                             isPreferred
                               ? 'border-yellow-400 bg-yellow-50'
@@ -542,6 +730,93 @@ export function VersionLibrary() {
                         </button>
                       );
                     })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Preview Modal */}
+        {previewVersion && previewTemplate && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      {previewVersion.name}
+                    </h2>
+                    <p className="text-gray-600">
+                      {previewVersion.targetRole} • {previewTemplate.name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setPreviewVersion(null);
+                      setPreviewTemplate(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Template Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preview with Template
+                  </label>
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {RESUME_TEMPLATES.map((template) => (
+                      <button
+                        key={template.id}
+                        onClick={() => setPreviewTemplate(template)}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                          previewTemplate.id === template.id
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {template.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview Area */}
+                <div className="bg-gray-100 rounded-lg p-8 mb-6 overflow-x-auto">
+                  <div className="flex justify-center">
+                    <TemplateRenderer
+                      template={previewTemplate}
+                      resume={previewVersion.optimizedContent}
+                      scale={0.6}
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={() => {
+                      setPreviewVersion(null);
+                      setPreviewTemplate(null);
+                      handleExport(previewVersion);
+                    }}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-5 h-5" />
+                    Export This Resume
+                  </button>
+                  <button
+                    onClick={() => {
+                      setPreviewVersion(null);
+                      setPreviewTemplate(null);
+                    }}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Close
+                  </button>
                 </div>
               </div>
             </div>
