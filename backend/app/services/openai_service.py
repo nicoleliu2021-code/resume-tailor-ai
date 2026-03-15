@@ -33,6 +33,11 @@ Resume Text:
 
 Return a JSON object with this structure:
 {{
+  "name": "Full Name (if present)",
+  "email": "email@example.com (if present)",
+  "phone": "Phone number (if present)",
+  "linkedin": "LinkedIn URL (if present)",
+  "location": "City, State (if present)",
   "summary": "Professional summary or objective",
   "experience": [
     {{
@@ -73,6 +78,7 @@ Return a JSON object with this structure:
   ]
 }}
 
+IMPORTANT: Extract contact information (name, email, phone, linkedin, location) if present at the top of the resume.
 Generate unique IDs for each item. Extract all relevant information accurately."""
 
     try:
@@ -474,7 +480,12 @@ CRITICAL: Every bullet must follow [ACTION VERB] + [WHAT] + [MEASURABLE IMPACT] 
         # Extract changes list
         changes = parsed_data.pop('changes', [])
 
-        # Keep original rawText
+        # Preserve original contact info and rawText
+        parsed_data['name'] = resume.name
+        parsed_data['email'] = resume.email
+        parsed_data['phone'] = resume.phone
+        parsed_data['linkedin'] = resume.linkedin
+        parsed_data['location'] = resume.location
         parsed_data['rawText'] = resume.rawText
 
         optimized_resume = StructuredResume(**parsed_data)
