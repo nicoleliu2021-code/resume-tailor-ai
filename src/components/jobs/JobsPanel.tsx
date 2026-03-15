@@ -127,7 +127,16 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
             <Lightbulb className="w-8 h-8 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-1">No jobs found</p>
-          <p className="text-xs text-gray-500">Try adding more details to your resume</p>
+          <p className="text-xs text-gray-500 mb-3">Try adding more details to your resume</p>
+
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left max-w-md mx-auto">
+            <p className="text-xs text-blue-900 font-semibold mb-2">💡 Tips to improve matches:</p>
+            <ul className="text-xs text-blue-800 space-y-1">
+              <li>• Add 3-5 specific skills (e.g., "React", "Python", "Product Strategy")</li>
+              <li>• Include job titles from your experience</li>
+              <li>• Add years of experience or education details</li>
+            </ul>
+          </div>
         </div>
       )}
 

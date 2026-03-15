@@ -270,10 +270,21 @@ def match_jobs(resume: StructuredResume, limit: int = 5, min_score: float = 60.0
     Match resume against all job templates
     Returns top N jobs sorted by fit score
     """
+    # Debug: Log resume data
+    print(f"\n[DEBUG] Matching resume:")
+    print(f"  - Experience count: {len(resume.experience)}")
+    print(f"  - Skills count: {len(resume.skills)}")
+    if resume.experience:
+        print(f"  - Job titles: {[exp.role for exp in resume.experience[:3]]}")
+    if resume.skills:
+        print(f"  - Top skills: {[s.name for s in resume.skills[:5]]}")
+
     matches = []
+    all_scores = []  # Track all scores for debugging
 
     for job_data in JOB_TEMPLATES:
         fit_score = calculate_fit_score(resume, job_data)
+        all_scores.append((job_data['title'], fit_score))
 
         # Only include jobs above minimum score
         if fit_score < min_score:
@@ -300,6 +311,13 @@ def match_jobs(resume: StructuredResume, limit: int = 5, min_score: float = 60.0
 
     # Sort by fit score (highest first)
     matches.sort(key=lambda x: x.fitScore, reverse=True)
+
+    # Debug logging: Print all scores
+    print(f"\n[DEBUG] Match scores for all {len(all_scores)} jobs:")
+    all_scores.sort(key=lambda x: x[1], reverse=True)
+    for job_title, score in all_scores[:10]:  # Top 10
+        print(f"  {score:.1f}% - {job_title}")
+    print(f"[DEBUG] Returning {len(matches)} jobs above {min_score}% threshold\n")
 
     # Return top N matches
     return matches[:limit]

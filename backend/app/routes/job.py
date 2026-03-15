@@ -132,7 +132,7 @@ async def discover_jobs(request: JobDiscoveryRequest):
         job_matches = match_jobs(
             resume=request.resume,
             limit=5,  # Return top 5 matches
-            min_score=60.0  # Only show jobs with 60%+ match
+            min_score=40.0  # Lowered threshold for testing (was 60.0)
         )
 
         print(f"[DEBUG] Found {len(job_matches)} matching jobs")
