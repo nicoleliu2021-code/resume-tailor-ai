@@ -209,7 +209,7 @@ export function ImprovementReportModal({
                 rel="noopener noreferrer"
                 onClick={handleApplyNow}
                 className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-                title={jobUrl ? `Apply for ${jobTitle}` : `Search "${jobTitle}" on LinkedIn`}
+                title={jobUrl ? 'Apply to this job' : `Search "${jobTitle}" on LinkedIn`}
               >
                 <ExternalLink className="w-5 h-5" />
                 <span>Apply Now</span>
