@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { Sparkles, Target, Loader, AlertCircle, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useResume } from '../contexts/ResumeContext';
-import { JobCategorySection } from '../components/jobs/JobCategorySection';
+import { EnhancedJobCard } from '../components/jobs/EnhancedJobCard';
 import { discoverJobsAPI } from '../services/api';
-import type { JobMatch, EnhancedJobMatch } from '../types/resume';
+import type { JobMatch } from '../types/resume';
 
 export function Jobs() {
   const { resume } = useResume();
@@ -36,7 +36,7 @@ export function Jobs() {
     }
   };
 
-  const handleTailorClick = (job: EnhancedJobMatch) => {
+  const handleTailorClick = (job: JobMatch) => {
     console.log('[Jobs] Tailoring for:', job.job.title);
     // Navigate to optimizer with pre-filled job
     window.location.href = `/optimizer?jobId=${job.job.id}`;
@@ -159,29 +159,77 @@ export function Jobs() {
             <div className="space-y-8">
               {/* Strong Matches */}
               {strongMatches.length > 0 && (
-                <JobCategorySection
-                  category="direct"
-                  jobs={strongMatches as EnhancedJobMatch[]}
-                  onTailorClick={handleTailorClick}
-                />
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">🎯</span>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Strong Matches</h2>
+                      <p className="text-sm text-gray-600">High fit roles - apply with confidence</p>
+                    </div>
+                    <span className="ml-auto px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">
+                      {strongMatches.length} {strongMatches.length === 1 ? 'job' : 'jobs'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {strongMatches.map((job) => (
+                      <EnhancedJobCard
+                        key={job.job.id}
+                        jobMatch={job}
+                        onTailorClick={() => handleTailorClick(job)}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Stretch Roles */}
               {stretchRoles.length > 0 && (
-                <JobCategorySection
-                  category="stretch"
-                  jobs={stretchRoles as EnhancedJobMatch[]}
-                  onTailorClick={handleTailorClick}
-                />
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">🚀</span>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Stretch Roles</h2>
+                      <p className="text-sm text-gray-600">Growth opportunities - develop new skills</p>
+                    </div>
+                    <span className="ml-auto px-3 py-1 bg-blue-100 text-blue-700 text-sm font-bold rounded-full">
+                      {stretchRoles.length} {stretchRoles.length === 1 ? 'job' : 'jobs'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {stretchRoles.map((job) => (
+                      <EnhancedJobCard
+                        key={job.job.id}
+                        jobMatch={job}
+                        onTailorClick={() => handleTailorClick(job)}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Adjacent Roles */}
               {adjacentRoles.length > 0 && (
-                <JobCategorySection
-                  category="adjacent"
-                  jobs={adjacentRoles as EnhancedJobMatch[]}
-                  onTailorClick={handleTailorClick}
-                />
+                <div>
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="text-3xl">🔄</span>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">Adjacent Roles</h2>
+                      <p className="text-sm text-gray-600">Career pivots - explore new directions</p>
+                    </div>
+                    <span className="ml-auto px-3 py-1 bg-orange-100 text-orange-700 text-sm font-bold rounded-full">
+                      {adjacentRoles.length} {adjacentRoles.length === 1 ? 'job' : 'jobs'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    {adjacentRoles.map((job) => (
+                      <EnhancedJobCard
+                        key={job.job.id}
+                        jobMatch={job}
+                        onTailorClick={() => handleTailorClick(job)}
+                      />
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}
