@@ -524,6 +524,7 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
   return (
     <div className="relative flex-1 sm:flex-initial">
       <button
+        data-export-button
         onClick={() => setShowMenu(!showMenu)}
         disabled={!resume}
         className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold
