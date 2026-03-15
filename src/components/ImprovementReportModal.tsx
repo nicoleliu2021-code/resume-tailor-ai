@@ -5,7 +5,6 @@ interface ImprovementReportModalProps {
   originalResume: StructuredResume;
   optimizedResume: StructuredResume;
   jobTitle: string;
-  jobDescription: string;
   jobUrl?: string;
   onContinue: () => void;
   onApplyNow: () => void;
@@ -25,7 +24,6 @@ export function ImprovementReportModal({
   originalResume,
   optimizedResume,
   jobTitle,
-  jobDescription,
   jobUrl,
   onContinue,
   onApplyNow,
