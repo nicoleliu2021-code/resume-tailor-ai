@@ -1,17 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { X, ChevronDown, ChevronUp } from 'lucide-react';
 import { JobCard } from './JobCard';
 import { JobPreviewModal } from './JobPreviewModal';
-import type { JobMatch, StructuredResume } from '../../types/resume';
+import type { JobMatch } from '../../types/resume';
 
 interface Props {
   jobs: JobMatch[];
-  resume: StructuredResume;
   onJobSelect: (jobDescription: string, jobTitle: string) => void;
   onClose: () => void;
 }
 
-export function MobileJobSheet({ jobs, resume, onJobSelect, onClose }: Props) {
+export function MobileJobSheet({ jobs, onJobSelect, onClose }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [previewJob, setPreviewJob] = useState<JobMatch | null>(null);
   const [isDragging, setIsDragging] = useState(false);
