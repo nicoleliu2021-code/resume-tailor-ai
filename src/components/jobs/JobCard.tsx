@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck } from 'lucide-react';
+import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck, CheckCircle2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { isJobSaved, saveJob, unsaveJob } from '../../services/savedJobs';
 import type { JobMatch } from '../../types/resume';
@@ -8,9 +8,12 @@ interface Props {
   onTailorClick: () => void;
   onPreviewClick?: () => void;
   onSaveChange?: (isSaved: boolean) => void;
+  selectionMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
-export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange }: Props) {
+export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange, selectionMode = false, isSelected = false, onToggleSelect }: Props) {
   const { job, fitScore, matchReasons, missingSkills, matchType } = jobMatch;
   const [isSaved, setIsSaved] = useState(false);
 
@@ -49,33 +52,67 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange 
   };
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-indigo-400 hover:shadow-lg transition-all">
+    <div
+      className={`bg-white border-2 rounded-xl p-4 transition-all ${
+        selectionMode
+          ? isSelected
+            ? 'border-purple-500 shadow-lg bg-purple-50'
+            : 'border-gray-200 hover:border-purple-300 cursor-pointer'
+          : 'border-gray-200 hover:border-indigo-400 hover:shadow-lg'
+      }`}
+      onClick={selectionMode ? onToggleSelect : undefined}
+    >
       {/* Header: Fit Score & Save Button */}
       <div className="flex items-center justify-between mb-3">
-        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${getBadgeColor(fitScore)}`}>
-          <TrendingUp className="w-4 h-4" />
-          <span className="text-sm font-bold">{fitScore}% Match</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            {getMatchLabel(matchType)}
-          </span>
-          <button
-            onClick={handleSaveToggle}
-            className={`p-2 rounded-lg transition-all ${
-              isSaved
-                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-            }`}
-            title={isSaved ? 'Remove from saved jobs' : 'Save job for later'}
-          >
-            {isSaved ? (
-              <BookmarkCheck className="w-4 h-4" />
-            ) : (
-              <Bookmark className="w-4 h-4" />
-            )}
-          </button>
-        </div>
+        {selectionMode ? (
+          <div className="flex items-center gap-3">
+            <div
+              className={`w-6 h-6 rounded border-2 flex items-center justify-center transition-all ${
+                isSelected
+                  ? 'bg-purple-600 border-purple-600'
+                  : 'border-gray-300 bg-white'
+              }`}
+            >
+              {isSelected && (
+                <CheckCircle2 className="w-4 h-4 text-white" />
+              )}
+            </div>
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${getBadgeColor(fitScore)}`}>
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-bold">{fitScore}% Match</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${getBadgeColor(fitScore)}`}>
+              <TrendingUp className="w-4 h-4" />
+              <span className="text-sm font-bold">{fitScore}% Match</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                {getMatchLabel(matchType)}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSaveToggle();
+                }}
+                className={`p-2 rounded-lg transition-all ${
+                  isSaved
+                    ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                    : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                }`}
+                title={isSaved ? 'Remove from saved jobs' : 'Save job for later'}
+              >
+                {isSaved ? (
+                  <BookmarkCheck className="w-4 h-4" />
+                ) : (
+                  <Bookmark className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Job Title & Company */}
@@ -150,23 +187,31 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange 
       </div>
 
       {/* CTAs */}
-      <div className="flex gap-2">
-        <button
-          onClick={onTailorClick}
-          className="flex-1 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-        >
-          <span>Tailor Resume</span>
-          <ArrowRight className="w-4 h-4" />
-        </button>
-        {onPreviewClick && (
+      {!selectionMode && (
+        <div className="flex gap-2">
           <button
-            onClick={onPreviewClick}
-            className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onTailorClick();
+            }}
+            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
           >
-            Preview
+            <span>Tailor Resume</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
-        )}
-      </div>
+          {onPreviewClick && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onPreviewClick();
+              }}
+              className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Preview
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
