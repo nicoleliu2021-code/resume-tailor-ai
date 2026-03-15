@@ -5,11 +5,13 @@ interface ImprovementReportModalProps {
   originalResume: StructuredResume;
   optimizedResume: StructuredResume;
   jobTitle: string;
+  jobDescription: string;
   jobUrl?: string;
   onContinue: () => void;
   onApplyNow: () => void;
   onExport: () => void;
   onClose: () => void;
+  onSaveSession?: () => void;
 }
 
 interface ImprovementMetrics {
@@ -23,13 +25,33 @@ export function ImprovementReportModal({
   originalResume,
   optimizedResume,
   jobTitle,
+  jobDescription,
   jobUrl,
   onContinue,
   onApplyNow,
   onExport,
   onClose,
+  onSaveSession,
 }: ImprovementReportModalProps) {
   const metrics = calculateMetrics(originalResume, optimizedResume);
+
+  const handleApplyNow = () => {
+    // Save session before opening job link
+    onSaveSession?.();
+    onApplyNow();
+  };
+
+  const handleContinue = () => {
+    // Save session when continuing to view resume
+    onSaveSession?.();
+    onContinue();
+  };
+
+  const handleExport = () => {
+    // Save session before export
+    onSaveSession?.();
+    onExport();
+  };
 
   return (
     <>
@@ -175,7 +197,7 @@ export function ImprovementReportModal({
             {/* Primary CTAs Row */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={onContinue}
+                onClick={handleContinue}
                 className="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
                 <CheckCircle className="w-5 h-5" />
@@ -187,7 +209,7 @@ export function ImprovementReportModal({
                 href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={onApplyNow}
+                onClick={handleApplyNow}
                 className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
                 title={jobUrl ? `Apply for ${jobTitle}` : `Search "${jobTitle}" on LinkedIn`}
               >
@@ -198,7 +220,7 @@ export function ImprovementReportModal({
 
             {/* Secondary CTA */}
             <button
-              onClick={onExport}
+              onClick={handleExport}
               className="w-full py-3 px-6 border-2 border-indigo-300 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
             >
               <Download className="w-5 h-5" />
