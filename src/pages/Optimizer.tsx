@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
@@ -8,6 +8,7 @@ import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { JobsPanel } from '../components/jobs/JobsPanel';
 import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
+import { ApplicationTracker } from '../components/jobs/ApplicationTracker';
 import { analyzeJobAPI } from '../services/api';
 import { getSavedJobs } from '../services/savedJobs';
 
@@ -86,6 +87,7 @@ export function Optimizer() {
   const [jobsPanelCollapsed, setJobsPanelCollapsed] = useState(false);
   const [savedJobsPanelOpen, setSavedJobsPanelOpen] = useState(false);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
+  const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
 
   // Update saved jobs count
   useEffect(() => {
@@ -242,6 +244,15 @@ export function Optimizer() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Application Tracker Button */}
+              <button
+                onClick={() => setApplicationTrackerOpen(true)}
+                className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-purple-300 text-purple-700 rounded-xl font-medium hover:bg-purple-50 transition-colors text-sm"
+              >
+                <ClipboardList className="w-4 h-4" />
+                <span className="hidden sm:inline">Applications</span>
+              </button>
+
               {/* Saved Jobs Button */}
               <button
                 onClick={() => setSavedJobsPanelOpen(true)}
@@ -642,6 +653,12 @@ export function Optimizer() {
             element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 100);
         }}
+      />
+
+      {/* Application Tracker */}
+      <ApplicationTracker
+        isOpen={applicationTrackerOpen}
+        onClose={() => setApplicationTrackerOpen(false)}
       />
     </div>
   );
