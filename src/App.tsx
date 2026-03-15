@@ -10,6 +10,7 @@ import { Jobs } from './pages/Jobs';
 import { Settings } from './pages/Settings';
 import { HowItWorks } from './pages/HowItWorks';
 import { Pricing } from './pages/Pricing';
+import { MasterResumeEditor } from './pages/MasterResumeEditor';
 import './App.css';
 
 function App() {
@@ -21,6 +22,7 @@ function App() {
             <Routes>
               <Route path="/" element={<AppLayout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="master-resume" element={<MasterResumeEditor />} />
                 <Route path="optimizer" element={<Optimizer />} />
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="applications" element={<Applications />} />

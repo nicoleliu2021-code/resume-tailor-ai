@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings, Sparkles, HelpCircle, CreditCard, ClipboardList, Briefcase } from 'lucide-react';
+import { Home, FileText, Settings, Sparkles, HelpCircle, CreditCard, ClipboardList, Briefcase, Database } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { UpgradeModal } from '../modals/UpgradeModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
+  { name: 'Master Resume', href: '/master-resume', icon: Database },
   { name: 'Resume Optimizer', href: '/optimizer', icon: Sparkles },
   { name: 'Job Discovery', href: '/jobs', icon: Briefcase },
   { name: 'Applications', href: '/applications', icon: ClipboardList },
