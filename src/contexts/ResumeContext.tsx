@@ -8,6 +8,8 @@ interface ResumeContextType {
   setOriginalResume: (resume: StructuredResume | null) => void;
   jobDescription: string;
   setJobDescription: (job: string) => void;
+  jobUrl: string;
+  setJobUrl: (url: string) => void;
   jobAnalysis: JobAnalysis | null;
   setJobAnalysis: (analysis: JobAnalysis | null) => void;
   matchScore: MatchScore | null;
@@ -26,6 +28,7 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
   const [resume, setResume] = useState<StructuredResume | null>(null);  // Optimized version
   const [originalResume, setOriginalResume] = useState<StructuredResume | null>(null);  // Original uploaded
   const [jobDescription, setJobDescription] = useState('');
+  const [jobUrl, setJobUrl] = useState('');
   const [jobAnalysis, setJobAnalysis] = useState<JobAnalysis | null>(null);
   const [matchScore, setMatchScore] = useState<MatchScore | null>(null);
   const [keywordGap, setKeywordGap] = useState<KeywordGap | null>(null);
@@ -41,6 +44,8 @@ export function ResumeProvider({ children }: { children: ReactNode }) {
         setOriginalResume,
         jobDescription,
         setJobDescription,
+        jobUrl,
+        setJobUrl,
         jobAnalysis,
         setJobAnalysis,
         matchScore,
