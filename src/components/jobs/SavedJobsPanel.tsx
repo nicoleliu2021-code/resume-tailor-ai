@@ -6,7 +6,7 @@ import { getSavedJobs, unsaveJob } from '../../services/savedJobs';
 import type { SavedJob } from '../../services/savedJobs';
 
 interface Props {
-  onJobSelect: (jobDescription: string, jobTitle: string) => void;
+  onJobSelect: (jobDescription: string, jobTitle: string, jobUrl?: string) => void;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -45,7 +45,7 @@ export function SavedJobsPanel({ onJobSelect, isOpen, onClose }: Props) {
   };
 
   const handleTailorClick = (saved: SavedJob) => {
-    onJobSelect(saved.jobMatch.job.description, saved.jobMatch.job.title);
+    onJobSelect(saved.jobMatch.job.description, saved.jobMatch.job.title, saved.jobMatch.job.jobUrl);
     onClose();
   };
 
