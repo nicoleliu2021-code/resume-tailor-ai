@@ -33,6 +33,11 @@ class Project(BaseModel):
     url: Optional[str] = None
 
 class StructuredResume(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    linkedin: Optional[str] = None
+    location: Optional[str] = None
     summary: str
     experience: List[Experience]
     education: List[Education]
@@ -150,6 +155,7 @@ class JobTemplate(BaseModel):
     industry: str
     tools: List[str]
     salary: Optional[str] = None
+    jobUrl: Optional[str] = None
 
 class JobMatch(BaseModel):
     job: JobTemplate
