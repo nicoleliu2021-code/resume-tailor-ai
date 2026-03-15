@@ -30,14 +30,14 @@ export function RecentOptimizations({ onRestore }: RecentOptimizationsProps) {
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-indigo-200 p-6 shadow-lg">
+    <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border-2 border-indigo-300 p-6 shadow-xl hover:shadow-2xl transition-shadow">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
-          <Clock className="w-5 h-5 text-white" />
+        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
+          <Clock className="w-6 h-6 text-white" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-gray-900">Recent Optimizations</h2>
-          <p className="text-xs text-gray-600">Quick access to your previous sessions</p>
+          <h2 className="text-xl font-bold text-gray-900">Your Recent Optimizations</h2>
+          <p className="text-sm text-indigo-700 font-medium">Pick up where you left off</p>
         </div>
       </div>
 
