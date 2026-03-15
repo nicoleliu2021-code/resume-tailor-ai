@@ -796,7 +796,6 @@ export function Optimizer() {
           originalResume={originalResume}
           optimizedResume={resume}
           jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
-          jobDescription={jobDescription}
           jobUrl={jobUrl}
           onContinue={() => {
             setShowImprovementReport(false);
