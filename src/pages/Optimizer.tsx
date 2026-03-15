@@ -648,7 +648,7 @@ export function Optimizer() {
           const saved = getSavedJobs();
           setSavedJobsCount(saved.length);
         }}
-        onJobSelect={(jobDescription, jobTitle, jobUrl) => {
+        onJobSelect={(jobDescription, _jobTitle, jobUrl) => {
           setJobDescription(jobDescription);
           setCurrentJobUrl(jobUrl);
           setViewMode('upload');
