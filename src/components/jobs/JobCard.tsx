@@ -1,14 +1,39 @@
-import { ArrowRight, MapPin, TrendingUp, AlertCircle } from 'lucide-react';
+import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { isJobSaved, saveJob, unsaveJob } from '../../services/savedJobs';
 import type { JobMatch } from '../../types/resume';
 
 interface Props {
   jobMatch: JobMatch;
   onTailorClick: () => void;
   onPreviewClick?: () => void;
+  onSaveChange?: (isSaved: boolean) => void;
 }
 
-export function JobCard({ jobMatch, onTailorClick, onPreviewClick }: Props) {
+export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange }: Props) {
   const { job, fitScore, matchReasons, missingSkills, matchType } = jobMatch;
+  const [isSaved, setIsSaved] = useState(false);
+
+  // Check if job is saved on mount
+  useEffect(() => {
+    setIsSaved(isJobSaved(job.id));
+  }, [job.id]);
+
+  const handleSaveToggle = () => {
+    try {
+      if (isSaved) {
+        unsaveJob(job.id);
+        setIsSaved(false);
+        onSaveChange?.(false);
+      } else {
+        saveJob(jobMatch);
+        setIsSaved(true);
+        onSaveChange?.(true);
+      }
+    } catch (error) {
+      console.error('[JobCard] Error toggling save:', error);
+    }
+  };
 
   // Determine badge color based on fit score
   const getBadgeColor = (score: number) => {
@@ -25,15 +50,32 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick }: Props) {
 
   return (
     <div className="bg-white border-2 border-gray-200 rounded-xl p-4 hover:border-indigo-400 hover:shadow-lg transition-all">
-      {/* Header: Fit Score */}
+      {/* Header: Fit Score & Save Button */}
       <div className="flex items-center justify-between mb-3">
         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${getBadgeColor(fitScore)}`}>
           <TrendingUp className="w-4 h-4" />
           <span className="text-sm font-bold">{fitScore}% Match</span>
         </div>
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-          {getMatchLabel(matchType)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+            {getMatchLabel(matchType)}
+          </span>
+          <button
+            onClick={handleSaveToggle}
+            className={`p-2 rounded-lg transition-all ${
+              isSaved
+                ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+            }`}
+            title={isSaved ? 'Remove from saved jobs' : 'Save job for later'}
+          >
+            {isSaved ? (
+              <BookmarkCheck className="w-4 h-4" />
+            ) : (
+              <Bookmark className="w-4 h-4" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Job Title & Company */}
