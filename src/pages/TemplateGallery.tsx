@@ -239,10 +239,19 @@ export function TemplateGallery() {
               }`}
             >
               {/* Preview Image */}
-              <div className="relative aspect-[8.5/11] bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
-                {/* Actual template preview */}
-                <div className="absolute inset-0 flex items-center justify-center p-4 overflow-hidden">
-                  <div className="scale-[0.25] origin-top-left" style={{ width: '400%', height: '400%' }}>
+              <div className="relative aspect-[8.5/11] bg-white rounded-t-lg overflow-hidden border-b border-gray-200">
+                {/* Actual template preview with proper scaling */}
+                <div className="absolute inset-0 p-2 overflow-hidden">
+                  <div style={{
+                    transform: 'scale(0.32)',
+                    transformOrigin: 'top center',
+                    width: '8.5in',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginLeft: '-50%',
+                    left: '50%',
+                    position: 'relative'
+                  }}>
                     <TemplateRenderer
                       template={template}
                       resume={displayResume}
