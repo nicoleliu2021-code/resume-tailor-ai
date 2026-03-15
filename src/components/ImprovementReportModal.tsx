@@ -1,4 +1,4 @@
-import { CheckCircle, TrendingUp, Target, Sparkles, X, ExternalLink, Download } from 'lucide-react';
+import { CheckCircle, TrendingUp, Target, Sparkles, X, ExternalLink, Download, ArrowRight } from 'lucide-react';
 import type { StructuredResume } from '../types/resume';
 
 interface ImprovementReportModalProps {
@@ -89,38 +89,91 @@ export function ImprovementReportModal({
 
         {/* Content - Scrollable */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          {/* Impact Summary */}
+          {/* Impact Summary - Enhanced with Before/After */}
           <section>
             <div className="flex items-center gap-2 mb-4">
               <TrendingUp className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-lg font-bold text-gray-900">Impact Summary</h3>
+              <h3 className="text-lg font-bold text-gray-900">What Changed</h3>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <MetricCard
-                label="Bullet Points"
-                value={`${metrics.bulletPoints.after}`}
-                change={metrics.bulletPoints.change}
-                suffix="optimized"
-              />
-              <MetricCard
-                label="Keywords Added"
-                value={`+${metrics.keywords.added}`}
-                change={metrics.keywords.added}
-                suffix="matched"
-              />
-              <MetricCard
-                label="Impact Score"
-                value={`${metrics.impactScore}%`}
-                change={metrics.impactScore - 60}
-                suffix="stronger"
-              />
-              <MetricCard
-                label="ATS Compatibility"
-                value={`${metrics.readabilityScore}%`}
-                change={metrics.readabilityScore - 65}
-                suffix="optimized"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+              {/* Before/After Bullet Points */}
+              <div className="bg-gradient-to-br from-gray-50 to-blue-50 border-2 border-gray-300 rounded-xl p-4">
+                <p className="text-xs text-gray-600 font-semibold mb-2">BULLET POINTS</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Before</p>
+                    <p className="text-2xl font-bold text-gray-400">{metrics.bulletPoints.before}</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-indigo-600" />
+                  <div>
+                    <p className="text-sm text-indigo-700 font-semibold">After</p>
+                    <p className="text-2xl font-bold text-indigo-600">{metrics.bulletPoints.after}</p>
+                  </div>
+                </div>
+                {metrics.bulletPoints.change > 0 && (
+                  <p className="text-xs text-green-600 font-semibold mt-2">
+                    +{metrics.bulletPoints.change} more impact bullets
+                  </p>
+                )}
+              </div>
+
+              {/* Before/After Keywords */}
+              <div className="bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-300 rounded-xl p-4">
+                <p className="text-xs text-purple-600 font-semibold mb-2">KEYWORDS</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Before</p>
+                    <p className="text-2xl font-bold text-gray-400">—</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-purple-600" />
+                  <div>
+                    <p className="text-sm text-purple-700 font-semibold">After</p>
+                    <p className="text-2xl font-bold text-purple-600">+{metrics.keywords.added}</p>
+                  </div>
+                </div>
+                <p className="text-xs text-purple-600 font-semibold mt-2">
+                  Job-matched keywords added
+                </p>
+              </div>
+
+              {/* Impact Score */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-4">
+                <p className="text-xs text-green-700 font-semibold mb-2">IMPACT SCORE</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Before</p>
+                    <p className="text-2xl font-bold text-gray-400">60%</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-green-600" />
+                  <div>
+                    <p className="text-sm text-green-700 font-semibold">After</p>
+                    <p className="text-2xl font-bold text-green-600">{metrics.impactScore}%</p>
+                  </div>
+                </div>
+                <p className="text-xs text-green-600 font-semibold mt-2">
+                  +{metrics.impactScore - 60}% stronger
+                </p>
+              </div>
+
+              {/* ATS Compatibility */}
+              <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl p-4">
+                <p className="text-xs text-blue-700 font-semibold mb-2">ATS COMPATIBILITY</p>
+                <div className="flex items-center gap-3">
+                  <div>
+                    <p className="text-sm text-gray-500">Before</p>
+                    <p className="text-2xl font-bold text-gray-400">65%</p>
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-blue-600" />
+                  <div>
+                    <p className="text-sm text-blue-700 font-semibold">After</p>
+                    <p className="text-2xl font-bold text-blue-600">{metrics.readabilityScore}%</p>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-600 font-semibold mt-2">
+                  +{metrics.readabilityScore - 65}% optimized
+                </p>
+              </div>
             </div>
           </section>
 
@@ -254,20 +307,6 @@ export function ImprovementReportModal({
 }
 
 // Helper Components
-function MetricCard({ label, value, change, suffix }: { label: string; value: string; change: number; suffix: string }) {
-  return (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-3">
-      <p className="text-xs text-gray-600 mb-1">{label}</p>
-      <p className="text-2xl font-bold text-gray-900 mb-1">{value}</p>
-      {change > 0 && (
-        <p className="text-xs text-green-600 font-semibold">
-          +{change} {suffix}
-        </p>
-      )}
-    </div>
-  );
-}
-
 function ImprovementItem({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
     <div className="flex items-start gap-3 p-3 bg-white border border-gray-200 rounded-lg">
