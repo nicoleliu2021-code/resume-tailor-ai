@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare, BarChart3, StickyNote, Tag } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare, BarChart3, StickyNote, Tag, MoreVertical, Keyboard, Command } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats, updateVersion } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
@@ -40,12 +40,108 @@ export function VersionLibrary() {
   const [editedTags, setEditedTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState('');
   const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [quickActionsVersion, setQuickActionsVersion] = useState<string | null>(null);
 
   useEffect(() => {
     loadVersions();
     const preferredId = getPreferredTemplate();
     setPreferredTemplateId(preferredId);
   }, []);
+
+  // Close quick actions menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (quickActionsVersion) {
+        setQuickActionsVersion(null);
+      }
+    };
+
+    if (quickActionsVersion) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [quickActionsVersion]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Cmd/Ctrl + K: Show keyboard shortcuts
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+
+      // Cmd/Ctrl + N: Create new version
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        window.location.href = '/smart-selector';
+      }
+
+      // Cmd/Ctrl + F: Focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Search"]') as HTMLInputElement;
+        searchInput?.focus();
+      }
+
+      // Cmd/Ctrl + B: Toggle batch mode
+      if ((e.metaKey || e.ctrlKey) && e.key === 'b') {
+        e.preventDefault();
+        setIsBatchMode(!isBatchMode);
+        if (isBatchMode) setSelectedVersionIds(new Set());
+      }
+
+      // Cmd/Ctrl + Shift + C: Toggle compare mode
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'C') {
+        e.preventDefault();
+        setIsCompareMode(!isCompareMode);
+        if (isCompareMode) setCompareVersions([null, null]);
+      }
+
+      // Cmd/Ctrl + A: Show analytics (when not in batch mode or an input)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && !isBatchMode) {
+        e.preventDefault();
+        setShowAnalytics(true);
+      }
+
+      // Escape: Close modals
+      if (e.key === 'Escape') {
+        setShowKeyboardShortcuts(false);
+        setShowAnalytics(false);
+        if (previewVersion) {
+          setPreviewVersion(null);
+          setPreviewTemplate(null);
+        }
+        if (editingVersion) {
+          setEditingVersion(null);
+          setEditedContent(null);
+        }
+        if (editingNotesVersion) {
+          setEditingNotesVersion(null);
+          setEditedNotes('');
+          setEditedTags([]);
+        }
+      }
+
+      // ?: Show keyboard shortcuts
+      if (e.key === '?' && !e.shiftKey) {
+        e.preventDefault();
+        setShowKeyboardShortcuts(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isBatchMode, isCompareMode, previewVersion, editingVersion, editingNotesVersion]);
 
   const loadVersions = () => {
     const allVersions = getAllVersions();
@@ -456,13 +552,22 @@ export function VersionLibrary() {
                 </button>
               )}
               {!isBatchMode && !isCompareMode && (
-                <a
-                  href="/smart-selector"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
-                >
-                  <Plus className="w-5 h-5" />
-                  Create New Version
-                </a>
+                <>
+                  <button
+                    onClick={() => setShowKeyboardShortcuts(true)}
+                    className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors flex items-center gap-2"
+                    title="Keyboard Shortcuts (? or Cmd+K)"
+                  >
+                    <Keyboard className="w-5 h-5" />
+                  </button>
+                  <a
+                    href="/smart-selector"
+                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
+                  >
+                    <Plus className="w-5 h-5" />
+                    Create New Version
+                  </a>
+                </>
               )}
             </div>
           </div>
@@ -751,9 +856,94 @@ export function VersionLibrary() {
                           )}
                         </div>
                       </div>
-                      <div className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${getStatusColor(version.status)}`}>
-                        {getStatusIcon(version.status)}
-                        {version.status}
+                      <div className="flex items-center gap-2">
+                        <div className={`px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1 ${getStatusColor(version.status)}`}>
+                          {getStatusIcon(version.status)}
+                          {version.status}
+                        </div>
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setQuickActionsVersion(quickActionsVersion === version.id ? null : version.id);
+                            }}
+                            className="p-1 hover:bg-gray-100 rounded transition-colors"
+                            title="Quick Actions"
+                          >
+                            <MoreVertical className="w-4 h-4 text-gray-600" />
+                          </button>
+                          {quickActionsVersion === version.id && (
+                            <div className="absolute right-0 top-8 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExport(version);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Download className="w-4 h-4" />
+                                Export
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditNotes(version);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <StickyNote className="w-4 h-4" />
+                                Notes & Tags
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEdit(version);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                                Edit Content
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handlePreview(version);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Eye className="w-4 h-4" />
+                                Preview
+                              </button>
+                              <hr className="my-1" />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDuplicate(version.id, version.name);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <Copy className="w-4 h-4" />
+                                Duplicate
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(version.id, version.name);
+                                  setQuickActionsVersion(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -1622,6 +1812,125 @@ export function VersionLibrary() {
                     className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
                   >
                     Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Keyboard Shortcuts Modal */}
+        {showKeyboardShortcuts && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                      <Keyboard className="w-6 h-6 text-indigo-600" />
+                      Keyboard Shortcuts
+                    </h2>
+                    <p className="text-gray-600">
+                      Boost your productivity with these shortcuts
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowKeyboardShortcuts(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Shortcuts List */}
+                <div className="space-y-6">
+                  {/* General */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">General</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Show keyboard shortcuts</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">?</kbd>
+                          <span className="text-gray-400">or</span>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">K</kbd>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Focus search</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">F</kbd>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Close modal</span>
+                        <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">Esc</kbd>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">Actions</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Create new version</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">N</kbd>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Toggle batch mode</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">B</kbd>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Toggle compare mode</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⇧</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">C</kbd>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-700">Show analytics</span>
+                        <div className="flex items-center gap-1">
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">⌘</kbd>
+                          <kbd className="px-2 py-1 bg-white border border-gray-300 rounded text-xs font-mono">A</kbd>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tips */}
+                  <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                    <div className="flex items-start gap-3">
+                      <Command className="w-5 h-5 text-indigo-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <h4 className="font-semibold text-indigo-900 mb-1">Pro Tips</h4>
+                        <ul className="text-sm text-indigo-700 space-y-1">
+                          <li>• Use <kbd className="px-1 py-0.5 bg-white border border-indigo-300 rounded text-xs">Tab</kbd> to navigate between elements</li>
+                          <li>• Press <kbd className="px-1 py-0.5 bg-white border border-indigo-300 rounded text-xs">Enter</kbd> to quickly add tags</li>
+                          <li>• On Windows, use <kbd className="px-1 py-0.5 bg-white border border-indigo-300 rounded text-xs">Ctrl</kbd> instead of <kbd className="px-1 py-0.5 bg-white border border-indigo-300 rounded text-xs">⌘</kbd></li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Close Button */}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setShowKeyboardShortcuts(false)}
+                    className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+                  >
+                    Got it!
                   </button>
                 </div>
               </div>
