@@ -192,7 +192,7 @@ export function ImprovementReportModal({
                 title={jobUrl ? `Apply for ${jobTitle}` : `Search "${jobTitle}" on LinkedIn`}
               >
                 <ExternalLink className="w-5 h-5" />
-                <span>Apply for {jobTitle}</span>
+                <span>Apply Now</span>
               </a>
             </div>
 
