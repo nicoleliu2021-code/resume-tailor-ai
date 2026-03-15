@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
@@ -7,7 +7,9 @@ import { ExportMenu } from '../components/ExportMenu';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { JobsPanel } from '../components/jobs/JobsPanel';
+import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
 import { analyzeJobAPI } from '../services/api';
+import { getSavedJobs } from '../services/savedJobs';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -82,6 +84,20 @@ export function Optimizer() {
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [jobsPanelCollapsed, setJobsPanelCollapsed] = useState(false);
+  const [savedJobsPanelOpen, setSavedJobsPanelOpen] = useState(false);
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
+
+  // Update saved jobs count
+  useEffect(() => {
+    const updateSavedCount = () => {
+      const saved = getSavedJobs();
+      setSavedJobsCount(saved.length);
+    };
+    updateSavedCount();
+    // Listen for storage changes (in case saved from another tab)
+    window.addEventListener('storage', updateSavedCount);
+    return () => window.removeEventListener('storage', updateSavedCount);
+  }, []);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -226,6 +242,20 @@ export function Optimizer() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Saved Jobs Button */}
+              <button
+                onClick={() => setSavedJobsPanelOpen(true)}
+                className="relative flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-indigo-300 text-indigo-700 rounded-xl font-medium hover:bg-indigo-50 transition-colors text-sm"
+              >
+                <BookmarkCheck className="w-4 h-4" />
+                <span className="hidden sm:inline">Saved Jobs</span>
+                {savedJobsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                    {savedJobsCount}
+                  </span>
+                )}
+              </button>
+
               {!showUpload && (
                 <button
                   onClick={handleStartOver}
@@ -593,6 +623,25 @@ export function Optimizer() {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureName="Resume Optimization"
+      />
+
+      {/* Saved Jobs Panel */}
+      <SavedJobsPanel
+        isOpen={savedJobsPanelOpen}
+        onClose={() => {
+          setSavedJobsPanelOpen(false);
+          // Refresh saved jobs count
+          const saved = getSavedJobs();
+          setSavedJobsCount(saved.length);
+        }}
+        onJobSelect={(jobDescription, jobTitle) => {
+          setJobDescription(jobDescription);
+          setViewMode('upload');
+          setTimeout(() => {
+            const element = document.querySelector('[data-job-panel]');
+            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }}
       />
     </div>
   );
