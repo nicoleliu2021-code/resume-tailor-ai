@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check } from 'lucide-react';
-import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare } from 'lucide-react';
+import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats, updateVersion } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import { getPreferredTemplate } from '../services/templatePreference';
@@ -29,6 +29,10 @@ export function VersionLibrary() {
   const [isBatchMode, setIsBatchMode] = useState(false);
   const [batchExporting, setBatchExporting] = useState(false);
   const [batchProgress, setBatchProgress] = useState<{ current: number; total: number; currentVersion: string } | null>(null);
+  const [editingVersion, setEditingVersion] = useState<ResumeVersion | null>(null);
+  const [editedContent, setEditedContent] = useState<any>(null);
+  const [compareVersions, setCompareVersions] = useState<[ResumeVersion | null, ResumeVersion | null]>([null, null]);
+  const [isCompareMode, setIsCompareMode] = useState(false);
 
   useEffect(() => {
     loadVersions();
@@ -68,6 +72,61 @@ export function VersionLibrary() {
     // Use preferred template or default to first one
     const template = RESUME_TEMPLATES.find(t => t.id === preferredTemplateId) || RESUME_TEMPLATES[0];
     setPreviewTemplate(template);
+  };
+
+  const handleEdit = (version: ResumeVersion) => {
+    setEditingVersion(version);
+    setEditedContent({ ...version.optimizedContent });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingVersion || !editedContent) return;
+
+    updateVersion(editingVersion.id, {
+      optimizedContent: editedContent,
+      updatedAt: new Date(),
+    });
+
+    setEditingVersion(null);
+    setEditedContent(null);
+    loadVersions();
+  };
+
+  const updateExperienceBullet = (expIndex: number, bulletIndex: number, newText: string) => {
+    if (!editedContent) return;
+    const newExperience = [...editedContent.experience];
+    newExperience[expIndex].bullets[bulletIndex] = newText;
+    setEditedContent({ ...editedContent, experience: newExperience });
+  };
+
+  const addExperienceBullet = (expIndex: number) => {
+    if (!editedContent) return;
+    const newExperience = [...editedContent.experience];
+    newExperience[expIndex].bullets.push('');
+    setEditedContent({ ...editedContent, experience: newExperience });
+  };
+
+  const removeExperienceBullet = (expIndex: number, bulletIndex: number) => {
+    if (!editedContent) return;
+    const newExperience = [...editedContent.experience];
+    newExperience[expIndex].bullets.splice(bulletIndex, 1);
+    setEditedContent({ ...editedContent, experience: newExperience });
+  };
+
+  const handleCompareSelect = (version: ResumeVersion) => {
+    if (!compareVersions[0]) {
+      setCompareVersions([version, null]);
+    } else if (!compareVersions[1]) {
+      setCompareVersions([compareVersions[0], version]);
+    } else {
+      // Reset and start over
+      setCompareVersions([version, null]);
+    }
+  };
+
+  const clearComparison = () => {
+    setCompareVersions([null, null]);
+    setIsCompareMode(false);
   };
 
   const toggleVersionSelection = (versionId: string) => {
@@ -265,22 +324,52 @@ export function VersionLibrary() {
                   Export Selected ({selectedVersionIds.size})
                 </button>
               )}
+              {isCompareMode && compareVersions[0] && compareVersions[1] && (
+                <button
+                  onClick={clearComparison}
+                  className="px-4 py-2 bg-red-100 text-red-700 rounded-lg font-medium hover:bg-red-200 transition-colors"
+                >
+                  Clear Comparison
+                </button>
+              )}
               <button
                 onClick={() => {
-                  setIsBatchMode(!isBatchMode);
+                  setIsCompareMode(!isCompareMode);
+                  if (isCompareMode) {
+                    setCompareVersions([null, null]);
+                  }
                   if (isBatchMode) {
+                    setIsBatchMode(false);
                     setSelectedVersionIds(new Set());
                   }
                 }}
                 className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
-                  isBatchMode
-                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  isCompareMode
+                    ? 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                     : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
                 }`}
               >
-                {isBatchMode ? 'Cancel Batch Mode' : 'Batch Select'}
+                <GitCompare className="w-4 h-4" />
+                {isCompareMode ? 'Cancel Compare' : 'Compare'}
               </button>
-              {!isBatchMode && (
+              {!isCompareMode && (
+                <button
+                  onClick={() => {
+                    setIsBatchMode(!isBatchMode);
+                    if (isBatchMode) {
+                      setSelectedVersionIds(new Set());
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 ${
+                    isBatchMode
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {isBatchMode ? 'Cancel Batch Mode' : 'Batch Select'}
+                </button>
+              )}
+              {!isBatchMode && !isCompareMode && (
                 <a
                   href="/smart-selector"
                   className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors flex items-center gap-2"
@@ -410,17 +499,43 @@ export function VersionLibrary() {
           </div>
         )}
 
+        {/* Compare Mode Help */}
+        {isCompareMode && (
+          <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg flex items-center gap-3">
+            <GitCompare className="w-5 h-5 text-purple-600" />
+            <div className="flex-1">
+              <p className="text-sm font-medium text-purple-900">
+                {!compareVersions[0]
+                  ? 'Click on a version to select it for comparison (1 of 2)'
+                  : !compareVersions[1]
+                  ? 'Click on another version to compare (2 of 2)'
+                  : 'Comparing 2 versions'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Versions Grid */}
         {filteredVersions.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredVersions.map((version) => {
               const isSelected = selectedVersionIds.has(version.id);
+              const isInCompare = compareVersions[0]?.id === version.id || compareVersions[1]?.id === version.id;
+              const compareIndex = compareVersions[0]?.id === version.id ? 1 : compareVersions[1]?.id === version.id ? 2 : null;
+
               return (
                 <div
                   key={version.id}
-                  className={`bg-white rounded-lg shadow-sm border-2 hover:border-indigo-300 transition-all ${
-                    isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200'
-                  }`}
+                  onClick={() => {
+                    if (isCompareMode) {
+                      handleCompareSelect(version);
+                    }
+                  }}
+                  className={`bg-white rounded-lg shadow-sm border-2 transition-all ${
+                    isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' :
+                    isInCompare ? 'border-purple-500 ring-2 ring-purple-200' :
+                    'border-gray-200 hover:border-indigo-300'
+                  } ${isCompareMode ? 'cursor-pointer' : ''}`}
                 >
                   {/* Card Header */}
                   <div className="p-4 border-b border-gray-200">
@@ -428,7 +543,10 @@ export function VersionLibrary() {
                       <div className="flex items-start gap-2 flex-1">
                         {isBatchMode && (
                           <button
-                            onClick={() => toggleVersionSelection(version.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleVersionSelection(version.id);
+                            }}
                             className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
                               isSelected
                                 ? 'bg-indigo-600 border-indigo-600'
@@ -437,6 +555,11 @@ export function VersionLibrary() {
                           >
                             {isSelected && <Check className="w-4 h-4 text-white" />}
                           </button>
+                        )}
+                        {isCompareMode && isInCompare && (
+                          <div className="mt-1 w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">
+                            {compareIndex}
+                          </div>
                         )}
                         <div className="flex-1">
                           <h3 className="font-semibold text-gray-900 text-lg mb-1">{version.name}</h3>
@@ -510,6 +633,13 @@ export function VersionLibrary() {
                   >
                     <Download className="w-4 h-4" />
                     Export
+                  </button>
+                  <button
+                    onClick={() => handleEdit(version)}
+                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                    title="Edit"
+                  >
+                    <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handlePreview(version)}
@@ -816,6 +946,321 @@ export function VersionLibrary() {
                     className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
                   >
                     Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Modal */}
+        {editingVersion && editedContent && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      Edit Resume Content
+                    </h2>
+                    <p className="text-gray-600">
+                      {editingVersion.name} • {editingVersion.targetRole}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingVersion(null);
+                      setEditedContent(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Summary Section */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Professional Summary
+                  </label>
+                  <textarea
+                    value={editedContent.summary || ''}
+                    onChange={(e) => setEditedContent({ ...editedContent, summary: e.target.value })}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="Write a compelling professional summary..."
+                  />
+                </div>
+
+                {/* Experience Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Experience</h3>
+                  {editedContent.experience && editedContent.experience.map((exp: any, expIndex: number) => (
+                    <div key={expIndex} className="mb-6 p-4 bg-gray-50 rounded-lg">
+                      <div className="mb-3">
+                        <h4 className="font-semibold text-gray-900">{exp.role}</h4>
+                        <p className="text-sm text-gray-600">{exp.company}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Achievements
+                        </label>
+                        {exp.bullets && exp.bullets.map((bullet: string, bulletIndex: number) => (
+                          <div key={bulletIndex} className="flex items-start gap-2">
+                            <textarea
+                              value={bullet}
+                              onChange={(e) => updateExperienceBullet(expIndex, bulletIndex, e.target.value)}
+                              rows={2}
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                            />
+                            <button
+                              onClick={() => removeExperienceBullet(expIndex, bulletIndex)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                              title="Remove"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          onClick={() => addExperienceBullet(expIndex)}
+                          className="px-3 py-1 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        >
+                          + Add Achievement
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Skills Section */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Skills (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={editedContent.skills?.map((s: any) => s.name).join(', ') || ''}
+                    onChange={(e) => {
+                      const skillNames = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                      const newSkills = skillNames.map((name, index) => ({
+                        id: `skill-${index}`,
+                        name,
+                        category: editedContent.skills?.[index]?.category || 'technical',
+                        proficiency: editedContent.skills?.[index]?.proficiency || 'intermediate',
+                      }));
+                      setEditedContent({ ...editedContent, skills: newSkills });
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    placeholder="JavaScript, React, Node.js, etc."
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSaveEdit}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg font-semibold hover:from-green-700 hover:to-emerald-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-5 h-5" />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingVersion(null);
+                      setEditedContent(null);
+                    }}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Comparison Modal */}
+        {compareVersions[0] && compareVersions[1] && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-7xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      Compare Resume Versions
+                    </h2>
+                    <p className="text-gray-600">
+                      Side-by-side comparison of resume content
+                    </p>
+                  </div>
+                  <button
+                    onClick={clearComparison}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Comparison Grid */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Version 1 */}
+                  <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">
+                          1
+                        </div>
+                        <h3 className="font-bold text-gray-900">{compareVersions[0].name}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">{compareVersions[0].targetRole}</p>
+                      {compareVersions[0].targetCompany && (
+                        <p className="text-sm text-gray-500">{compareVersions[0].targetCompany}</p>
+                      )}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Summary</h4>
+                      <p className="text-sm text-gray-600 bg-white rounded p-2">
+                        {compareVersions[0].optimizedContent.summary || 'No summary'}
+                      </p>
+                    </div>
+
+                    {/* Experience */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        Experience ({compareVersions[0].optimizedContent.experience?.length || 0})
+                      </h4>
+                      <div className="space-y-2 bg-white rounded p-2">
+                        {compareVersions[0].optimizedContent.experience?.map((exp: any, idx: number) => (
+                          <div key={idx} className="text-sm">
+                            <p className="font-medium text-gray-900">{exp.role}</p>
+                            <p className="text-xs text-gray-600">{exp.company}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {exp.bullets?.length || 0} achievements
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Skills */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        Skills ({compareVersions[0].optimizedContent.skills?.length || 0})
+                      </h4>
+                      <div className="flex flex-wrap gap-1 bg-white rounded p-2">
+                        {compareVersions[0].optimizedContent.skills?.slice(0, 10).map((skill: any, idx: number) => (
+                          <span key={idx} className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
+                            {skill.name}
+                          </span>
+                        ))}
+                        {compareVersions[0].optimizedContent.skills?.length > 10 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                            +{compareVersions[0].optimizedContent.skills.length - 10} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white rounded p-2">
+                        <p className="text-gray-500">Export Count</p>
+                        <p className="font-bold text-gray-900">{compareVersions[0].exportCount}</p>
+                      </div>
+                      <div className="bg-white rounded p-2">
+                        <p className="text-gray-500">Status</p>
+                        <p className="font-bold text-gray-900 capitalize">{compareVersions[0].status}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Version 2 */}
+                  <div className="border-2 border-purple-300 rounded-lg p-4 bg-purple-50">
+                    <div className="mb-4">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">
+                          2
+                        </div>
+                        <h3 className="font-bold text-gray-900">{compareVersions[1].name}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600">{compareVersions[1].targetRole}</p>
+                      {compareVersions[1].targetCompany && (
+                        <p className="text-sm text-gray-500">{compareVersions[1].targetCompany}</p>
+                      )}
+                    </div>
+
+                    {/* Summary */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">Summary</h4>
+                      <p className="text-sm text-gray-600 bg-white rounded p-2">
+                        {compareVersions[1].optimizedContent.summary || 'No summary'}
+                      </p>
+                    </div>
+
+                    {/* Experience */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        Experience ({compareVersions[1].optimizedContent.experience?.length || 0})
+                      </h4>
+                      <div className="space-y-2 bg-white rounded p-2">
+                        {compareVersions[1].optimizedContent.experience?.map((exp: any, idx: number) => (
+                          <div key={idx} className="text-sm">
+                            <p className="font-medium text-gray-900">{exp.role}</p>
+                            <p className="text-xs text-gray-600">{exp.company}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {exp.bullets?.length || 0} achievements
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Skills */}
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-sm text-gray-700 mb-2">
+                        Skills ({compareVersions[1].optimizedContent.skills?.length || 0})
+                      </h4>
+                      <div className="flex flex-wrap gap-1 bg-white rounded p-2">
+                        {compareVersions[1].optimizedContent.skills?.slice(0, 10).map((skill: any, idx: number) => (
+                          <span key={idx} className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">
+                            {skill.name}
+                          </span>
+                        ))}
+                        {compareVersions[1].optimizedContent.skills?.length > 10 && (
+                          <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded">
+                            +{compareVersions[1].optimizedContent.skills.length - 10} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-white rounded p-2">
+                        <p className="text-gray-500">Export Count</p>
+                        <p className="font-bold text-gray-900">{compareVersions[1].exportCount}</p>
+                      </div>
+                      <div className="bg-white rounded p-2">
+                        <p className="text-gray-500">Status</p>
+                        <p className="font-bold text-gray-900 capitalize">{compareVersions[1].status}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="mt-6 flex items-center gap-4">
+                  <button
+                    onClick={clearComparison}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Close Comparison
                   </button>
                 </div>
               </div>
