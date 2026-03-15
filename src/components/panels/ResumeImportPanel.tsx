@@ -72,12 +72,12 @@ export function ResumeImportPanel({ onComplete }: Props) {
         </div>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-gray-900">Step 1: Upload Resume</h2>
+            <h2 className="text-lg font-bold text-gray-900">Step 1: Upload Your Resume</h2>
             <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs font-semibold rounded-full">
               Required
             </span>
           </div>
-          <p className="text-sm text-gray-600 mt-0.5">We'll analyze your experience and optimize it</p>
+          <p className="text-sm text-gray-600 mt-0.5">AI will tailor it to match the exact job you want</p>
         </div>
       </div>
 
