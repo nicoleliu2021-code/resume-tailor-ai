@@ -6,7 +6,7 @@ import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ExportMenu } from '../components/ExportMenu';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
-// import { RecommendedJobsPanel } from '../components/panels/RecommendedJobsPanel';
+import { JobsPanel } from '../components/jobs/JobsPanel';
 import { analyzeJobAPI } from '../services/api';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
@@ -81,7 +81,7 @@ export function Optimizer() {
   const [viewMode, setViewMode] = useState<ViewMode>('upload');
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
-  // const [swappingJob, setSwappingJob] = useState(false);
+  const [jobsPanelCollapsed, setJobsPanelCollapsed] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -282,19 +282,41 @@ export function Optimizer() {
               </div>
             ) : (
               // Upload Panels
-              <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <ResumeImportPanel />
-                <JobAnalyzerPanel />
+              <div className="max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                  <ResumeImportPanel />
+                  <JobAnalyzerPanel />
 
-                {analysisError && (
-                  <div className="col-span-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
-                    <p className="text-sm text-red-800 font-medium">{analysisError}</p>
-                    <button
-                      onClick={() => setAnalysisError('')}
-                      className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline"
-                    >
-                      Dismiss
-                    </button>
+                  {analysisError && (
+                    <div className="col-span-2 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                      <p className="text-sm text-red-800 font-medium">{analysisError}</p>
+                      <button
+                        onClick={() => setAnalysisError('')}
+                        className="mt-2 text-sm text-red-600 hover:text-red-700 font-semibold underline"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Jobs Discovery Panel - Shows after resume upload */}
+                {resume && (
+                  <div className="mt-6">
+                    <JobsPanel
+                      resume={resume}
+                      onJobSelect={(jobDescription, jobTitle) => {
+                        console.log('[Optimizer] Job selected:', jobTitle);
+                        setJobDescription(jobDescription);
+                        // Scroll to job description panel
+                        setTimeout(() => {
+                          const element = document.querySelector('[data-job-panel]');
+                          element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }, 100);
+                      }}
+                      isCollapsed={jobsPanelCollapsed}
+                      onToggle={() => setJobsPanelCollapsed(!jobsPanelCollapsed)}
+                    />
                   </div>
                 )}
               </div>

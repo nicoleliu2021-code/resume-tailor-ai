@@ -79,3 +79,33 @@ export interface SkillCoverage {
   coverage: number; // 0-100
   inResume: boolean;
 }
+
+// Job Discovery Types
+export interface JobTemplate {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  remote: boolean;
+  description: string;
+  requiredSkills: string[];
+  preferredSkills: string[];
+  yearsOfExperience: number;
+  seniorityLevel: string;
+  industry: string;
+  tools: string[];
+  salary?: string;
+}
+
+export interface JobMatch {
+  job: JobTemplate;
+  fitScore: number;
+  matchReasons: string[];
+  missingSkills: string[];
+  matchType: 'direct' | 'stretch' | 'adjacent';
+}
+
+export interface JobDiscoveryResponse {
+  jobs: JobMatch[];
+  totalFound: number;
+}

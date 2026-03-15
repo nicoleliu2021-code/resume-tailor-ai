@@ -46,7 +46,7 @@ export function JobAnalyzerPanel() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-xl transition-shadow">
+    <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-xl transition-shadow" data-job-panel>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
           <Briefcase className="w-6 h-6 text-white" />

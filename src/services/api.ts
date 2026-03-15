@@ -1,4 +1,4 @@
-import type { StructuredResume, JobAnalysis } from '../types/resume';
+import type { StructuredResume, JobAnalysis, JobDiscoveryResponse } from '../types/resume';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -100,4 +100,28 @@ export async function parsePDFAPI(file: File): Promise<string> {
   const data = await response.json();
   console.log('[API] Success! Text length:', data.text?.length);
   return data.text;
+}
+
+export async function discoverJobsAPI(resume: StructuredResume): Promise<JobDiscoveryResponse> {
+  console.log('[API] discoverJobsAPI called');
+
+  const response = await fetch(`${API_BASE_URL}/api/job/discover`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ resume }),
+  });
+
+  console.log('[API] Response status:', response.status, response.ok);
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    console.error('[API] Error response:', error);
+    throw new Error(error.detail || 'Failed to discover jobs');
+  }
+
+  const data = await response.json();
+  console.log('[API] Success! Found', data.totalFound, 'jobs');
+  return data;
 }
