@@ -134,3 +134,33 @@ class JobRecommendationsRequest(BaseModel):
 class JobRecommendationsResponse(BaseModel):
     recommendations: List[RecommendedJob]
     reasoning: str  # Why these alternatives were recommended
+
+# Job Discovery Schemas (Proactive Feature)
+class JobTemplate(BaseModel):
+    id: str
+    title: str
+    company: str
+    location: str
+    remote: bool
+    description: str
+    requiredSkills: List[str]
+    preferredSkills: List[str]
+    yearsOfExperience: int
+    seniorityLevel: str  # "junior", "mid", "senior", "lead", "executive"
+    industry: str
+    tools: List[str]
+    salary: Optional[str] = None
+
+class JobMatch(BaseModel):
+    job: JobTemplate
+    fitScore: int  # 0-100
+    matchReasons: List[str]  # Why this job matches
+    missingSkills: List[str]  # Skills user doesn't have
+    matchType: str  # "direct", "stretch", "adjacent"
+
+class JobDiscoveryRequest(BaseModel):
+    resume: StructuredResume
+
+class JobDiscoveryResponse(BaseModel):
+    jobs: List[JobMatch]
+    totalFound: int

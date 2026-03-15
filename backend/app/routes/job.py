@@ -5,9 +5,12 @@ from app.models.schemas import (
     FetchJobUrlRequest,
     JobRecommendationsRequest,
     JobRecommendationsResponse,
-    RecommendedJob
+    RecommendedJob,
+    JobDiscoveryRequest,
+    JobDiscoveryResponse
 )
 from app.services.openai_service import analyze_job_description, get_job_recommendations
+from app.services.job_matcher import match_jobs
 import requests
 from bs4 import BeautifulSoup
 
@@ -114,4 +117,40 @@ async def recommend_jobs(request: JobRecommendationsRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate job recommendations: {str(e)}"
+        )
+
+@router.post("/discover", response_model=JobDiscoveryResponse)
+async def discover_jobs(request: JobDiscoveryRequest):
+    """
+    Discover relevant jobs based on resume (proactive feature).
+    Returns curated job matches ranked by relevance score.
+    """
+    try:
+        print(f"[DEBUG] Discovering jobs for resume with {len(request.resume.experience)} experiences")
+
+        # Match resume against job templates
+        job_matches = match_jobs(
+            resume=request.resume,
+            limit=5,  # Return top 5 matches
+            min_score=60.0  # Only show jobs with 60%+ match
+        )
+
+        print(f"[DEBUG] Found {len(job_matches)} matching jobs")
+
+        # Log top matches for debugging
+        for match in job_matches[:3]:
+            print(f"  - {match.job.title}: {match.fitScore}% match")
+
+        return JobDiscoveryResponse(
+            jobs=job_matches,
+            totalFound=len(job_matches)
+        )
+
+    except Exception as e:
+        print(f"[ERROR] Failed to discover jobs: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to discover jobs: {str(e)}"
         )
