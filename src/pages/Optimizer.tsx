@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList, ExternalLink } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
@@ -273,17 +273,16 @@ export function Optimizer() {
                 )}
               </button>
 
-              {/* Apply Now Button - only show in optimized view if job URL exists */}
-              {showOptimized && currentJobUrl && (
+              {/* Apply Now Button - always show in optimized view */}
+              {showOptimized && (
                 <a
-                  href={currentJobUrl}
+                  href={currentJobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm shadow-md hover:shadow-lg"
+                  title={currentJobUrl ? 'Apply to this job' : 'Search for this job on LinkedIn'}
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
+                  <ExternalLink className="w-4 h-4" />
                   <span className="hidden sm:inline">Apply Now</span>
                   <span className="sm:hidden">Apply</span>
                 </a>
