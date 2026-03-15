@@ -6,8 +6,6 @@ import {
   HeadingLevel,
   AlignmentType,
   BorderStyle,
-  TabStopType,
-  TabStopPosition,
 } from 'docx';
 import { saveAs } from 'file-saver';
 import type { ResumeTemplateData } from '../types/resumeTemplate';
@@ -91,9 +89,13 @@ function generateDocumentContent(data: ResumeTemplateData): Paragraph[] {
   if (data.targetRole) {
     content.push(
       new Paragraph({
-        text: data.targetRole,
+        children: [
+          new TextRun({
+            text: data.targetRole,
+            bold: true,
+          }),
+        ],
         alignment: AlignmentType.CENTER,
-        bold: true,
         spacing: { after: 200 },
       })
     );
@@ -221,8 +223,12 @@ function generateDocumentContent(data: ResumeTemplateData): Paragraph[] {
 
       content.push(
         new Paragraph({
-          text: degreeParts.join(' • '),
-          italics: true,
+          children: [
+            new TextRun({
+              text: degreeParts.join(' • '),
+              italics: true,
+            }),
+          ],
           spacing: { after: 50 },
         })
       );
@@ -260,8 +266,12 @@ function generateDocumentContent(data: ResumeTemplateData): Paragraph[] {
 
       content.push(
         new Paragraph({
-          text: headerParts.join(' | '),
-          bold: true,
+          children: [
+            new TextRun({
+              text: headerParts.join(' | '),
+              bold: true,
+            }),
+          ],
           spacing: { before: idx === 0 ? 0 : 150, after: 50 },
         })
       );
@@ -319,9 +329,13 @@ function generateDocumentContent(data: ResumeTemplateData): Paragraph[] {
     data.publications.forEach((pub) => {
       content.push(
         new Paragraph({
-          text: pub.title,
-          italics: true,
-          bold: true,
+          children: [
+            new TextRun({
+              text: pub.title,
+              italics: true,
+              bold: true,
+            }),
+          ],
           spacing: { after: 50 },
         })
       );

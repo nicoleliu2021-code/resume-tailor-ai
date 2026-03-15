@@ -1,4 +1,4 @@
-import type { StructuredResume } from '../types/resume';
+import type { StructuredResume, Skill } from '../types/resume';
 import type { ResumeTemplateData } from '../types/resumeTemplate';
 
 /**
@@ -23,10 +23,10 @@ export function convertStructuredResumeToTemplate(
     // Experience
     experience: (resume.experience || []).map((exp) => ({
       company: exp.company,
-      role: exp.title,
+      role: exp.role, // Note: using 'role' not 'title'
       location: exp.location,
       startDate: formatDate(exp.startDate),
-      endDate: exp.endDate || 'Present',
+      endDate: exp.current ? 'Present' : formatDate(exp.endDate),
       bullets: exp.bullets || [],
     })),
 
@@ -35,13 +35,13 @@ export function convertStructuredResumeToTemplate(
 
     // Education
     education: (resume.education || []).map((edu) => ({
-      institution: edu.institution,
+      institution: edu.school, // Note: using 'school' not 'institution'
       degree: edu.degree,
       field: edu.field,
-      location: edu.location,
-      graduationDate: edu.graduationDate || '',
+      location: undefined, // Not in original type
+      graduationDate: formatDate(edu.endDate),
       gpa: edu.gpa,
-      honors: edu.honors,
+      honors: undefined, // Not in original type
     })),
 
     // Projects
@@ -49,8 +49,8 @@ export function convertStructuredResumeToTemplate(
       name: project.name,
       description: project.description,
       technologies: project.technologies,
-      link: project.link,
-      date: project.date,
+      link: project.url, // Note: using 'url' not 'link'
+      date: undefined, // Not in original type
     })),
   };
 }
@@ -203,12 +203,13 @@ function formatDate(date: string | Date | undefined): string {
 export function convertTemplateToStructuredResume(
   template: ResumeTemplateData
 ): StructuredResume {
-  // Flatten skills back to array format
-  const skillsArray = Object.entries(template.skills || {}).flatMap(
+  // Flatten skills back to array format with proper types
+  const skillsArray: Skill[] = Object.entries(template.skills || {}).flatMap(
     ([category, skills]) => {
       return (skills || []).map((skill) => ({
+        id: `skill_${Math.random().toString(36).substr(2, 9)}`,
         name: skill,
-        category,
+        category: mapCategoryToSkillType(category),
       }));
     }
   );
@@ -220,25 +221,49 @@ export function convertTemplateToStructuredResume(
     linkedin: template.linkedin,
     location: template.location,
     summary: template.summary,
-    experience: (template.experience || []).map((exp) => ({
+    experience: (template.experience || []).map((exp, idx) => ({
+      id: `exp_${idx}_${Date.now()}`,
       company: exp.company,
-      title: exp.role,
+      role: exp.role,
       location: exp.location,
       startDate: exp.startDate,
-      endDate: exp.endDate,
-      duration: `${exp.startDate} - ${exp.endDate}`,
+      endDate: exp.endDate === 'Present' ? new Date().toISOString().split('T')[0] : exp.endDate,
+      current: exp.endDate === 'Present',
       bullets: exp.bullets,
     })),
-    education: (template.education || []).map((edu) => ({
-      institution: edu.institution,
+    education: (template.education || []).map((edu, idx) => ({
+      id: `edu_${idx}_${Date.now()}`,
+      school: edu.institution,
       degree: edu.degree,
-      field: edu.field,
-      location: edu.location,
-      graduationDate: edu.graduationDate,
+      field: edu.field || '',
+      startDate: '', // Not available in template format
+      endDate: edu.graduationDate,
       gpa: edu.gpa,
-      honors: edu.honors,
     })),
     skills: skillsArray,
-    projects: template.projects || [],
+    projects: (template.projects || []).map((proj, idx) => ({
+      id: `proj_${idx}_${Date.now()}`,
+      name: proj.name,
+      description: proj.description,
+      technologies: proj.technologies || [],
+      url: proj.link,
+    })),
   };
+}
+
+// Helper to map template categories to Skill type categories
+function mapCategoryToSkillType(
+  category: string
+): 'technical' | 'soft' | 'language' | 'tool' {
+  const lowerCategory = category.toLowerCase();
+  if (lowerCategory.includes('language')) return 'language';
+  if (lowerCategory.includes('tool') || lowerCategory.includes('platform'))
+    return 'tool';
+  if (
+    lowerCategory.includes('leadership') ||
+    lowerCategory.includes('soft') ||
+    lowerCategory.includes('management')
+  )
+    return 'soft';
+  return 'technical';
 }
