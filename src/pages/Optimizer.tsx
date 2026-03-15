@@ -88,6 +88,7 @@ export function Optimizer() {
   const [savedJobsPanelOpen, setSavedJobsPanelOpen] = useState(false);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
   const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
+  const [currentJobUrl, setCurrentJobUrl] = useState<string | undefined>(undefined);
 
   // Update saved jobs count
   useEffect(() => {
@@ -281,6 +282,7 @@ export function Optimizer() {
                 <ExportMenu
                   resume={resume}
                   onUpgradeNeeded={() => setShowUpgradeModal(true)}
+                  jobUrl={currentJobUrl}
                 />
               )}
             </div>
@@ -346,9 +348,10 @@ export function Optimizer() {
                   <div className="mt-6">
                     <JobsPanel
                       resume={resume}
-                      onJobSelect={(jobDescription, jobTitle) => {
+                      onJobSelect={(jobDescription, jobTitle, jobUrl) => {
                         console.log('[Optimizer] Job selected:', jobTitle);
                         setJobDescription(jobDescription);
+                        setCurrentJobUrl(jobUrl);
                         // Scroll to job description panel
                         setTimeout(() => {
                           const element = document.querySelector('[data-job-panel]');
@@ -645,8 +648,9 @@ export function Optimizer() {
           const saved = getSavedJobs();
           setSavedJobsCount(saved.length);
         }}
-        onJobSelect={(jobDescription) => {
+        onJobSelect={(jobDescription, jobTitle, jobUrl) => {
           setJobDescription(jobDescription);
+          setCurrentJobUrl(jobUrl);
           setViewMode('upload');
           setTimeout(() => {
             const element = document.querySelector('[data-job-panel]');
