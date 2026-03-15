@@ -1,20 +1,15 @@
 import { X, TrendingUp, CheckCircle, ArrowRight } from 'lucide-react';
 import { InsightCard } from './InsightCard';
 import type { OptimizationInsights } from '../../types/insights';
-import type { StructuredResume } from '../../types/resume';
 
 interface InsightsModalProps {
   insights: OptimizationInsights;
-  originalResume: StructuredResume;
-  optimizedResume: StructuredResume;
   onContinue: () => void;
   onViewComparison: () => void;
 }
 
 export function InsightsModal({
   insights,
-  originalResume,
-  optimizedResume,
   onContinue,
   onViewComparison,
 }: InsightsModalProps) {

@@ -62,7 +62,7 @@ export function StatusTransitionModal({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   const nextStatus = getNextStatus(currentStatus);
-  const config = transitionConfig[nextStatus];
+  const config = transitionConfig[nextStatus as keyof typeof transitionConfig];
 
   if (!config) return null;
 
@@ -98,7 +98,7 @@ export function StatusTransitionModal({
           </div>
 
           {/* Date Field */}
-          {config.fields.includes('date') && (
+          {config.fields.includes('date' as any) && (
             <div className="mb-4">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                 <Calendar className="w-4 h-4" />
@@ -114,7 +114,7 @@ export function StatusTransitionModal({
           )}
 
           {/* Notes Field */}
-          {config.fields.includes('notes') && (
+          {config.fields.includes('notes' as any) && (
             <div className="mb-6">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
                 <FileText className="w-4 h-4" />

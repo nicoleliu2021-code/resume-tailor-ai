@@ -5,7 +5,7 @@ import type { Application, ApplicationStatus } from '../../types/application';
 interface ApplicationDetailsProps {
   application: Application;
   onClose: () => void;
-  onStatusChange: (newStatus: ApplicationStatus) => void;
+  onStatusChange: () => void;
 }
 
 export function ApplicationDetails({ application, onClose, onStatusChange }: ApplicationDetailsProps) {
@@ -205,7 +205,7 @@ export function ApplicationDetails({ application, onClose, onStatusChange }: App
             <div className="flex gap-3">
               {nextAction && (
                 <button
-                  onClick={() => onStatusChange(nextAction.status)}
+                  onClick={onStatusChange}
                   className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-bold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
                 >
                   <span>{nextAction.label}</span>

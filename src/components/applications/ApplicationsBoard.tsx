@@ -20,7 +20,7 @@ export function ApplicationsBoard() {
     setSelectedApp(app);
   };
 
-  const handleStatusChange = (app: Application, newStatus: ApplicationStatus) => {
+  const handleStatusChange = (app: Application) => {
     setTransitionApp(app);
   };
 
@@ -63,7 +63,7 @@ export function ApplicationsBoard() {
         <ApplicationDetails
           application={selectedApp}
           onClose={() => setSelectedApp(null)}
-          onStatusChange={(newStatus) => handleStatusChange(selectedApp, newStatus)}
+          onStatusChange={() => handleStatusChange(selectedApp)}
         />
       )}
 

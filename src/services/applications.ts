@@ -5,7 +5,7 @@ const MAX_APPLICATIONS = 100; // Prevent unlimited growth
 
 // Helper to serialize dates
 function serializeApplication(app: Application): string {
-  return JSON.stringify(app, (key, value) => {
+  return JSON.stringify(app, (_key, value) => {
     if (value instanceof Date) {
       return value.toISOString();
     }
