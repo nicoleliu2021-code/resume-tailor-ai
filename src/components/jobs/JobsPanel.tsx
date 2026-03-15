@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X } from 'lucide-react';
 import { JobCard } from './JobCard';
+import { JobPreviewModal } from './JobPreviewModal';
 import { discoverJobsAPI } from '../../services/api';
 import type { StructuredResume, JobMatch } from '../../types/resume';
 
@@ -16,6 +17,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showAll, setShowAll] = useState(false);
+  const [previewJob, setPreviewJob] = useState<JobMatch | null>(null);
 
   // Auto-load jobs when resume is available
   useEffect(() => {
@@ -158,6 +160,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
                 key={jobMatch.job.id}
                 jobMatch={jobMatch}
                 onTailorClick={() => handleTailorClick(jobMatch)}
+                onPreviewClick={() => setPreviewJob(jobMatch)}
               />
             ))}
           </div>
@@ -180,6 +183,18 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
             </p>
           </div>
         </>
+      )}
+
+      {/* Job Preview Modal */}
+      {previewJob && (
+        <JobPreviewModal
+          jobMatch={previewJob}
+          onClose={() => setPreviewJob(null)}
+          onTailorClick={() => {
+            handleTailorClick(previewJob);
+            setPreviewJob(null);
+          }}
+        />
       )}
     </div>
   );
