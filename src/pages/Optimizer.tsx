@@ -77,7 +77,7 @@ function QuickFixCard({ icon, title, impact, time, onClick }: QuickFixProps) {
 }
 
 export function Optimizer() {
-  const { resume, originalResume, setOriginalResume, jobDescription, jobAnalysis, setResume, setJobDescription, setJobAnalysis } = useResume();
+  const { resume, originalResume, setOriginalResume, jobDescription, jobUrl, jobAnalysis, setResume, setJobDescription, setJobUrl, setJobAnalysis } = useResume();
   const { canUseFeature, incrementUsage } = useSubscription();
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [analysisError, setAnalysisError] = useState('');
@@ -89,7 +89,6 @@ export function Optimizer() {
   const [savedJobsPanelOpen, setSavedJobsPanelOpen] = useState(false);
   const [savedJobsCount, setSavedJobsCount] = useState(0);
   const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
-  const [currentJobUrl, setCurrentJobUrl] = useState<string | undefined>(undefined);
   const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
   const [showImprovementReport, setShowImprovementReport] = useState(false);
 
@@ -118,6 +117,8 @@ export function Optimizer() {
       setResume(null);
       setOriginalResume(null);
       setJobDescription('');
+      setJobUrl('');
+      setCurrentJobTitle('');
       setJobAnalysis(null);
       setLoadingStep(null);
       setAnalysisError('');
@@ -276,11 +277,11 @@ export function Optimizer() {
               {/* Apply Now Button - always show in optimized view */}
               {showOptimized && (
                 <a
-                  href={currentJobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`}
+                  href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm shadow-md hover:shadow-lg"
-                  title={currentJobUrl ? 'Apply to this job' : 'Search for this job on LinkedIn'}
+                  title={jobUrl ? 'Apply to this job' : 'Search for this job on LinkedIn'}
                 >
                   <ExternalLink className="w-4 h-4" />
                   <span className="hidden sm:inline">Apply Now</span>
@@ -302,7 +303,7 @@ export function Optimizer() {
                 <ExportMenu
                   resume={resume}
                   onUpgradeNeeded={() => setShowUpgradeModal(true)}
-                  jobUrl={currentJobUrl}
+                  jobUrl={jobUrl}
                 />
               )}
             </div>
@@ -372,7 +373,7 @@ export function Optimizer() {
                         console.log('[Optimizer] Job selected:', jobTitle);
                         setJobDescription(jobDescription);
                         setCurrentJobTitle(jobTitle);
-                        setCurrentJobUrl(jobUrl);
+                        setJobUrl(jobUrl || '');
                         // Scroll to job description panel
                         setTimeout(() => {
                           const element = document.querySelector('[data-job-panel]');
@@ -542,10 +543,10 @@ export function Optimizer() {
                     <p className="text-green-700 mb-3">
                       Your resume has been optimized and is ready to export. Score improved from {resumeScore - 18} to <span className="font-bold">{resumeScore}</span>.
                     </p>
-                    {currentJobUrl && (
+                    {jobUrl && (
                       <div className="flex flex-wrap gap-3">
                         <a
-                          href={currentJobUrl}
+                          href={jobUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
@@ -684,15 +685,15 @@ export function Optimizer() {
           originalResume={originalResume}
           optimizedResume={resume}
           jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
-          jobUrl={currentJobUrl}
+          jobUrl={jobUrl}
           onContinue={() => {
             setShowImprovementReport(false);
             setViewMode('optimized');
           }}
           onApplyNow={() => {
             setShowImprovementReport(false);
-            if (currentJobUrl) {
-              window.open(currentJobUrl, '_blank');
+            if (jobUrl) {
+              window.open(jobUrl, '_blank');
             }
           }}
           onExport={() => {
@@ -725,7 +726,7 @@ export function Optimizer() {
         onJobSelect={(jobDescription, jobTitle, jobUrl) => {
           setJobDescription(jobDescription);
           setCurrentJobTitle(jobTitle);
-          setCurrentJobUrl(jobUrl);
+          setJobUrl(jobUrl || '');
           setViewMode('upload');
           setTimeout(() => {
             const element = document.querySelector('[data-job-panel]');
