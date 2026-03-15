@@ -32,7 +32,8 @@ Requirements:
         "seniorityLevel": "senior",
         "industry": "SaaS",
         "tools": ["Jira", "Figma", "SQL", "Google Analytics"],
-        "salary": "$140K - $180K"
+        "salary": "$140K - $180K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Senior%20Product%20Manager"
     },
 
     # Software Engineering
@@ -63,7 +64,8 @@ Requirements:
         "seniorityLevel": "senior",
         "industry": "Tech",
         "tools": ["React", "Node.js", "PostgreSQL", "Git"],
-        "salary": "$150K - $190K"
+        "salary": "$150K - $190K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Senior%20Software%20Engineer%20React"
     },
 
     {
@@ -93,7 +95,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "FinTech",
         "tools": ["React", "Python", "PostgreSQL", "Docker"],
-        "salary": "$120K - $160K"
+        "salary": "$120K - $160K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Full%20Stack%20Engineer%20FinTech"
     },
 
     # Data Science
@@ -124,7 +127,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["Python", "SQL", "Jupyter", "Tableau"],
-        "salary": "$130K - $170K"
+        "salary": "$130K - $170K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Data%20Scientist"
     },
 
     # DevOps
@@ -155,7 +159,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["AWS", "Docker", "Kubernetes", "Terraform", "Jenkins"],
-        "salary": "$135K - $175K"
+        "salary": "$135K - $175K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=DevOps%20Engineer%20AWS"
     },
 
     # Technical Product Manager
@@ -186,7 +191,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "SaaS",
         "tools": ["Jira", "Postman", "SQL", "Swagger"],
-        "salary": "$135K - $170K"
+        "salary": "$135K - $170K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Technical%20Product%20Manager"
     },
 
     # UX Designer
@@ -217,7 +223,8 @@ Requirements:
         "seniorityLevel": "senior",
         "industry": "Tech",
         "tools": ["Figma", "Miro", "UserTesting", "Sketch"],
-        "salary": "$130K - $165K"
+        "salary": "$130K - $165K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Senior%20UX%20Designer"
     },
 
     # Marketing Manager
@@ -248,7 +255,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "SaaS",
         "tools": ["HubSpot", "Google Analytics", "Salesforce", "Figma"],
-        "salary": "$110K - $145K"
+        "salary": "$110K - $145K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Product%20Marketing%20Manager"
     },
 
     # Solutions Architect
@@ -279,7 +287,8 @@ Requirements:
         "seniorityLevel": "senior",
         "industry": "Enterprise Software",
         "tools": ["AWS", "Azure", "Kubernetes", "Terraform"],
-        "salary": "$155K - $195K"
+        "salary": "$155K - $195K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Solutions%20Architect"
     },
 
     # Engineering Manager
@@ -310,7 +319,8 @@ Requirements:
         "seniorityLevel": "lead",
         "industry": "Tech",
         "tools": ["Git", "Jira", "Slack", "GitHub"],
-        "salary": "$180K - $230K"
+        "salary": "$180K - $230K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Engineering%20Manager"
     },
 
     # Frontend Engineer
@@ -341,7 +351,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["React", "TypeScript", "Tailwind CSS", "Figma"],
-        "salary": "$115K - $155K"
+        "salary": "$115K - $155K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Frontend%20Engineer%20React"
     },
 
     # Backend Engineer
@@ -372,7 +383,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["Python", "PostgreSQL", "AWS", "Docker"],
-        "salary": "$125K - $165K"
+        "salary": "$125K - $165K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Backend%20Engineer%20Python"
     },
 
     # Customer Success Manager
@@ -403,7 +415,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "SaaS",
         "tools": ["Salesforce", "Gainsight", "Slack", "Zoom"],
-        "salary": "$90K - $120K"
+        "salary": "$90K - $120K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Customer%20Success%20Manager"
     },
 
     # Technical Writer
@@ -434,7 +447,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["Markdown", "Git", "Postman", "ReadMe"],
-        "salary": "$95K - $130K"
+        "salary": "$95K - $130K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Technical%20Writer"
     },
 
     # QA Engineer
@@ -465,7 +479,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["Cypress", "JavaScript", "Git", "Jenkins"],
-        "salary": "$100K - $135K"
+        "salary": "$100K - $135K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=QA%20Engineer%20Automation"
     },
 
     # Business Analyst
@@ -496,7 +511,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Finance",
         "tools": ["SQL", "Tableau", "Excel", "Google Sheets"],
-        "salary": "$85K - $115K"
+        "salary": "$85K - $115K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Business%20Analyst"
     },
 
     # Sales Engineer
@@ -527,7 +543,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Enterprise Software",
         "tools": ["Salesforce", "Zoom", "Slack", "Postman"],
-        "salary": "$120K - $160K + commission"
+        "salary": "$120K - $160K + commission",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Sales%20Engineer"
     },
 
     # Project Manager
@@ -558,7 +575,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["Jira", "Asana", "Confluence", "Slack"],
-        "salary": "$105K - $140K"
+        "salary": "$105K - $140K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Technical%20Project%20Manager"
     },
 
     # Security Engineer
@@ -589,7 +607,8 @@ Requirements:
         "seniorityLevel": "mid",
         "industry": "Tech",
         "tools": ["AWS", "Splunk", "Burp Suite", "Terraform"],
-        "salary": "$140K - $180K"
+        "salary": "$140K - $180K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=Security%20Engineer"
     },
 
     # HR Manager
@@ -620,6 +639,7 @@ Requirements:
         "seniorityLevel": "senior",
         "industry": "Tech",
         "tools": ["Lever", "BambooHR", "Slack", "Google Workspace"],
-        "salary": "$110K - $145K"
+        "salary": "$110K - $145K",
+        "jobUrl": "https://www.linkedin.com/jobs/search/?keywords=People%20Operations%20Manager"
     }
 ]
