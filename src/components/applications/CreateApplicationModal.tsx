@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { X, Briefcase, MapPin, DollarSign, Link as LinkIcon, FileText, TrendingUp, AlertCircle } from 'lucide-react';
 import { getAllVersions } from '../../services/resumeVersions';
-import type { ResumeVersion } from '../../types/resumeVersion';
 
 interface CreateApplicationModalProps {
   onClose: () => void;
