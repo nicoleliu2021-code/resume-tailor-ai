@@ -5,10 +5,13 @@ import { useResume } from '../contexts/ResumeContext';
 import { ExperienceLibrary } from '../components/master-resume/ExperienceLibrary';
 import { SkillsLibrary } from '../components/master-resume/SkillsLibrary';
 import { EducationLibrary } from '../components/master-resume/EducationLibrary';
+import { ProjectsLibrary } from '../components/master-resume/ProjectsLibrary';
+import { CertificationsLibrary } from '../components/master-resume/CertificationsLibrary';
+import { SummariesLibrary } from '../components/master-resume/SummariesLibrary';
 import { StatsBar } from '../components/master-resume/StatsBar';
 import type { MasterResume } from '../types/masterResume';
 
-type TabType = 'experiences' | 'skills' | 'education';
+type TabType = 'experiences' | 'skills' | 'education' | 'projects' | 'certifications' | 'summaries';
 
 export function MasterResumeEditor() {
   const [masterResume, setMasterResume] = useState<MasterResume | null>(null);
@@ -181,6 +184,36 @@ export function MasterResumeEditor() {
             >
               Education
             </button>
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'projects'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Projects ({masterResume.projects.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('certifications')}
+              className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'certifications'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Certifications ({masterResume.certifications.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('summaries')}
+              className={`pb-4 px-2 border-b-2 font-medium transition-colors ${
+                activeTab === 'summaries'
+                  ? 'border-indigo-600 text-indigo-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Summaries ({masterResume.summaries.length})
+            </button>
           </nav>
         </div>
 
@@ -203,6 +236,27 @@ export function MasterResumeEditor() {
           {activeTab === 'education' && (
             <EducationLibrary
               education={masterResume.education}
+              onUpdate={refreshMasterResume}
+            />
+          )}
+
+          {activeTab === 'projects' && (
+            <ProjectsLibrary
+              projects={masterResume.projects}
+              onUpdate={refreshMasterResume}
+            />
+          )}
+
+          {activeTab === 'certifications' && (
+            <CertificationsLibrary
+              certifications={masterResume.certifications}
+              onUpdate={refreshMasterResume}
+            />
+          )}
+
+          {activeTab === 'summaries' && (
+            <SummariesLibrary
+              summaries={masterResume.summaries}
               onUpdate={refreshMasterResume}
             />
           )}
