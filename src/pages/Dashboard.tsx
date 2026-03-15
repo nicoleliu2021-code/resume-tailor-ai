@@ -120,7 +120,7 @@ export function Dashboard() {
             <p className="text-center text-sm text-gray-500 uppercase tracking-wider font-semibold mb-6">
               Quick Actions
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
               <Link
                 to="/master-resume"
                 className="group bg-white rounded-xl p-6 shadow-md border-2 border-gray-200 hover:border-indigo-400 hover:shadow-lg transition-all"
@@ -185,6 +185,27 @@ export function Dashboard() {
                 </p>
                 <div className="flex items-center gap-1 text-sm font-medium text-purple-600">
                   View Library
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </Link>
+
+              <Link
+                to="/templates"
+                className="group bg-white rounded-xl p-6 shadow-md border-2 border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    Templates
+                  </h3>
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  Browse 6 professional resume templates with live preview
+                </p>
+                <div className="flex items-center gap-1 text-sm font-medium text-blue-600">
+                  Browse Templates
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </div>
               </Link>

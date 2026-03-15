@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
+import { RESUME_TEMPLATES } from '../data/templates';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
 
 type StatusFilter = 'all' | ResumeVersion['status'];
@@ -11,6 +12,8 @@ export function VersionLibrary() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedVersionForExport, setSelectedVersionForExport] = useState<ResumeVersion | null>(null);
 
   useEffect(() => {
     loadVersions();
@@ -39,8 +42,18 @@ export function VersionLibrary() {
   };
 
   const handleExport = (version: ResumeVersion) => {
-    // TODO: Implement export functionality
-    alert(`Export functionality for "${version.name}" coming soon!`);
+    setSelectedVersionForExport(version);
+    setShowTemplateSelector(true);
+  };
+
+  const handleTemplateSelect = (templateId: string) => {
+    if (!selectedVersionForExport) return;
+
+    // TODO: Implement actual export with selected template
+    const template = RESUME_TEMPLATES.find(t => t.id === templateId);
+    alert(`Exporting "${selectedVersionForExport.name}" with template "${template?.name}". PDF export coming soon!`);
+    setShowTemplateSelector(false);
+    setSelectedVersionForExport(null);
   };
 
   // Filter versions
@@ -345,6 +358,59 @@ export function VersionLibrary() {
                 Create Your First Version
               </a>
             )}
+          </div>
+        )}
+
+        {/* Template Selector Modal */}
+        {showTemplateSelector && selectedVersionForExport && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      Choose Template
+                    </h2>
+                    <p className="text-gray-600">
+                      Select a template for "{selectedVersionForExport.name}"
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowTemplateSelector(false);
+                      setSelectedVersionForExport(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {RESUME_TEMPLATES.map((template) => (
+                    <button
+                      key={template.id}
+                      onClick={() => handleTemplateSelect(template.id)}
+                      className="text-left bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-400 hover:shadow-lg transition-all"
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <Layout className="w-5 h-5 text-indigo-600" />
+                        <h3 className="font-bold text-gray-900">{template.name}</h3>
+                      </div>
+                      <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                          {template.style.columns === 1 ? 'Single' : 'Two'} Column
+                        </span>
+                        <span className="text-xs font-semibold text-green-600">
+                          ATS: {template.atsScore}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
