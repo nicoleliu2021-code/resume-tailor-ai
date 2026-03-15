@@ -6,7 +6,7 @@ import type { JobMatch } from '../../types/resume';
 
 interface Props {
   jobs: JobMatch[];
-  onJobSelect: (jobDescription: string, jobTitle: string) => void;
+  onJobSelect: (jobDescription: string, jobTitle: string, jobUrl?: string) => void;
   onClose: () => void;
 }
 
@@ -80,7 +80,7 @@ export function MobileJobSheet({ jobs, onJobSelect, onClose }: Props) {
   };
 
   const handleTailorClick = (job: JobMatch) => {
-    onJobSelect(job.job.description, job.job.title);
+    onJobSelect(job.job.description, job.job.title, job.job.jobUrl);
     onClose();
   };
 
