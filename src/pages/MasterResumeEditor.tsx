@@ -4,6 +4,7 @@ import { getMasterResume, getStats, importFromStructuredResume, saveMasterResume
 import { useResume } from '../contexts/ResumeContext';
 import { ExperienceLibrary } from '../components/master-resume/ExperienceLibrary';
 import { SkillsLibrary } from '../components/master-resume/SkillsLibrary';
+import { EducationLibrary } from '../components/master-resume/EducationLibrary';
 import { StatsBar } from '../components/master-resume/StatsBar';
 import type { MasterResume } from '../types/masterResume';
 
@@ -200,9 +201,10 @@ export function MasterResumeEditor() {
           )}
 
           {activeTab === 'education' && (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <p className="text-gray-600">Education management coming soon</p>
-            </div>
+            <EducationLibrary
+              education={masterResume.education}
+              onUpdate={refreshMasterResume}
+            />
           )}
         </div>
       </div>

@@ -3,11 +3,12 @@ import type {
   MasterExperience,
   Achievement,
   MasterSkill,
+  Certification,
   SummaryVariant,
   MasterResumeStats,
   ImportResult,
 } from '../types/masterResume';
-import type { StructuredResume, Experience, Skill } from '../types/resume';
+import type { StructuredResume, Experience, Skill, Education, Project } from '../types/resume';
 
 const STORAGE_KEY = 'master_resume_v1';
 
@@ -307,6 +308,138 @@ export function suggestSkillsFromExperiences(): string[] {
   // Filter out skills already in master skills
   const existingSkills = new Set(resume.skills.map((s) => s.name.toLowerCase()));
   return Array.from(allSkills).filter((skill) => !existingSkills.has(skill.toLowerCase()));
+}
+
+// ============================================================================
+// Education Management
+// ============================================================================
+
+export function addEducation(education: Omit<Education, 'id'>): string {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const newEducation: Education = {
+    ...education,
+    id: generateId(),
+  };
+
+  resume.education.push(newEducation);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
+
+  return newEducation.id;
+}
+
+export function updateEducation(id: string, updates: Partial<Education>): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const index = resume.education.findIndex((edu) => edu.id === id);
+  if (index === -1) throw new Error('Education not found');
+
+  resume.education[index] = {
+    ...resume.education[index],
+    ...updates,
+  };
+
+  saveMasterResume(resume);
+}
+
+export function deleteEducation(id: string): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  resume.education = resume.education.filter((edu) => edu.id !== id);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
+}
+
+// ============================================================================
+// Project Management
+// ============================================================================
+
+export function addProject(project: Omit<Project, 'id'>): string {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const newProject: Project = {
+    ...project,
+    id: generateId(),
+  };
+
+  resume.projects.push(newProject);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
+
+  return newProject.id;
+}
+
+export function updateProject(id: string, updates: Partial<Project>): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const index = resume.projects.findIndex((proj) => proj.id === id);
+  if (index === -1) throw new Error('Project not found');
+
+  resume.projects[index] = {
+    ...resume.projects[index],
+    ...updates,
+  };
+
+  saveMasterResume(resume);
+}
+
+export function deleteProject(id: string): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  resume.projects = resume.projects.filter((proj) => proj.id !== id);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
+}
+
+// ============================================================================
+// Certification Management
+// ============================================================================
+
+export function addCertification(certification: Omit<Certification, 'id'>): string {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const newCertification: Certification = {
+    ...certification,
+    id: generateId(),
+  };
+
+  resume.certifications.push(newCertification);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
+
+  return newCertification.id;
+}
+
+export function updateCertification(id: string, updates: Partial<Certification>): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  const index = resume.certifications.findIndex((cert) => cert.id === id);
+  if (index === -1) throw new Error('Certification not found');
+
+  resume.certifications[index] = {
+    ...resume.certifications[index],
+    ...updates,
+  };
+
+  saveMasterResume(resume);
+}
+
+export function deleteCertification(id: string): void {
+  const resume = getMasterResume();
+  if (!resume) throw new Error('No master resume found');
+
+  resume.certifications = resume.certifications.filter((cert) => cert.id !== id);
+  resume.completionScore = calculateCompletionScore(resume);
+  saveMasterResume(resume);
 }
 
 // ============================================================================
