@@ -6,8 +6,8 @@ interface ProgressStepsProps {
 
 const steps = [
   { id: 'upload', label: 'Upload Resume', icon: FileText },
-  { id: 'job', label: 'Add Job', icon: Briefcase },
-  { id: 'optimize', label: 'AI Optimization', icon: Sparkles },
+  { id: 'job', label: 'Choose Target Job', icon: Briefcase },
+  { id: 'optimize', label: 'Optimize Resume', icon: Sparkles },
   { id: 'review', label: 'Review & Apply', icon: Send },
 ] as const;
 
