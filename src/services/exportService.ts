@@ -338,8 +338,8 @@ function sanitizeFileName(name: string): string {
  * Export a resume version as DOCX (placeholder - requires docx library)
  */
 export async function exportToDOCX(
-  version: ResumeVersion,
-  templateId: string,
+  _version: ResumeVersion,
+  _templateId: string,
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
   onProgress?.({ status: 'error', progress: 0, message: 'DOCX export coming soon!' });
