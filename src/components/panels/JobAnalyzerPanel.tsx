@@ -68,13 +68,8 @@ export function JobAnalyzerPanel() {
           <Briefcase className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-gray-900">Step 2: Add Job Description</h2>
-            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-full">
-              Required
-            </span>
-          </div>
-          <p className="text-sm text-gray-600 mt-0.5">Paste job text or URL — we'll handle the rest</p>
+          <h2 className="text-lg font-bold text-gray-900">Paste Job Description or Job Post URL</h2>
+          <p className="text-sm text-gray-600 mt-0.5">We'll automatically detect and fetch from URLs</p>
         </div>
       </div>
 
