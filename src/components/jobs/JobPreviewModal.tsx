@@ -1,4 +1,4 @@
-import { X, ArrowRight, MapPin, Briefcase, DollarSign, TrendingUp, Plus } from 'lucide-react';
+import { X, ArrowRight, MapPin, Briefcase, DollarSign, TrendingUp, Plus, ExternalLink } from 'lucide-react';
 import type { JobMatch } from '../../types/resume';
 
 interface Props {
@@ -166,35 +166,50 @@ export function JobPreviewModal({ jobMatch, onClose, onTailorClick, onTrackAppli
         </div>
 
         {/* Footer */}
-        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-3">
-          <button
-            onClick={onClose}
-            className="py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Close
-          </button>
-          {onTrackApplication && (
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6">
+          {/* Apply Button - if job URL exists */}
+          {job.jobUrl && (
+            <a
+              href={job.jobUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full mb-3 py-3 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-5 h-5" />
+              <span>View & Apply on LinkedIn</span>
+            </a>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Close
+            </button>
+            {onTrackApplication && (
+              <button
+                onClick={() => {
+                  onTrackApplication();
+                  onClose();
+                }}
+                className="py-3 px-4 border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Track Application</span>
+              </button>
+            )}
             <button
               onClick={() => {
-                onTrackApplication();
+                onTailorClick();
                 onClose();
               }}
-              className="py-3 px-4 border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors flex items-center gap-2"
+              className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
             >
-              <Plus className="w-4 h-4" />
-              <span>Track Application</span>
+              <span>Tailor Resume for This Job</span>
+              <ArrowRight className="w-5 h-5" />
             </button>
-          )}
-          <button
-            onClick={() => {
-              onTailorClick();
-              onClose();
-            }}
-            className="flex-1 py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-          >
-            <span>Tailor Resume for This Job</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
+          </div>
         </div>
       </div>
     </div>
