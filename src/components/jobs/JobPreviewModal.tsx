@@ -1,13 +1,15 @@
-import { X, ArrowRight, MapPin, Briefcase, DollarSign, TrendingUp } from 'lucide-react';
+import { X, ArrowRight, MapPin, Briefcase, DollarSign, TrendingUp, Plus } from 'lucide-react';
+import { useState } from 'react';
 import type { JobMatch } from '../../types/resume';
 
 interface Props {
   jobMatch: JobMatch;
   onClose: () => void;
   onTailorClick: () => void;
+  onTrackApplication?: () => void;
 }
 
-export function JobPreviewModal({ jobMatch, onClose, onTailorClick }: Props) {
+export function JobPreviewModal({ jobMatch, onClose, onTailorClick, onTrackApplication }: Props) {
   const { job, fitScore, matchReasons, missingSkills, matchType } = jobMatch;
 
   // Determine badge color based on fit score
@@ -168,10 +170,22 @@ export function JobPreviewModal({ jobMatch, onClose, onTailorClick }: Props) {
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-3">
           <button
             onClick={onClose}
-            className="flex-1 py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            className="py-3 px-4 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
           >
             Close
           </button>
+          {onTrackApplication && (
+            <button
+              onClick={() => {
+                onTrackApplication();
+                onClose();
+              }}
+              className="py-3 px-4 border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Track Application</span>
+            </button>
+          )}
           <button
             onClick={() => {
               onTailorClick();
