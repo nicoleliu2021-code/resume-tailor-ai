@@ -10,7 +10,7 @@ import type { StructuredResume, JobMatch } from '../../types/resume';
 
 interface Props {
   resume: StructuredResume | null;
-  onJobSelect: (jobDescription: string, jobTitle: string) => void;
+  onJobSelect: (jobDescription: string, jobTitle: string, jobUrl?: string) => void;
   isCollapsed?: boolean;
   onToggle?: () => void;
 }
@@ -65,7 +65,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
 
   const handleTailorClick = (job: JobMatch) => {
     console.log('[JobsPanel] Tailoring resume for:', job.job.title);
-    onJobSelect(job.job.description, job.job.title);
+    onJobSelect(job.job.description, job.job.title, job.job.jobUrl);
   };
 
   const handleToggleSelection = (jobId: string) => {
