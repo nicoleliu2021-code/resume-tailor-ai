@@ -2,12 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { parsePDFAPI } from '../services/api';
 
-// Configure PDF.js worker - use local bundled worker for reliability
-// Vite will handle bundling this properly
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).href;
+// Configure PDF.js worker - use unpkg CDN (most reliable across environments)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 // Detect if user is on mobile device
 function isMobileDevice(): boolean {
