@@ -1,5 +1,4 @@
 import { X, ArrowRight, MapPin, Briefcase, DollarSign, TrendingUp, Plus } from 'lucide-react';
-import { useState } from 'react';
 import type { JobMatch } from '../../types/resume';
 
 interface Props {
