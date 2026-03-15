@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare, BarChart3 } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star, X, Check, Edit2, Save, GitCompare, BarChart3, StickyNote, Tag } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats, updateVersion } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
@@ -35,6 +35,11 @@ export function VersionLibrary() {
   const [compareVersions, setCompareVersions] = useState<[ResumeVersion | null, ResumeVersion | null]>([null, null]);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [editingNotesVersion, setEditingNotesVersion] = useState<ResumeVersion | null>(null);
+  const [editedNotes, setEditedNotes] = useState('');
+  const [editedTags, setEditedTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [selectedTagFilter, setSelectedTagFilter] = useState<string | null>(null);
 
   useEffect(() => {
     loadVersions();
@@ -163,6 +168,38 @@ export function VersionLibrary() {
     }
   };
 
+  const handleEditNotes = (version: ResumeVersion) => {
+    setEditingNotesVersion(version);
+    setEditedNotes(version.notes || '');
+    setEditedTags([...version.tags]);
+  };
+
+  const handleSaveNotes = () => {
+    if (!editingNotesVersion) return;
+
+    updateVersion(editingNotesVersion.id, {
+      notes: editedNotes,
+      tags: editedTags,
+      updatedAt: new Date(),
+    });
+
+    setEditingNotesVersion(null);
+    setEditedNotes('');
+    setEditedTags([]);
+    loadVersions();
+  };
+
+  const handleAddTag = () => {
+    if (newTag.trim() && !editedTags.includes(newTag.trim())) {
+      setEditedTags([...editedTags, newTag.trim()]);
+      setNewTag('');
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setEditedTags(editedTags.filter(tag => tag !== tagToRemove));
+  };
+
   const handleBatchExport = async (templateId: string) => {
     if (selectedVersionIds.size === 0) return;
 
@@ -260,10 +297,18 @@ export function VersionLibrary() {
     }
   };
 
+  // Get all unique tags from versions
+  const allTags = Array.from(new Set(versions.flatMap(v => v.tags))).sort();
+
   // Filter versions
   const filteredVersions = versions.filter((version) => {
     // Status filter
     if (statusFilter !== 'all' && version.status !== statusFilter) {
+      return false;
+    }
+
+    // Tag filter
+    if (selectedTagFilter && !version.tags.includes(selectedTagFilter)) {
       return false;
     }
 
@@ -274,7 +319,8 @@ export function VersionLibrary() {
         version.name.toLowerCase().includes(query) ||
         version.targetRole.toLowerCase().includes(query) ||
         version.targetCompany?.toLowerCase().includes(query) ||
-        version.tags.some((tag) => tag.toLowerCase().includes(query))
+        version.tags.some((tag) => tag.toLowerCase().includes(query)) ||
+        version.notes?.toLowerCase().includes(query)
       );
     }
 
@@ -499,7 +545,8 @@ export function VersionLibrary() {
 
           {/* Expandable Filter Options */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+              {/* Status Filter */}
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-gray-700">Status:</span>
                 <div className="flex flex-wrap gap-2">
@@ -518,9 +565,94 @@ export function VersionLibrary() {
                   ))}
                 </div>
               </div>
+
+              {/* Tag Filter */}
+              {allTags.length > 0 && (
+                <div className="flex items-start gap-2">
+                  <span className="text-sm font-medium text-gray-700 pt-1 flex items-center gap-1">
+                    <Tag className="w-4 h-4" />
+                    Tags:
+                  </span>
+                  <div className="flex flex-wrap gap-2 flex-1">
+                    <button
+                      onClick={() => setSelectedTagFilter(null)}
+                      className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                        selectedTagFilter === null
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      All Tags
+                    </button>
+                    {allTags.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => setSelectedTagFilter(tag)}
+                        className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                          selectedTagFilter === tag
+                            ? 'bg-indigo-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Active Filters Display */}
+        {(statusFilter !== 'all' || selectedTagFilter || searchQuery) && (
+          <div className="mb-4 flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-700">Active Filters:</span>
+            {statusFilter !== 'all' && (
+              <span className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-2">
+                Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className="hover:text-indigo-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {selectedTagFilter && (
+              <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium flex items-center gap-2">
+                Tag: {selectedTagFilter}
+                <button
+                  onClick={() => setSelectedTagFilter(null)}
+                  className="hover:text-purple-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            {searchQuery && (
+              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium flex items-center gap-2">
+                Search: "{searchQuery}"
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="hover:text-green-900"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+            <button
+              onClick={() => {
+                setStatusFilter('all');
+                setSelectedTagFilter(null);
+                setSearchQuery('');
+              }}
+              className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm font-medium hover:bg-gray-200 transition-colors"
+            >
+              Clear All
+            </button>
+          </div>
+        )}
 
         {/* Batch Selection Controls */}
         {isBatchMode && filteredVersions.length > 0 && (
@@ -652,6 +784,35 @@ export function VersionLibrary() {
                     </div>
                   )}
 
+                  {/* Tags */}
+                  {version.tags && version.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {version.tags.slice(0, 3).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded text-xs font-medium"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {version.tags.length > 3 && (
+                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs font-medium">
+                          +{version.tags.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Notes Indicator */}
+                  {version.notes && version.notes.trim() && (
+                    <div className="flex items-center gap-2 text-xs text-gray-600 bg-amber-50 border border-amber-200 rounded px-2 py-1 mb-2">
+                      <StickyNote className="w-3 h-3 text-amber-600" />
+                      <span className="truncate">
+                        {version.notes.length > 50 ? `${version.notes.substring(0, 50)}...` : version.notes}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Stats */}
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div>
@@ -685,28 +846,50 @@ export function VersionLibrary() {
                     Export
                   </button>
                   <button
-                    onClick={() => handleEdit(version)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditNotes(version);
+                    }}
+                    className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                    title="Notes & Tags"
+                  >
+                    <StickyNote className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(version);
+                    }}
                     className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
                     title="Edit"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handlePreview(version)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePreview(version);
+                    }}
                     className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
                     title="View"
                   >
                     <Eye className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDuplicate(version.id, version.name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDuplicate(version.id, version.name);
+                    }}
                     className="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
                     title="Duplicate"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDelete(version.id, version.name)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(version.id, version.name);
+                    }}
                     className="px-3 py-2 border border-red-300 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
                     title="Delete"
                   >
@@ -1324,6 +1507,126 @@ export function VersionLibrary() {
             versions={versions}
             onClose={() => setShowAnalytics(false)}
           />
+        )}
+
+        {/* Notes & Tags Modal */}
+        {editingNotesVersion && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1 flex items-center gap-2">
+                      <StickyNote className="w-6 h-6 text-indigo-600" />
+                      Notes & Tags
+                    </h2>
+                    <p className="text-gray-600">
+                      {editingNotesVersion.name}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingNotesVersion(null);
+                      setEditedNotes('');
+                      setEditedTags([]);
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Tags Section */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    Tags
+                  </label>
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {editedTags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium flex items-center gap-2 group"
+                      >
+                        {tag}
+                        <button
+                          onClick={() => handleRemoveTag(tag)}
+                          className="hover:text-indigo-900 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    {editedTags.length === 0 && (
+                      <p className="text-sm text-gray-500 italic">No tags yet. Add tags to organize your versions.</p>
+                    )}
+                  </div>
+
+                  {/* Add Tag Input */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      placeholder="Add a tag (e.g., fintech, senior-level)"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                    />
+                    <button
+                      onClick={handleAddTag}
+                      className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-200 transition-colors"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                {/* Notes Section */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Notes
+                  </label>
+                  <textarea
+                    value={editedNotes}
+                    onChange={(e) => setEditedNotes(e.target.value)}
+                    rows={8}
+                    placeholder="Add notes about this version... e.g., 'Focused on product management skills', 'Emphasized fintech experience', etc."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    {editedNotes.length} characters
+                  </p>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleSaveNotes}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-5 h-5" />
+                    Save Notes & Tags
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEditingNotesVersion(null);
+                      setEditedNotes('');
+                      setEditedTags([]);
+                    }}
+                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
