@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare } from 'lucide-react';
+import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare, Smartphone } from 'lucide-react';
 import { JobCard } from './JobCard';
 import { JobPreviewModal } from './JobPreviewModal';
 import { BatchGenerateModal } from './BatchGenerateModal';
+import { MobileJobSheet } from './MobileJobSheet';
+import { ApplicationTracker } from './ApplicationTracker';
 import { discoverJobsAPI } from '../../services/api';
 import type { StructuredResume, JobMatch } from '../../types/resume';
 
@@ -22,6 +24,19 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedJobs, setSelectedJobs] = useState<Set<string>>(new Set());
   const [showBatchModal, setShowBatchModal] = useState(false);
+  const [showMobileSheet, setShowMobileSheet] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [trackingJob, setTrackingJob] = useState<JobMatch | null>(null);
+
+  // Detect mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Auto-load jobs when resume is available
   useEffect(() => {
@@ -87,17 +102,26 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
     return null;
   }
 
-  // Collapsed state
+  // Collapsed state - show floating button
   if (isCollapsed) {
     return (
       <div className="fixed right-6 bottom-6 z-50">
         <button
-          onClick={onToggle}
+          onClick={() => {
+            if (isMobile && jobs.length > 0) {
+              setShowMobileSheet(true);
+            } else {
+              onToggle?.();
+            }
+          }}
           className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
         >
           <Lightbulb className="w-5 h-5" />
-          <span>{jobs.length > 0 ? `${jobs.length} Jobs For You` : 'Discover Jobs'}</span>
-          <ChevronUp className="w-4 h-4" />
+          <span className="hidden sm:inline">
+            {jobs.length > 0 ? `${jobs.length} Jobs For You` : 'Discover Jobs'}
+          </span>
+          <span className="sm:hidden">{jobs.length}</span>
+          {isMobile ? <Smartphone className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
         </button>
       </div>
     );
@@ -271,6 +295,10 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
             handleTailorClick(previewJob);
             setPreviewJob(null);
           }}
+          onTrackApplication={() => {
+            setTrackingJob(previewJob);
+            setPreviewJob(null);
+          }}
         />
       )}
 
@@ -287,6 +315,28 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
           onComplete={() => {
             console.log('[JobsPanel] Batch generation complete');
           }}
+        />
+      )}
+
+      {/* Mobile Job Sheet */}
+      {showMobileSheet && isMobile && jobs.length > 0 && resume && (
+        <MobileJobSheet
+          jobs={jobs}
+          resume={resume}
+          onJobSelect={(jobDescription, jobTitle) => {
+            onJobSelect(jobDescription, jobTitle);
+            setShowMobileSheet(false);
+          }}
+          onClose={() => setShowMobileSheet(false)}
+        />
+      )}
+
+      {/* Application Tracker */}
+      {trackingJob && (
+        <ApplicationTracker
+          isOpen={true}
+          onClose={() => setTrackingJob(null)}
+          prefilledJob={trackingJob}
         />
       )}
     </div>
