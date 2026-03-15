@@ -1,4 +1,4 @@
-import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck, CheckCircle2 } from 'lucide-react';
+import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck, CheckCircle2, ExternalLink } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { isJobSaved, saveJob, unsaveJob } from '../../services/savedJobs';
 import type { JobMatch } from '../../types/resume';
@@ -188,29 +188,45 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
 
       {/* CTAs */}
       {!selectionMode && (
-        <div className="flex gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onTailorClick();
-            }}
-            className="flex-1 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-          >
-            <span>Tailor Resume</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
-          {onPreviewClick && (
+        <>
+          {/* Apply Button - if job URL exists */}
+          {job.jobUrl && (
+            <a
+              href={job.jobUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="block w-full mb-2 py-2 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>View & Apply</span>
+            </a>
+          )}
+
+          <div className="flex gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                onPreviewClick();
+                onTailorClick();
               }}
-              className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
             >
-              Preview
+              <span>Tailor Resume</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-          )}
-        </div>
+            {onPreviewClick && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPreviewClick();
+                }}
+                className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                Preview
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
