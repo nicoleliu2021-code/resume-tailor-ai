@@ -123,7 +123,7 @@ function ResumeSection({
                   : 'bg-gray-200 text-gray-700'
               }`}
             >
-              {skill}
+              {skill.name}
             </span>
           ))}
         </div>
@@ -138,9 +138,9 @@ function ResumeSection({
         {resume.experience.map((exp, idx) => (
           <div key={idx} className="space-y-2">
             <div>
-              <p className="font-semibold text-sm text-gray-900">{exp.title}</p>
+              <p className="font-semibold text-sm text-gray-900">{exp.role}</p>
               <p className="text-xs text-gray-600">
-                {exp.company} • {exp.dates}
+                {exp.company} • {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
               </p>
             </div>
             <ul className="space-y-1.5">
