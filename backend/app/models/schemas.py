@@ -15,8 +15,8 @@ class Education(BaseModel):
     school: str
     degree: str
     field: str
-    startDate: str
-    endDate: str
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None
     gpa: Optional[str] = None
 
 class Skill(BaseModel):
@@ -38,7 +38,7 @@ class StructuredResume(BaseModel):
     phone: Optional[str] = None
     linkedin: Optional[str] = None
     location: Optional[str] = None
-    summary: str
+    summary: Optional[str] = None
     experience: List[Experience]
     education: List[Education]
     skills: List[Skill]
