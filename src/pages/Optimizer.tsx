@@ -816,6 +816,10 @@ export function Optimizer() {
           optimizedResume={resume}
           jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
           jobUrl={jobUrl}
+          jobDescription={jobDescription}
+          matchScore={resumeScore}
+          whyItMatches={jobAnalysis?.coreResponsibilities?.slice(0, 3) || ['Experience aligned with role requirements', 'Skills match job description', 'Background fits the position']}
+          missingSkills={jobAnalysis?.technicalSkills?.slice(0, 3) || []}
           onContinue={() => {
             setShowImprovementReport(false);
             setViewMode('optimized');

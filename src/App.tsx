@@ -6,6 +6,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Optimizer } from './pages/Optimizer';
 import { Applications } from './pages/Applications';
+import { Jobs } from './pages/Jobs';
 import { Settings } from './pages/Settings';
 import { HowItWorks } from './pages/HowItWorks';
 import { Pricing } from './pages/Pricing';
@@ -21,6 +22,7 @@ function App() {
               <Route path="/" element={<AppLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="optimizer" element={<Optimizer />} />
+                <Route path="jobs" element={<Jobs />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="how-it-works" element={<HowItWorks />} />
                 <Route path="pricing" element={<Pricing />} />

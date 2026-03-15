@@ -1,4 +1,7 @@
-import { CheckCircle, TrendingUp, Target, Sparkles, X, ExternalLink, Download, ArrowRight } from 'lucide-react';
+import { CheckCircle, TrendingUp, Target, Sparkles, X, ExternalLink, Download, ArrowRight, ClipboardPlus } from 'lucide-react';
+import { useState } from 'react';
+import { useApplications } from '../contexts/ApplicationsContext';
+import { createApplicationFromJob } from '../services/applications';
 import type { StructuredResume } from '../types/resume';
 
 interface ImprovementReportModalProps {
@@ -6,6 +9,10 @@ interface ImprovementReportModalProps {
   optimizedResume: StructuredResume;
   jobTitle: string;
   jobUrl?: string;
+  jobDescription?: string;
+  matchScore?: number;
+  whyItMatches?: string[];
+  missingSkills?: string[];
   onContinue: () => void;
   onApplyNow: () => void;
   onExport: () => void;
@@ -25,6 +32,10 @@ export function ImprovementReportModal({
   optimizedResume,
   jobTitle,
   jobUrl,
+  jobDescription,
+  matchScore,
+  whyItMatches,
+  missingSkills,
   onContinue,
   onApplyNow,
   onExport,
@@ -32,6 +43,8 @@ export function ImprovementReportModal({
   onSaveSession,
 }: ImprovementReportModalProps) {
   const metrics = calculateMetrics(originalResume, optimizedResume);
+  const { addApplication } = useApplications();
+  const [savedToApps, setSavedToApps] = useState(false);
 
   const handleApplyNow = () => {
     // Save session before opening job link
@@ -56,6 +69,38 @@ export function ImprovementReportModal({
     onSaveSession?.();
     // For now, also trigger PDF export (can be enhanced to separate DOCX later)
     onExport();
+  };
+
+  const handleSaveToApplications = () => {
+    try {
+      const application = createApplicationFromJob({
+        jobTitle,
+        company: jobUrl ? new URL(jobUrl).hostname.replace('www.', '') : 'Company',
+        jobUrl,
+        jobDescription: jobDescription || '',
+        location: '',
+        salary: '',
+        remote: false,
+        resumeVersion: {
+          id: `resume_${Date.now()}`,
+          fileName: `${jobTitle.replace(/[^a-z0-9]/gi, '_')}_Resume.pdf`,
+          optimizedFor: jobTitle,
+          content: optimizedResume,
+          exportedAt: new Date(),
+        },
+        matchScore: matchScore || 85,
+        matchType: matchScore && matchScore >= 85 ? 'strong' : matchScore && matchScore >= 70 ? 'stretch' : 'adjacent',
+        whyItMatches: whyItMatches || ['Resume optimized for this role'],
+        missingSkills: missingSkills || [],
+        status: 'tailored',
+      });
+
+      addApplication(application);
+      setSavedToApps(true);
+      setTimeout(() => setSavedToApps(false), 3000);
+    } catch (error) {
+      console.error('[ImprovementReportModal] Error saving to applications:', error);
+    }
   };
 
   return (
@@ -251,6 +296,31 @@ export function ImprovementReportModal({
 
         {/* Footer - CTAs */}
         <div className="border-t border-gray-200 p-6 bg-gradient-to-br from-gray-50 to-indigo-50 flex-shrink-0">
+          {/* Success Message */}
+          {savedToApps && (
+            <div className="mb-4 p-3 bg-green-50 border-2 border-green-300 rounded-lg flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <span className="text-sm font-semibold text-green-900">
+                Saved to Applications Board! Track your progress there.
+              </span>
+            </div>
+          )}
+
+          {/* Save to Applications */}
+          <div className="mb-4">
+            <button
+              onClick={handleSaveToApplications}
+              disabled={savedToApps}
+              className="w-full py-3 px-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ClipboardPlus className="w-5 h-5" />
+              <span>{savedToApps ? 'Saved to Applications!' : 'Save to Applications Board'}</span>
+            </button>
+            <p className="text-xs text-gray-600 ml-1 mt-2">
+              💼 Track this application from Saved → Applied → Interview → Offer
+            </p>
+          </div>
+
           {/* Primary Action: Download */}
           <div className="mb-4">
             <div className="flex flex-col sm:flex-row gap-3 mb-2">

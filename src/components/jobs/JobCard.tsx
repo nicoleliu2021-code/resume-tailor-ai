@@ -1,6 +1,8 @@
-import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck, CheckCircle2, ExternalLink } from 'lucide-react';
+import { ArrowRight, MapPin, TrendingUp, AlertCircle, Bookmark, BookmarkCheck, CheckCircle2, ExternalLink, ClipboardPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { isJobSaved, saveJob, unsaveJob } from '../../services/savedJobs';
+import { useApplications } from '../../contexts/ApplicationsContext';
+import { createApplicationFromJob } from '../../services/applications';
 import type { JobMatch } from '../../types/resume';
 
 interface Props {
@@ -17,6 +19,8 @@ interface Props {
 export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange, selectionMode = false, isSelected = false, onToggleSelect, isActiveSelection = false }: Props) {
   const { job, fitScore, matchReasons, missingSkills, matchType } = jobMatch;
   const [isSaved, setIsSaved] = useState(false);
+  const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+  const { addApplication } = useApplications();
 
   // Check if job is saved on mount
   useEffect(() => {
@@ -36,6 +40,55 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
       }
     } catch (error) {
       console.error('[JobCard] Error toggling save:', error);
+    }
+  };
+
+  const handleSaveToApplications = () => {
+    try {
+      const matchTypeMap: Record<string, 'strong' | 'stretch' | 'adjacent'> = {
+        direct: 'strong',
+        stretch: 'stretch',
+        adjacent: 'adjacent'
+      };
+
+      const application = createApplicationFromJob({
+        jobTitle: job.title,
+        company: job.company,
+        jobUrl: job.jobUrl,
+        jobDescription: job.description,
+        location: job.location,
+        salary: job.salary,
+        remote: job.remote || false,
+        resumeVersion: {
+          id: `resume_${Date.now()}`,
+          fileName: 'Resume - Not yet tailored.pdf',
+          optimizedFor: job.title,
+          content: {
+            name: '',
+            email: '',
+            phone: '',
+            linkedin: '',
+            location: '',
+            summary: '',
+            experience: [],
+            education: [],
+            skills: [],
+            projects: []
+          },
+          exportedAt: new Date(),
+        },
+        matchScore: fitScore,
+        matchType: matchTypeMap[matchType] || 'adjacent',
+        whyItMatches: matchReasons,
+        missingSkills: missingSkills,
+        status: 'saved',
+      });
+
+      addApplication(application);
+      setShowSaveSuccess(true);
+      setTimeout(() => setShowSaveSuccess(false), 2000);
+    } catch (error) {
+      console.error('[JobCard] Error saving to applications:', error);
     }
   };
 
@@ -196,6 +249,14 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
         </div>
       </div>
 
+      {/* Success Message */}
+      {showSaveSuccess && (
+        <div className="mb-3 p-2 bg-green-50 border border-green-300 rounded-lg flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-green-600" />
+          <span className="text-xs font-semibold text-green-900">Saved to Applications!</span>
+        </div>
+      )}
+
       {/* CTAs - New Hierarchy */}
       {!selectionMode && (
         <div className="space-y-2">
@@ -213,6 +274,17 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
 
           {/* Secondary & Tertiary CTAs */}
           <div className="flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSaveToApplications();
+              }}
+              className="flex-1 px-3 py-2 border-2 border-purple-300 text-purple-700 font-semibold rounded-lg hover:bg-purple-50 transition-colors text-xs flex items-center justify-center gap-1.5"
+              title="Save to Applications board"
+            >
+              <ClipboardPlus className="w-3.5 h-3.5" />
+              <span>Save to Apps</span>
+            </button>
             {onPreviewClick && (
               <button
                 onClick={(e) => {
@@ -221,7 +293,7 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
                 }}
                 className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-xs"
               >
-                Preview Job
+                Preview
               </button>
             )}
             {job.jobUrl && (
@@ -233,7 +305,7 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
                 className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-xs flex items-center justify-center gap-1.5"
               >
                 <ExternalLink className="w-3.5 h-3.5" />
-                <span>View Job</span>
+                <span>View</span>
               </a>
             )}
           </div>

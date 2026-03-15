@@ -226,8 +226,8 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
           {!selectionMode ? (
             <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
               <p className="text-xs text-indigo-900 font-medium">
-                ✨ <strong>Found {jobs.length} roles</strong> that match your profile.
-                Click "Tailor Resume" to generate a custom resume for each job.
+                ✨ <strong>Found {jobs.length} roles</strong> categorized by match strength.
+                Strong matches are your best fit, stretch roles offer growth opportunities.
               </p>
             </div>
           ) : (
@@ -239,29 +239,108 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
             </div>
           )}
 
-          {/* Job Cards */}
-          <div className="space-y-4 mb-4">
-            {jobs.slice(0, showAll ? jobs.length : 3).map((jobMatch) => (
-              <JobCard
-                key={jobMatch.job.id}
-                jobMatch={jobMatch}
-                onTailorClick={() => handleTailorClick(jobMatch)}
-                onPreviewClick={() => setPreviewJob(jobMatch)}
-                selectionMode={selectionMode}
-                isSelected={selectedJobs.has(jobMatch.job.id)}
-                onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
-                isActiveSelection={selectedJobId === jobMatch.job.id}
-              />
-            ))}
+          {/* Job Cards - Categorized by Match Type */}
+          <div className="space-y-6 mb-4">
+            {/* Strong Matches (85%+) */}
+            {jobs.filter(j => j.matchType === 'direct' || j.fitScore >= 85).length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🎯</span>
+                  <h3 className="font-bold text-gray-900">Strong Matches</h3>
+                  <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                    {jobs.filter(j => j.matchType === 'direct' || j.fitScore >= 85).length}
+                  </span>
+                </div>
+                <div className="space-y-4">
+                  {jobs
+                    .filter(j => j.matchType === 'direct' || j.fitScore >= 85)
+                    .slice(0, showAll ? undefined : 2)
+                    .map((jobMatch) => (
+                      <JobCard
+                        key={jobMatch.job.id}
+                        jobMatch={jobMatch}
+                        onTailorClick={() => handleTailorClick(jobMatch)}
+                        onPreviewClick={() => setPreviewJob(jobMatch)}
+                        selectionMode={selectionMode}
+                        isSelected={selectedJobs.has(jobMatch.job.id)}
+                        onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
+                        isActiveSelection={selectedJobId === jobMatch.job.id}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stretch Roles (70-84%) */}
+            {jobs.filter(j => j.matchType === 'stretch' || (j.fitScore >= 70 && j.fitScore < 85)).length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🚀</span>
+                  <h3 className="font-bold text-gray-900">Stretch Roles</h3>
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-semibold rounded-full">
+                    {jobs.filter(j => j.matchType === 'stretch' || (j.fitScore >= 70 && j.fitScore < 85)).length}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mb-3">Growth opportunities that may require some skill development</p>
+                <div className="space-y-4">
+                  {jobs
+                    .filter(j => j.matchType === 'stretch' || (j.fitScore >= 70 && j.fitScore < 85))
+                    .slice(0, showAll ? undefined : 2)
+                    .map((jobMatch) => (
+                      <JobCard
+                        key={jobMatch.job.id}
+                        jobMatch={jobMatch}
+                        onTailorClick={() => handleTailorClick(jobMatch)}
+                        onPreviewClick={() => setPreviewJob(jobMatch)}
+                        selectionMode={selectionMode}
+                        isSelected={selectedJobs.has(jobMatch.job.id)}
+                        onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
+                        isActiveSelection={selectedJobId === jobMatch.job.id}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* Adjacent Roles (<70%) */}
+            {jobs.filter(j => j.matchType === 'adjacent' || j.fitScore < 70).length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">🔄</span>
+                  <h3 className="font-bold text-gray-900">Adjacent Roles</h3>
+                  <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded-full">
+                    {jobs.filter(j => j.matchType === 'adjacent' || j.fitScore < 70).length}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-600 mb-3">Related roles that could be pivots or career changes</p>
+                <div className="space-y-4">
+                  {jobs
+                    .filter(j => j.matchType === 'adjacent' || j.fitScore < 70)
+                    .slice(0, showAll ? undefined : 1)
+                    .map((jobMatch) => (
+                      <JobCard
+                        key={jobMatch.job.id}
+                        jobMatch={jobMatch}
+                        onTailorClick={() => handleTailorClick(jobMatch)}
+                        onPreviewClick={() => setPreviewJob(jobMatch)}
+                        selectionMode={selectionMode}
+                        isSelected={selectedJobs.has(jobMatch.job.id)}
+                        onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
+                        isActiveSelection={selectedJobId === jobMatch.job.id}
+                      />
+                    ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Show More/Less Button */}
-          {jobs.length > 3 && (
+          {jobs.length > 5 && (
             <button
               onClick={() => setShowAll(!showAll)}
               className="w-full py-2.5 px-4 border-2 border-indigo-300 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
             >
-              <span>{showAll ? 'Show Less' : `Show ${jobs.length - 3} More Jobs`}</span>
+              <span>{showAll ? 'Show Less' : `Show All ${jobs.length} Jobs`}</span>
               {showAll ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           )}
