@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Edit2, Archive, Trash2, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Edit2, Archive, Trash2 } from 'lucide-react';
 import { deleteExperience, archiveExperience, unarchiveExperience } from '../../services/masterResume';
 import { AchievementPool } from './AchievementPool';
 import type { MasterExperience } from '../../types/masterResume';
