@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
+import { exportToPDF } from '../services/exportService';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
+import type { ExportProgress } from '../services/exportService';
 
 type StatusFilter = 'all' | ResumeVersion['status'];
 
@@ -14,6 +16,8 @@ export function VersionLibrary() {
   const [showFilters, setShowFilters] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedVersionForExport, setSelectedVersionForExport] = useState<ResumeVersion | null>(null);
+  const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     loadVersions();
@@ -46,14 +50,39 @@ export function VersionLibrary() {
     setShowTemplateSelector(true);
   };
 
-  const handleTemplateSelect = (templateId: string) => {
+  const handleTemplateSelect = async (templateId: string) => {
     if (!selectedVersionForExport) return;
 
-    // TODO: Implement actual export with selected template
-    const template = RESUME_TEMPLATES.find(t => t.id === templateId);
-    alert(`Exporting "${selectedVersionForExport.name}" with template "${template?.name}". PDF export coming soon!`);
-    setShowTemplateSelector(false);
-    setSelectedVersionForExport(null);
+    setIsExporting(true);
+    setExportProgress({ status: 'preparing', progress: 0, message: 'Preparing export...' });
+
+    try {
+      await exportToPDF(selectedVersionForExport, templateId, (progress) => {
+        setExportProgress(progress);
+      });
+
+      // Close modal and reset state
+      setShowTemplateSelector(false);
+      setSelectedVersionForExport(null);
+      setIsExporting(false);
+      setExportProgress(null);
+
+      // Refresh versions to update export count
+      loadVersions();
+    } catch (error) {
+      console.error('[VersionLibrary] Export error:', error);
+      setIsExporting(false);
+      setExportProgress({
+        status: 'error',
+        progress: 0,
+        message: error instanceof Error ? error.message : 'Export failed',
+      });
+
+      // Keep modal open on error so user can retry
+      setTimeout(() => {
+        setExportProgress(null);
+      }, 3000);
+    }
   };
 
   // Filter versions
@@ -377,21 +406,58 @@ export function VersionLibrary() {
                   </div>
                   <button
                     onClick={() => {
-                      setShowTemplateSelector(false);
-                      setSelectedVersionForExport(null);
+                      if (!isExporting) {
+                        setShowTemplateSelector(false);
+                        setSelectedVersionForExport(null);
+                        setExportProgress(null);
+                      }
                     }}
-                    className="text-gray-400 hover:text-gray-600 text-2xl"
+                    disabled={isExporting}
+                    className="text-gray-400 hover:text-gray-600 text-2xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     ×
                   </button>
                 </div>
+
+                {/* Export Progress */}
+                {exportProgress && (
+                  <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3 mb-2">
+                      {exportProgress.status === 'error' ? (
+                        <div className="w-5 h-5 bg-red-600 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">!</span>
+                        </div>
+                      ) : exportProgress.status === 'complete' ? (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Loader className="w-5 h-5 text-indigo-600 animate-spin" />
+                      )}
+                      <span className={`font-medium ${
+                        exportProgress.status === 'error' ? 'text-red-700' :
+                        exportProgress.status === 'complete' ? 'text-green-700' :
+                        'text-gray-900'
+                      }`}>
+                        {exportProgress.message}
+                      </span>
+                    </div>
+                    {exportProgress.status !== 'error' && exportProgress.status !== 'complete' && (
+                      <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-300"
+                          style={{ width: `${exportProgress.progress}%` }}
+                        ></div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {RESUME_TEMPLATES.map((template) => (
                     <button
                       key={template.id}
                       onClick={() => handleTemplateSelect(template.id)}
-                      className="text-left bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-400 hover:shadow-lg transition-all"
+                      disabled={isExporting}
+                      className="text-left bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-400 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-2 mb-2">
                         <Layout className="w-5 h-5 text-indigo-600" />
