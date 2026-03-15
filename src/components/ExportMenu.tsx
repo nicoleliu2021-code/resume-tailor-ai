@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, CheckCircle, ExternalLink } from 'lucide-react';
 import type { StructuredResume } from '../types/resume';
 import { useSubscription } from '../contexts/SubscriptionContext';
 
 interface ExportMenuProps {
   resume: StructuredResume | null;
   onUpgradeNeeded?: () => void;
+  jobUrl?: string;
 }
 
-export function ExportMenu({ resume, onUpgradeNeeded }: ExportMenuProps) {
+export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps) {
   const { canUseFeature, incrementUsage } = useSubscription();
   const [showMenu, setShowMenu] = useState(false);
+  const [justExported, setJustExported] = useState(false);
 
   const exportAsPDF = async () => {
     if (!resume) return;
@@ -219,6 +221,8 @@ export function ExportMenu({ resume, onUpgradeNeeded }: ExportMenuProps) {
       }
 
       doc.save(`${name.replace(/\s+/g, '_')}_Resume.pdf`);
+      setJustExported(true);
+      setTimeout(() => setJustExported(false), 3000);
     } catch (error) {
       console.error('PDF export error:', error);
       alert(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -509,6 +513,8 @@ export function ExportMenu({ resume, onUpgradeNeeded }: ExportMenuProps) {
 
       const blob = await Packer.toBlob(doc);
       saveAs(blob, `${name.replace(/\s+/g, '_')}_Resume.docx`);
+      setJustExported(true);
+      setTimeout(() => setJustExported(false), 3000);
     } catch (error) {
       console.error('DOCX export error:', error);
       alert(`Failed to export DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -520,37 +526,78 @@ export function ExportMenu({ resume, onUpgradeNeeded }: ExportMenuProps) {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={!resume}
-        className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-purple-600 to-indigo-600
-          text-white rounded-xl font-semibold hover:from-purple-700 hover:to-indigo-700
-          disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
+        className={`w-full sm:w-auto flex items-center justify-center gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold
+          disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl text-sm sm:text-base ${
+          justExported
+            ? 'bg-green-600 hover:bg-green-700 text-white'
+            : 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white'
+        }`}
       >
-        <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-        <span className="hidden sm:inline">Export Resume</span>
-        <span className="sm:hidden">Export</span>
+        {justExported ? (
+          <>
+            <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span>Resume Ready!</span>
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="hidden sm:inline">Ready to Apply!</span>
+            <span className="sm:hidden">Export</span>
+          </>
+        )}
       </button>
 
       {showMenu && resume && (
-        <div className="absolute top-12 sm:top-14 right-0 bg-white rounded-xl shadow-2xl border border-gray-200 py-2 w-56 sm:w-64 z-50">
-          <button
-            onClick={() => { exportAsPDF(); setShowMenu(false); }}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-2 sm:gap-3"
-          >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="font-semibold text-xs sm:text-sm text-gray-900">Export as PDF</p>
-              <p className="text-xs text-gray-500 hidden sm:block">Professional print-ready format</p>
+        <div className="absolute top-12 sm:top-14 right-0 bg-white rounded-xl shadow-2xl border-2 border-indigo-200 py-2 w-64 sm:w-80 z-50">
+          {/* Quick Info Banner */}
+          <div className="px-4 py-3 bg-gradient-to-r from-indigo-50 to-purple-50 border-b border-indigo-100">
+            <p className="text-xs font-semibold text-indigo-900">
+              ✨ Your tailored resume with your contact info
+            </p>
+            <p className="text-xs text-indigo-700 mt-0.5">
+              Ready to send: {resume.name || 'Your Name'}
+            </p>
+          </div>
+
+          {/* Export Options */}
+          <div className="py-2">
+            <button
+              onClick={() => { exportAsPDF(); setShowMenu(false); }}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-2 sm:gap-3"
+            >
+              <Download className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-xs sm:text-sm text-gray-900">Export as PDF</p>
+                <p className="text-xs text-gray-500">Professional print-ready format</p>
+              </div>
+            </button>
+            <button
+              onClick={() => { exportAsDOCX(); setShowMenu(false); }}
+              className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-2 sm:gap-3"
+            >
+              <Download className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-xs sm:text-sm text-gray-900">Export as DOCX</p>
+                <p className="text-xs text-gray-500">Editable Word document</p>
+              </div>
+            </button>
+          </div>
+
+          {/* Apply Now CTA - if job URL exists */}
+          {jobUrl && (
+            <div className="border-t border-gray-200 p-3">
+              <a
+                href={jobUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setShowMenu(false)}
+                className="block w-full py-2.5 px-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center gap-2"
+              >
+                <ExternalLink className="w-4 h-4" />
+                <span>Apply on LinkedIn →</span>
+              </a>
             </div>
-          </button>
-          <button
-            onClick={() => { exportAsDOCX(); setShowMenu(false); }}
-            className="w-full px-3 sm:px-4 py-2 sm:py-3 text-left hover:bg-gray-50 transition-colors flex items-center gap-2 sm:gap-3"
-          >
-            <Download className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 flex-shrink-0" />
-            <div className="min-w-0">
-              <p className="font-semibold text-xs sm:text-sm text-gray-900">Export as DOCX</p>
-              <p className="text-xs text-gray-500 hidden sm:block">Editable Word document</p>
-            </div>
-          </button>
+          )}
         </div>
       )}
     </div>
