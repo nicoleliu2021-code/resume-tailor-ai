@@ -140,7 +140,7 @@ export interface MasterResumeStats {
 export interface MasterResumeFilters {
   searchQuery?: string;
   experienceCategory?: MasterExperience['category'][];
-  impactLevel?: MasterExperience['impact Level'][];
+  impactLevel?: MasterExperience['impactLevel'][];
   skillCategories?: MasterSkill['category'][];
   dateRange?: {
     start: Date;

@@ -8,7 +8,7 @@ import type {
   SelectionStrategy,
   RelevanceLevel,
 } from '../types/aiSelection';
-import type { MasterResume, MasterExperience, Achievement, MasterSkill } from '../types/masterResume';
+import type { MasterResume, MasterExperience, MasterSkill } from '../types/masterResume';
 import { getMasterResume } from './masterResume';
 
 const openai = new OpenAI({
@@ -481,9 +481,9 @@ function identifyStrengths(
 }
 
 function identifyGaps(
-  jobDescription: string,
-  experienceScores: ExperienceRelevanceScore[],
-  skillScores: SkillRelevanceScore[]
+  _jobDescription: string,
+  _experienceScores: ExperienceRelevanceScore[],
+  _skillScores: SkillRelevanceScore[]
 ): string[] {
   // This is a simplified version - could be enhanced with more sophisticated gap analysis
   return [];

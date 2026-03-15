@@ -3,12 +3,11 @@ import type {
   MasterExperience,
   Achievement,
   MasterSkill,
-  Certification,
   SummaryVariant,
   MasterResumeStats,
   ImportResult,
 } from '../types/masterResume';
-import type { StructuredResume, Experience, Skill, Project, Education } from '../types/resume';
+import type { StructuredResume, Experience, Skill } from '../types/resume';
 
 const STORAGE_KEY = 'master_resume_v1';
 
@@ -471,7 +470,7 @@ export function getStats(): MasterResumeStats {
 // ============================================================================
 
 function generateId(): string {
-  return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
 }
 
 function calculateCompletionScore(resume: MasterResume): number {
