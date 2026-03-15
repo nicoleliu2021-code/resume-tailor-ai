@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
-import { exportToPDF } from '../services/exportService';
+import { exportToPDF, exportToDOCX } from '../services/exportService';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
 import type { ExportProgress } from '../services/exportService';
 
@@ -18,6 +18,7 @@ export function VersionLibrary() {
   const [selectedVersionForExport, setSelectedVersionForExport] = useState<ResumeVersion | null>(null);
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf');
 
   useEffect(() => {
     loadVersions();
@@ -57,15 +58,22 @@ export function VersionLibrary() {
     setExportProgress({ status: 'preparing', progress: 0, message: 'Preparing export...' });
 
     try {
-      await exportToPDF(selectedVersionForExport, templateId, (progress) => {
-        setExportProgress(progress);
-      });
+      if (exportFormat === 'pdf') {
+        await exportToPDF(selectedVersionForExport, templateId, (progress) => {
+          setExportProgress(progress);
+        });
+      } else {
+        await exportToDOCX(selectedVersionForExport, templateId, (progress) => {
+          setExportProgress(progress);
+        });
+      }
 
       // Close modal and reset state
       setShowTemplateSelector(false);
       setSelectedVersionForExport(null);
       setIsExporting(false);
       setExportProgress(null);
+      setExportFormat('pdf'); // Reset to default
 
       // Refresh versions to update export count
       loadVersions();
@@ -410,6 +418,7 @@ export function VersionLibrary() {
                         setShowTemplateSelector(false);
                         setSelectedVersionForExport(null);
                         setExportProgress(null);
+                        setExportFormat('pdf');
                       }
                     }}
                     disabled={isExporting}
@@ -417,6 +426,37 @@ export function VersionLibrary() {
                   >
                     ×
                   </button>
+                </div>
+
+                {/* Format Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Export Format
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setExportFormat('pdf')}
+                      disabled={isExporting}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        exportFormat === 'pdf'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => setExportFormat('docx')}
+                      disabled={isExporting}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        exportFormat === 'docx'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      DOCX (Word)
+                    </button>
+                  </div>
                 </div>
 
                 {/* Export Progress */}
