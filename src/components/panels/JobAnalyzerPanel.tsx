@@ -5,9 +5,8 @@ import { useResume } from '../../contexts/ResumeContext';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
 export function JobAnalyzerPanel() {
-  const { jobDescription, setJobDescription } = useResume();
+  const { jobDescription, setJobDescription, jobUrl, setJobUrl } = useResume();
   const [error, setError] = useState('');
-  const [jobUrl, setJobUrl] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [inputMode, setInputMode] = useState<'text' | 'url'>('text');
 
@@ -36,6 +35,7 @@ export function JobAnalyzerPanel() {
 
       const data = await response.json();
       setJobDescription(data.text);
+      // Keep the job URL in context
       setInputMode('text');
       setError('');
     } catch (err) {
@@ -89,11 +89,15 @@ export function JobAnalyzerPanel() {
       </div>
 
       {inputMode === 'text' ? (
-        <div>
-          <textarea
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            placeholder="Paste the complete job description here...
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Job Description
+            </label>
+            <textarea
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              placeholder="Paste the complete job description here...
 
 Include:
 • Job title and responsibilities
@@ -102,25 +106,49 @@ Include:
 • Company information
 
 The more detail you provide, the better your optimized resume will be."
-            className="w-full h-80 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-sm leading-relaxed"
-          />
-          {jobDescription && (
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                {jobDescription.split(/\s+/).length} words • {jobDescription.length} characters
-              </span>
-              {jobDescription.split(/\s+/).length > 50 ? (
-                <span className="text-green-600 font-semibold flex items-center gap-1">
-                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  Good length
+              className="w-full h-64 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 resize-none text-sm leading-relaxed"
+            />
+            {jobDescription && (
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-gray-500">
+                  {jobDescription.split(/\s+/).length} words • {jobDescription.length} characters
                 </span>
-              ) : (
-                <span className="text-amber-600 text-xs font-medium">Add more detail for best results</span>
-              )}
+                {jobDescription.split(/\s+/).length > 50 ? (
+                  <span className="text-green-600 font-semibold flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Good length
+                  </span>
+                ) : (
+                  <span className="text-amber-600 text-xs font-medium">Add more detail for best results</span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Optional Job URL Field */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Job Posting URL <span className="text-gray-500 font-normal">(Optional)</span>
+            </label>
+            <div className="relative">
+              <LinkIcon className="absolute left-3 top-3.5 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                value={jobUrl}
+                onChange={(e) => setJobUrl(e.target.value)}
+                placeholder="https://job-boards.greenhouse.io/company/jobs/1234567890"
+                className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm"
+              />
             </div>
-          )}
+            <p className="mt-2 text-xs text-gray-600 flex items-start gap-1.5">
+              <svg className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+              <span>Add the job posting URL so you can apply directly after optimization</span>
+            </p>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
