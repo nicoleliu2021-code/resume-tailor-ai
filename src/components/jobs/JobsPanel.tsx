@@ -13,9 +13,10 @@ interface Props {
   onJobSelect: (jobDescription: string, jobTitle: string, jobUrl?: string) => void;
   isCollapsed?: boolean;
   onToggle?: () => void;
+  selectedJobId?: string | null;
 }
 
-export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }: Props) {
+export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, selectedJobId }: Props) {
   const [jobs, setJobs] = useState<JobMatch[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -118,7 +119,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
         >
           <Lightbulb className="w-5 h-5" />
           <span className="hidden sm:inline">
-            {jobs.length > 0 ? `${jobs.length} Jobs For You` : 'Discover Jobs'}
+            {jobs.length > 0 ? `${jobs.length} Recommended Jobs` : 'Discover Jobs'}
           </span>
           <span className="sm:hidden">{jobs.length}</span>
           {isMobile ? <Smartphone className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
@@ -136,11 +137,11 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
             <Lightbulb className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Jobs For You</h2>
+            <h2 className="text-lg font-bold text-gray-900">Recommended Jobs for Your Resume</h2>
             <p className="text-xs text-gray-600">
               {selectionMode
                 ? `${selectedJobs.size} selected`
-                : 'Based on your resume'}
+                : 'Select one to tailor your resume'}
             </p>
           </div>
         </div>
@@ -249,6 +250,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle }
                 selectionMode={selectionMode}
                 isSelected={selectedJobs.has(jobMatch.job.id)}
                 onToggleSelect={() => handleToggleSelection(jobMatch.job.id)}
+                isActiveSelection={selectedJobId === jobMatch.job.id}
               />
             ))}
           </div>
