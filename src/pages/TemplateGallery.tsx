@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, CheckCircle, Crown, Shield, Layout, Eye, ArrowRight, Star } from 'lucide-react';
+import { CheckCircle, Crown, Shield, Layout, Eye, ArrowRight, Star, Lock } from 'lucide-react';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { TemplateRenderer } from '../components/templates/TemplateRenderer';
 import { setPreferredTemplate } from '../services/templatePreference';
+import { useResume } from '../contexts/ResumeContext';
 import type { ResumeTemplate, ATSSafetyTier } from '../types/template';
 import type { StructuredResume } from '../types/resume';
 
@@ -80,9 +81,13 @@ type ATSFilter = 'all' | ATSSafetyTier;
 
 export function TemplateGallery() {
   const navigate = useNavigate();
+  const { resume } = useResume();
   const [tierFilter, setTierFilter] = useState<FilterType>('all');
   const [atsFilter, setATSFilter] = useState<ATSFilter>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate | null>(null);
+
+  // Use uploaded resume if available, otherwise use sample
+  const displayResume = resume || SAMPLE_RESUME;
 
   const handleUseTemplate = (template: ResumeTemplate) => {
     setPreferredTemplate(template.id);
@@ -235,9 +240,15 @@ export function TemplateGallery() {
             >
               {/* Preview Image */}
               <div className="relative aspect-[8.5/11] bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
-                {/* Placeholder preview - will be replaced with actual template rendering */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <FileText className="w-20 h-20 text-gray-400" />
+                {/* Actual template preview */}
+                <div className="absolute inset-0 flex items-center justify-center p-4 overflow-hidden">
+                  <div className="scale-[0.25] origin-top-left" style={{ width: '400%', height: '400%' }}>
+                    <TemplateRenderer
+                      template={template}
+                      resume={displayResume}
+                      scale={1}
+                    />
+                  </div>
                 </div>
 
                 {/* Badges */}
@@ -301,16 +312,33 @@ export function TemplateGallery() {
                   </button>
                   <button
                     onClick={() => handleUseTemplate(template)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
-                    title="Use Template"
+                    disabled={template.isPremium}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      template.isPremium
+                        ? 'border border-gray-200 text-gray-400 cursor-not-allowed bg-gray-50'
+                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                    }`}
+                    title={template.isPremium ? 'Premium Only' : 'Use Template'}
                   >
-                    <ArrowRight className="w-4 h-4" />
+                    {template.isPremium ? (
+                      <Lock className="w-4 h-4" />
+                    ) : (
+                      <ArrowRight className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
 
                 {/* Usage Stats */}
-                <div className="mt-3 pt-3 border-t border-gray-200 text-xs text-gray-500">
-                  Used by {template.usageCount.toLocaleString()} people
+                <div className="mt-3 pt-3 border-t border-gray-200">
+                  <p className="text-xs text-gray-500">
+                    Used by {template.usageCount.toLocaleString()} people
+                  </p>
+                  {template.isPremium && (
+                    <p className="text-xs text-amber-600 font-medium mt-1 flex items-center gap-1">
+                      <Lock className="w-3 h-3" />
+                      Preview only • Premium required for download
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -408,27 +436,59 @@ export function TemplateGallery() {
                   <div className="flex justify-center">
                     <TemplateRenderer
                       template={selectedTemplate}
-                      resume={SAMPLE_RESUME}
+                      resume={displayResume}
                       scale={0.5}
                     />
                   </div>
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-4">
-                  <button
-                    onClick={() => handleUseTemplate(selectedTemplate)}
-                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
-                  >
-                    Use This Template
-                    <ArrowRight className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => setSelectedTemplate(null)}
-                    className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
-                  >
-                    Close
-                  </button>
+                <div className="space-y-4">
+                  {selectedTemplate.isPremium && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <Lock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-amber-900 mb-1">
+                            Premium Template - Preview Only
+                          </p>
+                          <p className="text-xs text-amber-700">
+                            This template is available for preview. Download and export features require a premium subscription.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => handleUseTemplate(selectedTemplate)}
+                      disabled={selectedTemplate.isPremium}
+                      className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all shadow-lg flex items-center justify-center gap-2 ${
+                        selectedTemplate.isPremium
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
+                      }`}
+                    >
+                      {selectedTemplate.isPremium ? (
+                        <>
+                          <Lock className="w-5 h-5" />
+                          Premium Only
+                        </>
+                      ) : (
+                        <>
+                          Use This Template
+                          <ArrowRight className="w-5 h-5" />
+                        </>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => setSelectedTemplate(null)}
+                      className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

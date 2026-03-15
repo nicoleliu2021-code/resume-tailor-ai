@@ -15,7 +15,7 @@ const isMobileDevice = () => {
 };
 
 export function ResumeImportPanel({ onComplete }: Props) {
-  const { setResume } = useResume();
+  const { setResume, setOriginalResume } = useResume();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [fileName, setFileName] = useState('');
@@ -52,7 +52,21 @@ export function ResumeImportPanel({ onComplete }: Props) {
       console.log('[ResumeImport] Received structured resume:', structured);
 
       setResume(structured);
+      setOriginalResume(structured);
       console.log('[ResumeImport] Resume set in context');
+
+      // Auto-import to master resume
+      const { importFromStructuredResume, saveMasterResume, getMasterResume } = await import('../../services/masterResume');
+      const existingMaster = getMasterResume();
+
+      if (!existingMaster) {
+        console.log('[ResumeImport] Auto-importing to master resume...');
+        const result = importFromStructuredResume(structured);
+        if (result.success && result.masterResume) {
+          saveMasterResume(result.masterResume);
+          console.log('[ResumeImport] Master resume created successfully');
+        }
+      }
 
       onComplete?.();
     } catch (err) {
