@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList, ExternalLink } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
-import { ExportMenu } from '../components/ExportMenu';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
 import { RecentOptimizations } from '../components/RecentOptimizations';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
@@ -374,41 +373,14 @@ export function Optimizer() {
                 )}
               </button>
 
-              {/* Apply Now Button - always show in optimized view */}
-              {showOptimized && (
-                <button
-                  onClick={() => {
-                    // Save session before applying
-                    handleSaveSession();
-                    // Open job URL in new tab
-                    const url = jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(currentJobTitle || jobAnalysis?.roleTitle || 'job')}`;
-                    window.open(url, '_blank');
-                  }}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-colors text-sm shadow-md hover:shadow-lg"
-                  title={jobUrl ? 'Apply to this job' : 'Search for this job on LinkedIn'}
-                >
-                  <ExternalLink className="w-4 h-4" />
-                  <span className="hidden sm:inline">Apply Now</span>
-                  <span className="sm:hidden">Apply</span>
-                </button>
-              )}
-
               {!showUpload && (
                 <button
                   onClick={handleStartOver}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-colors text-sm"
+                  className="flex items-center gap-2 px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm"
                 >
                   <RotateCcw className="w-4 h-4" />
                   <span className="hidden sm:inline">Start Over</span>
                 </button>
-              )}
-
-              {showOptimized && resume && (
-                <ExportMenu
-                  resume={resume}
-                  onUpgradeNeeded={() => setShowUpgradeModal(true)}
-                  jobUrl={jobUrl}
-                />
               )}
             </div>
           </div>
