@@ -171,38 +171,39 @@ export function ImprovementReportModal({
 
         {/* Footer - CTAs */}
         <div className="border-t border-gray-200 p-6 bg-gray-50 flex-shrink-0">
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Primary CTA */}
-            <button
-              onClick={onContinue}
-              className="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-            >
-              <CheckCircle className="w-5 h-5" />
-              <span>View Optimized Resume</span>
-            </button>
-
-            {/* Secondary CTAs */}
-            <div className="flex gap-3">
-              {jobUrl && (
-                <a
-                  href={jobUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={onApplyNow}
-                  className="flex-1 sm:flex-none py-3 px-6 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  <span>Apply Now</span>
-                </a>
-              )}
+          <div className="flex flex-col gap-3">
+            {/* Primary CTAs Row */}
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
-                onClick={onExport}
-                className="flex-1 sm:flex-none py-3 px-6 border-2 border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                onClick={onContinue}
+                className="flex-1 py-3 px-6 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
               >
-                <Download className="w-5 h-5" />
-                <span>Export</span>
+                <CheckCircle className="w-5 h-5" />
+                <span>View Optimized Resume</span>
               </button>
+
+              {/* Apply Now - Always show, with job-specific link */}
+              <a
+                href={jobUrl || `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onApplyNow}
+                className="flex-1 py-3 px-6 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
+                title={jobUrl ? `Apply for ${jobTitle}` : `Search "${jobTitle}" on LinkedIn`}
+              >
+                <ExternalLink className="w-5 h-5" />
+                <span>Apply for {jobTitle}</span>
+              </a>
             </div>
+
+            {/* Secondary CTA */}
+            <button
+              onClick={onExport}
+              className="w-full py-3 px-6 border-2 border-indigo-300 text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" />
+              <span>Export Resume</span>
+            </button>
           </div>
         </div>
       </div>
@@ -266,7 +267,6 @@ function calculateMetrics(original: StructuredResume, optimized: StructuredResum
 
   // Calculate impact score (based on quantification indicators)
   const quantifiers = /\d+%|\d+x|\d+\+|increased|reduced|improved|achieved|delivered|generated/gi;
-  const originalQuantified = (original.experience.flatMap(exp => exp.bullets).join(' ').match(quantifiers) || []).length;
   const optimizedQuantified = (optimized.experience.flatMap(exp => exp.bullets).join(' ').match(quantifiers) || []).length;
   const impactScore = Math.min(95, 60 + Math.floor((optimizedQuantified / Math.max(1, optimizedBullets)) * 100));
 
