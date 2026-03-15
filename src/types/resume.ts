@@ -106,6 +106,37 @@ export interface JobMatch {
   matchType: 'direct' | 'stretch' | 'adjacent';
 }
 
+// Enhanced Job Match with AI Insights
+export interface SkillGap {
+  skill: string;
+  importance: 'critical' | 'preferred' | 'nice-to-have';
+  canLearn: boolean;
+}
+
+export interface SalaryRange {
+  min: number;
+  max: number;
+  currency: string;
+}
+
+export interface EnhancedJobMatch extends JobMatch {
+  // Additional AI Analysis
+  confidenceLevel: 'high' | 'medium' | 'low';
+  skillGaps: SkillGap[];
+  salaryRange?: SalaryRange;
+
+  // AI Insights
+  aiSummary: string;
+  applicationTips: string[];
+  interviewTopics: string[];
+
+  // Metadata
+  discoveredAt: Date;
+  isSaved: boolean;
+  isTailored: boolean;
+  applicationId?: string;
+}
+
 export interface JobDiscoveryResponse {
   jobs: JobMatch[];
   totalFound: number;
