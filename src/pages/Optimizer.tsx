@@ -6,6 +6,7 @@ import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
 import { RecentOptimizations } from '../components/RecentOptimizations';
+import { ProgressSteps } from '../components/ProgressSteps';
 import { JobAnalyzerPanel } from '../components/panels/JobAnalyzerPanel';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { JobsPanel } from '../components/jobs/JobsPanel';
@@ -331,29 +332,34 @@ export function Optimizer() {
   const showScore = viewMode === 'score' && !showUpload;
   const showOptimized = viewMode === 'optimized' && !showUpload;
 
+  // Determine current step for progress indicator
+  const getCurrentStep = (): 'upload' | 'job' | 'optimize' | 'review' => {
+    if (loadingStep === 'analyzing' || loadingStep === 'optimizing') return 'optimize';
+    if (showOptimized) return 'review';
+    if (!resume) return 'upload';
+    if (!jobDescription) return 'job';
+    return 'job';
+  };
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-indigo-50">
-      {/* Header */}
+      {/* Progress Steps */}
+      {!loadingStep && <ProgressSteps currentStep={getCurrentStep()} />}
+
+      {/* Header - Minimized */}
       {!loadingStep && (
-        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-4 shadow-sm">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                <Zap className="w-6 h-6 text-indigo-600" />
-                Resume Optimizer
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 mt-1">
-                {showUpload ? 'Upload your resume and job description' :
-                 showScore ? 'Review your score and optimize' :
-                 'Your optimized resume is ready'}
-              </p>
+        <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-3 shadow-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-5 h-5 text-indigo-600" />
+              <h1 className="text-lg font-bold text-gray-900">Resume Optimizer</h1>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
               {/* Application Tracker Button */}
               <button
                 onClick={() => setApplicationTrackerOpen(true)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-purple-300 text-purple-700 rounded-xl font-medium hover:bg-purple-50 transition-colors text-sm"
+                className="flex items-center gap-2 px-3 py-1.5 border border-purple-300 text-purple-700 rounded-lg font-medium hover:bg-purple-50 transition-colors text-xs"
               >
                 <ClipboardList className="w-4 h-4" />
                 <span className="hidden sm:inline">Applications</span>
@@ -362,12 +368,12 @@ export function Optimizer() {
               {/* Saved Jobs Button */}
               <button
                 onClick={() => setSavedJobsPanelOpen(true)}
-                className="relative flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-indigo-300 text-indigo-700 rounded-xl font-medium hover:bg-indigo-50 transition-colors text-sm"
+                className="relative flex items-center gap-2 px-3 py-1.5 border border-indigo-300 text-indigo-700 rounded-lg font-medium hover:bg-indigo-50 transition-colors text-xs"
               >
                 <BookmarkCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Saved Jobs</span>
+                <span className="hidden sm:inline">Saved</span>
                 {savedJobsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {savedJobsCount}
                   </span>
                 )}
@@ -376,9 +382,9 @@ export function Optimizer() {
               {!showUpload && (
                 <button
                   onClick={handleStartOver}
-                  className="flex items-center gap-2 px-3 sm:px-4 py-2 text-gray-600 hover:text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors text-sm"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-gray-600 hover:text-gray-900 rounded-lg font-medium hover:bg-gray-100 transition-colors text-xs"
                 >
-                  <RotateCcw className="w-4 h-4" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">Start Over</span>
                 </button>
               )}
