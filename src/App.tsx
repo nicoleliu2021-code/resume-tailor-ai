@@ -11,6 +11,8 @@ import { Settings } from './pages/Settings';
 import { HowItWorks } from './pages/HowItWorks';
 import { Pricing } from './pages/Pricing';
 import { MasterResumeEditor } from './pages/MasterResumeEditor';
+import { SmartSelector } from './pages/SmartSelector';
+import { VersionLibrary } from './pages/VersionLibrary';
 import './App.css';
 
 function App() {
@@ -23,6 +25,8 @@ function App() {
               <Route path="/" element={<AppLayout />}>
                 <Route index element={<Dashboard />} />
                 <Route path="master-resume" element={<MasterResumeEditor />} />
+                <Route path="smart-selector" element={<SmartSelector />} />
+                <Route path="versions" element={<VersionLibrary />} />
                 <Route path="optimizer" element={<Optimizer />} />
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="applications" element={<Applications />} />
