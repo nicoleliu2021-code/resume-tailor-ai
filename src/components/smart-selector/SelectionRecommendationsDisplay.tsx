@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { CheckCircle2, XCircle, AlertCircle, Sparkles, TrendingUp, Award, Briefcase, ChevronDown, ChevronRight } from 'lucide-react';
 import type { SelectionRecommendation } from '../../types/aiSelection';
 import type { MasterResume } from '../../types/masterResume';
@@ -242,8 +242,8 @@ export function SelectionRecommendationsDisplay({
                       )}
                     </div>
 
-                    {rec && rec.reasoning && (
-                      <p className="text-sm text-gray-700 mb-2 italic">&ldquo;{rec.reasoning}&rdquo;</p>
+                    {rec && rec.reasons && rec.reasons.length > 0 && (
+                      <p className="text-sm text-gray-700 mb-2 italic">&ldquo;{rec.reasons[0]}&rdquo;</p>
                     )}
 
                     {/* Achievements for this experience */}
@@ -287,8 +287,8 @@ export function SelectionRecommendationsDisplay({
                                         <span className="text-xs font-semibold text-indigo-600">
                                           Score: {achRec.relevanceScore}
                                         </span>
-                                        {achRec.reasoning && (
-                                          <span className="text-xs text-gray-500">• {achRec.reasoning}</span>
+                                        {achRec.reasons && achRec.reasons.length > 0 && (
+                                          <span className="text-xs text-gray-500">• {achRec.reasons[0]}</span>
                                         )}
                                       </div>
                                     )}

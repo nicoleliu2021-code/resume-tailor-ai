@@ -44,7 +44,7 @@ export function SmartSelector() {
         jobTitle: jobTitle.trim(),
         jobCompany: jobCompany.trim() || undefined,
         jobDescription: jobDescription.trim(),
-        selectionStrategy: 'balanced',
+        preferredStrategy: 'hybrid',
       });
 
       setRecommendation(result);
@@ -65,17 +65,52 @@ export function SmartSelector() {
     if (!masterResume || !recommendation) return;
 
     try {
+      // Build optimized content from selected items
+      const optimizedContent = {
+        name: masterResume.name,
+        email: masterResume.email,
+        phone: masterResume.phone,
+        linkedin: masterResume.linkedin,
+        location: masterResume.location,
+        summary: selectedData.summary,
+        experience: masterResume.experiences
+          .filter((exp) => selectedData.experienceIds.includes(exp.id))
+          .map((exp) => ({
+            id: exp.id,
+            company: exp.company,
+            role: exp.role,
+            location: exp.location,
+            startDate: exp.startDate,
+            endDate: exp.endDate,
+            current: exp.current,
+            bullets: exp.achievements
+              .filter((ach) => selectedData.achievementIds.includes(ach.id))
+              .map((ach) => ach.text),
+          })),
+        education: masterResume.education,
+        skills: masterResume.skills
+          .filter((skill) => selectedData.skillIds.includes(skill.id))
+          .map((skill) => ({
+            id: skill.id,
+            name: skill.name,
+            category: skill.category,
+            proficiency: skill.proficiency,
+          })),
+        projects: masterResume.projects,
+      };
+
       const versionId = createVersionFromSelection({
         name: recommendation.suggestedVersionName,
-        jobTitle: recommendation.jobTitle,
-        jobCompany: recommendation.targetCompany,
+        targetRole: recommendation.jobTitle,
+        targetCompany: recommendation.targetCompany,
         jobDescription: jobDescription,
         selectedExperienceIds: selectedData.experienceIds,
         selectedAchievementIds: selectedData.achievementIds,
         selectedSkillIds: selectedData.skillIds,
-        summary: selectedData.summary,
+        selectedProjectIds: [],
+        optimizedContent,
+        matchScore: recommendation.estimatedMatchScore,
         tags: recommendation.suggestedTags,
-        estimatedMatchScore: recommendation.estimatedMatchScore,
       });
 
       console.log('[SmartSelector] Created version:', versionId);
