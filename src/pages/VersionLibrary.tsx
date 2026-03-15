@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader } from 'lucide-react';
+import { Copy, Trash2, Download, Eye, Plus, Search, Filter, TrendingUp, FileText, CheckCircle, Archive, Layout, Loader, Star } from 'lucide-react';
 import { getAllVersions, deleteVersion, duplicateVersion, getVersionStats } from '../services/resumeVersions';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
+import { getPreferredTemplate } from '../services/templatePreference';
 import type { ResumeVersion, VersionStats } from '../types/resumeVersion';
 import type { ExportProgress } from '../services/exportService';
 
@@ -19,9 +20,12 @@ export function VersionLibrary() {
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<'pdf' | 'docx'>('pdf');
+  const [preferredTemplateId, setPreferredTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     loadVersions();
+    const preferredId = getPreferredTemplate();
+    setPreferredTemplateId(preferredId);
   }, []);
 
   const loadVersions = () => {
@@ -492,28 +496,52 @@ export function VersionLibrary() {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {RESUME_TEMPLATES.map((template) => (
-                    <button
-                      key={template.id}
-                      onClick={() => handleTemplateSelect(template.id)}
-                      disabled={isExporting}
-                      className="text-left bg-white border-2 border-gray-200 rounded-lg p-4 hover:border-indigo-400 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <Layout className="w-5 h-5 text-indigo-600" />
-                        <h3 className="font-bold text-gray-900">{template.name}</h3>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{template.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs px-2 py-1 bg-gray-100 rounded">
-                          {template.style.columns === 1 ? 'Single' : 'Two'} Column
-                        </span>
-                        <span className="text-xs font-semibold text-green-600">
-                          ATS: {template.atsScore}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
+                  {[...RESUME_TEMPLATES]
+                    .sort((a, b) => {
+                      // Sort preferred template first
+                      if (a.id === preferredTemplateId) return -1;
+                      if (b.id === preferredTemplateId) return 1;
+                      return 0;
+                    })
+                    .map((template) => {
+                      const isPreferred = template.id === preferredTemplateId;
+                      return (
+                        <button
+                          key={template.id}
+                          onClick={() => handleTemplateSelect(template.id)}
+                          disabled={isExporting}
+                          className={`text-left bg-white border-2 rounded-lg p-4 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                            isPreferred
+                              ? 'border-yellow-400 bg-yellow-50'
+                              : 'border-gray-200 hover:border-indigo-400'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <Layout className="w-5 h-5 text-indigo-600" />
+                            <h3 className="font-bold text-gray-900 flex-1">{template.name}</h3>
+                            {isPreferred && (
+                              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                            )}
+                          </div>
+                          {isPreferred && (
+                            <div className="mb-2">
+                              <span className="text-xs px-2 py-0.5 bg-yellow-200 text-yellow-800 rounded-full font-semibold">
+                                Your Preferred Template
+                              </span>
+                            </div>
+                          )}
+                          <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs px-2 py-1 bg-gray-100 rounded">
+                              {template.style.columns === 1 ? 'Single' : 'Two'} Column
+                            </span>
+                            <span className="text-xs font-semibold text-green-600">
+                              ATS: {template.atsScore}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
                 </div>
               </div>
             </div>

@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FileText, CheckCircle, Crown, Shield, Layout, Eye, ArrowRight, Star } from 'lucide-react';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { TemplateRenderer } from '../components/templates/TemplateRenderer';
+import { setPreferredTemplate } from '../services/templatePreference';
 import type { ResumeTemplate, ATSSafetyTier } from '../types/template';
 import type { StructuredResume } from '../types/resume';
 
@@ -77,9 +79,16 @@ type FilterType = 'all' | 'free' | 'premium';
 type ATSFilter = 'all' | ATSSafetyTier;
 
 export function TemplateGallery() {
+  const navigate = useNavigate();
   const [tierFilter, setTierFilter] = useState<FilterType>('all');
   const [atsFilter, setATSFilter] = useState<ATSFilter>('all');
   const [selectedTemplate, setSelectedTemplate] = useState<ResumeTemplate | null>(null);
+
+  const handleUseTemplate = (template: ResumeTemplate) => {
+    setPreferredTemplate(template.id);
+    // Navigate to Version Library where user can export with this template
+    navigate('/versions');
+  };
 
   // Filter templates
   const filteredTemplates = RESUME_TEMPLATES.filter((template) => {
@@ -291,7 +300,9 @@ export function TemplateGallery() {
                     Preview
                   </button>
                   <button
+                    onClick={() => handleUseTemplate(template)}
                     className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors"
+                    title="Use Template"
                   >
                     <ArrowRight className="w-4 h-4" />
                   </button>
@@ -405,7 +416,10 @@ export function TemplateGallery() {
 
                 {/* Action Buttons */}
                 <div className="flex items-center gap-4">
-                  <button className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2">
+                  <button
+                    onClick={() => handleUseTemplate(selectedTemplate)}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg flex items-center justify-center gap-2"
+                  >
                     Use This Template
                     <ArrowRight className="w-5 h-5" />
                   </button>
