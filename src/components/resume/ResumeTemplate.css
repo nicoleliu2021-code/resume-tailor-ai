@@ -1,0 +1,398 @@
+/* ============================================
+   ATS-Optimized Resume Template Styles
+   ============================================
+
+   Design Principles:
+   - Simple, semantic HTML structure
+   - No tables, columns, or complex layouts
+   - Clean typography with proper spacing
+   - Optimized for ATS parsing and recruiter readability
+   - Prints cleanly to PDF and DOCX
+   ============================================ */
+
+.resume-template {
+  max-width: 8.5in;
+  margin: 0 auto;
+  background: white;
+  color: #000000;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ============================================
+   Header Section
+   ============================================ */
+
+.resume-header {
+  text-align: center;
+  margin-bottom: 16px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 12px;
+}
+
+.resume-name {
+  font-size: 20pt;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #000000;
+}
+
+.resume-contact {
+  font-size: 10pt;
+  color: #000000;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+}
+
+.contact-item {
+  color: #000000;
+}
+
+.contact-separator {
+  margin: 0 4px;
+  color: #000000;
+}
+
+/* ============================================
+   Target Role (Optional Highlight)
+   ============================================ */
+
+.target-role {
+  margin-bottom: 12px !important;
+}
+
+.target-role-content {
+  text-align: center;
+  font-size: 12pt;
+  font-weight: 600;
+  color: #000000;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================
+   Section Structure
+   ============================================ */
+
+.resume-section {
+  margin-bottom: 16px;
+  page-break-inside: avoid;
+}
+
+.section-heading {
+  font-size: 11pt;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin: 0 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #000000;
+  color: #000000;
+}
+
+/* ============================================
+   Professional Summary
+   ============================================ */
+
+.summary-content {
+  margin: 0;
+  text-align: justify;
+  color: #000000;
+}
+
+/* ============================================
+   Experience Section
+   ============================================ */
+
+.experience-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.experience-entry {
+  page-break-inside: avoid;
+}
+
+.experience-header {
+  margin-bottom: 4px;
+}
+
+.experience-title {
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.company-name {
+  font-weight: 700;
+}
+
+.title-separator {
+  font-weight: 400;
+  margin: 0 4px;
+}
+
+.role-name {
+  font-weight: 600;
+  font-style: italic;
+}
+
+.experience-meta {
+  font-size: 10pt;
+  color: #000000;
+  margin-top: 2px;
+}
+
+.location {
+  color: #000000;
+}
+
+.meta-separator {
+  margin: 0 4px;
+}
+
+.dates {
+  color: #000000;
+}
+
+/* ============================================
+   Bullet Points
+   ============================================ */
+
+.bullet-list {
+  margin: 6px 0 0 20px;
+  padding: 0;
+  list-style-type: disc;
+}
+
+.bullet-item {
+  margin-bottom: 4px;
+  color: #000000;
+  line-height: 1.4;
+}
+
+.bullet-item::marker {
+  color: #000000;
+}
+
+/* ============================================
+   Skills Section
+   ============================================ */
+
+.skills-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skill-category {
+  color: #000000;
+}
+
+.skill-label {
+  font-weight: 700;
+  color: #000000;
+}
+
+.skill-items {
+  color: #000000;
+}
+
+/* ============================================
+   Education Section
+   ============================================ */
+
+.education-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.education-entry {
+  page-break-inside: avoid;
+}
+
+.education-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 2px;
+}
+
+.education-title {
+  font-weight: 700;
+  color: #000000;
+}
+
+.institution-name {
+  font-weight: 700;
+}
+
+.education-date {
+  font-size: 10pt;
+  color: #000000;
+  white-space: nowrap;
+}
+
+.education-details {
+  font-style: italic;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.degree {
+  font-weight: 600;
+}
+
+.field {
+  font-weight: 400;
+}
+
+.gpa {
+  font-weight: 400;
+}
+
+.education-honors {
+  font-size: 10pt;
+  color: #000000;
+  margin-top: 2px;
+}
+
+/* ============================================
+   Projects Section (Optional)
+   ============================================ */
+
+.projects-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.project-entry {
+  page-break-inside: avoid;
+}
+
+.project-header {
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 4px;
+}
+
+.project-name {
+  font-weight: 700;
+}
+
+.project-date {
+  font-weight: 400;
+}
+
+.project-description {
+  margin: 0 0 4px 0;
+  color: #000000;
+}
+
+.project-tech {
+  font-size: 10pt;
+  color: #000000;
+}
+
+.tech-label {
+  font-weight: 600;
+}
+
+/* ============================================
+   Certifications Section (Optional)
+   ============================================ */
+
+.certifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.certification-entry {
+  color: #000000;
+}
+
+.cert-name {
+  font-weight: 600;
+}
+
+.cert-separator {
+  margin: 0 4px;
+}
+
+.cert-issuer,
+.cert-date {
+  color: #000000;
+}
+
+/* ============================================
+   Publications Section (Optional)
+   ============================================ */
+
+.publications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.publication-entry {
+  page-break-inside: avoid;
+}
+
+.pub-title {
+  font-weight: 600;
+  font-style: italic;
+  color: #000000;
+  margin-bottom: 2px;
+}
+
+.pub-meta {
+  font-size: 10pt;
+  color: #000000;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .resume-template {
+    margin: 0;
+    padding: 0.5in;
+    box-shadow: none;
+  }
+
+  .resume-section {
+    page-break-inside: avoid;
+  }
+
+  .experience-entry,
+  .education-entry,
+  .project-entry {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure consistent colors in print */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+
+/* ============================================
+   Screen Display (For Preview)
+   ============================================ */
+
+@media screen {
+  .resume-template {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-height: 11in;
+  }
+}
