@@ -11,9 +11,10 @@ interface Props {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
+  isActiveSelection?: boolean;
 }
 
-export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange, selectionMode = false, isSelected = false, onToggleSelect }: Props) {
+export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange, selectionMode = false, isSelected = false, onToggleSelect, isActiveSelection = false }: Props) {
   const { job, fitScore, matchReasons, missingSkills, matchType } = jobMatch;
   const [isSaved, setIsSaved] = useState(false);
 
@@ -54,7 +55,9 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
   return (
     <div
       className={`bg-white border-2 rounded-xl p-4 transition-all ${
-        selectionMode
+        isActiveSelection
+          ? 'border-green-500 shadow-xl bg-green-50 ring-2 ring-green-200'
+          : selectionMode
           ? isSelected
             ? 'border-purple-500 shadow-lg bg-purple-50'
             : 'border-gray-200 hover:border-purple-300 cursor-pointer'
@@ -62,6 +65,13 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
       }`}
       onClick={selectionMode ? onToggleSelect : undefined}
     >
+      {/* Active Selection Badge */}
+      {isActiveSelection && (
+        <div className="mb-3 flex items-center gap-2 px-3 py-2 bg-green-100 border border-green-300 rounded-lg">
+          <CheckCircle2 className="w-4 h-4 text-green-700" />
+          <span className="text-xs font-bold text-green-900">SELECTED FOR TAILORING</span>
+        </div>
+      )}
       {/* Header: Fit Score & Save Button */}
       <div className="flex items-center justify-between mb-3">
         {selectionMode ? (
@@ -186,47 +196,48 @@ export function JobCard({ jobMatch, onTailorClick, onPreviewClick, onSaveChange,
         </div>
       </div>
 
-      {/* CTAs */}
+      {/* CTAs - New Hierarchy */}
       {!selectionMode && (
-        <>
-          {/* Apply Button - if job URL exists */}
-          {job.jobUrl && (
-            <a
-              href={job.jobUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="block w-full mb-2 py-2 px-4 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              <span>View & Apply</span>
-            </a>
-          )}
+        <div className="space-y-2">
+          {/* Primary CTA: Tailor Resume */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onTailorClick();
+            }}
+            className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 text-sm"
+          >
+            <span>Tailor Resume</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
 
+          {/* Secondary & Tertiary CTAs */}
           <div className="flex gap-2">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onTailorClick();
-              }}
-              className="flex-1 py-2.5 px-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2"
-            >
-              <span>Tailor Resume</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
             {onPreviewClick && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onPreviewClick();
                 }}
-                className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-xs"
               >
-                Preview
+                Preview Job
               </button>
             )}
+            {job.jobUrl && (
+              <a
+                href={job.jobUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex-1 px-3 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition-colors text-xs flex items-center justify-center gap-1.5"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>View Job</span>
+              </a>
+            )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
