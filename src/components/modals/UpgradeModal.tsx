@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Check, Zap, Receipt } from 'lucide-react';
+import { X, Check, Zap } from 'lucide-react';
 import { SUBSCRIPTION_PLANS, type SubscriptionTier } from '../../types/subscription';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { CheckoutModal } from './CheckoutModal';
@@ -60,8 +60,8 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
 
         {/* Pricing Cards */}
         <div className="p-8">
-          <div className="grid md:grid-cols-4 gap-6">
-            {(['free', 'onetime', 'pro', 'premium'] as SubscriptionTier[]).map((tier) => {
+          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+            {(['free', 'pro'] as SubscriptionTier[]).map((tier) => {
               const plan = SUBSCRIPTION_PLANS[tier];
               const isCurrent = tier === currentTier;
               const isRecommended = plan.popular || false;
@@ -98,8 +98,6 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
                   <div className="mb-4">
                     {tier === 'pro' ? (
                       <Zap className="w-10 h-10 text-indigo-600" />
-                    ) : tier === 'onetime' ? (
-                      <Receipt className="w-10 h-10 text-green-600" />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold">
                         F
@@ -136,18 +134,14 @@ export function UpgradeModal({ isOpen, onClose, featureName }: UpgradeModalProps
                   {/* CTA Button */}
                   <button
                     onClick={() => handleUpgrade(tier)}
-                    disabled={isCurrent}
+                    disabled={isCurrent || tier === 'free'}
                     className={`w-full py-3 rounded-lg font-semibold transition-all ${
-                      isCurrent
+                      isCurrent || tier === 'free'
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : isRecommended
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg'
-                        : tier === 'onetime'
-                        ? 'bg-green-600 text-white hover:bg-green-700'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        : 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700 shadow-lg'
                     }`}
                   >
-                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Current Plan' : tier === 'onetime' ? `Get Started - $${plan.price} One-Time` : tier === 'premium' ? 'Upgrade to Premium' : 'Upgrade to Pro'}
+                    {isCurrent ? 'Current Plan' : tier === 'free' ? 'Free Forever' : 'Upgrade to Pro'}
                   </button>
                 </div>
               );

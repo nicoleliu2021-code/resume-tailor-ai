@@ -80,7 +80,7 @@ export function Sidebar() {
                 onClick={() => setShowUpgradeModal(true)}
                 className="mt-2 w-full rounded-md bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1.5 text-xs font-semibold hover:from-purple-600 hover:to-pink-600 transition-all shadow-lg"
               >
-                Tailor More Resumes
+                {remainingJobs === 0 ? 'Upgrade for More' : 'Upgrade to Pro'}
               </button>
             </>
           ) : (

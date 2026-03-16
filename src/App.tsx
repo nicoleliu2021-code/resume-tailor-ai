@@ -9,7 +9,7 @@ import { Applications } from './pages/Applications';
 import { Jobs } from './pages/Jobs';
 import { Settings } from './pages/Settings';
 import { HowItWorks } from './pages/HowItWorks';
-import { Pricing } from './pages/Pricing';
+// import { Pricing } from './pages/Pricing';
 import { MasterResumeEditor } from './pages/MasterResumeEditor';
 import { SmartSelector } from './pages/SmartSelector';
 import { VersionLibrary } from './pages/VersionLibrary';
@@ -33,7 +33,7 @@ function App() {
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="how-it-works" element={<HowItWorks />} />
-                <Route path="pricing" element={<Pricing />} />
+                {/* <Route path="pricing" element={<Pricing />} /> */}
                 <Route path="settings" element={<Settings />} />
               </Route>
             </Routes>

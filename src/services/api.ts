@@ -105,12 +105,29 @@ export async function parsePDFAPI(file: File): Promise<string> {
 export async function discoverJobsAPI(resume: StructuredResume): Promise<JobDiscoveryResponse> {
   console.log('[API] discoverJobsAPI called');
 
+  // Sort experiences by most recent first (current jobs first, then by end date)
+  const sortedResume = {
+    ...resume,
+    experience: [...resume.experience].sort((a, b) => {
+      // Current positions first
+      if (a.current && !b.current) return -1;
+      if (!a.current && b.current) return 1;
+
+      // Then sort by end date (most recent first)
+      const dateA = new Date(a.endDate || a.startDate);
+      const dateB = new Date(b.endDate || b.startDate);
+      return dateB.getTime() - dateA.getTime();
+    })
+  };
+
+  console.log('[API] Sorted experiences, most recent:', sortedResume.experience[0]?.role, 'at', sortedResume.experience[0]?.company);
+
   const response = await fetch(`${API_BASE_URL}/api/job/discover`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ resume }),
+    body: JSON.stringify({ resume: sortedResume }),
   });
 
   console.log('[API] Response status:', response.status, response.ok);
