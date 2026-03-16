@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Upload Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px 0; cursor: pointer; }
+        #output { background: #f5f5f5; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-size: 12px; }
+        input[type="file"] { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>PDF Upload Test</h1>
+    <p>Test PDF parsing step-by-step</p>
+
+    <input type="file" id="fileInput" accept=".pdf" />
+    <button onclick="testPDFParsing()">Parse PDF</button>
+
+    <h3>Output:</h3>
+    <div id="output">Select a PDF file and click Parse PDF</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function testPDFParsing() {
+            const output = document.getElementById('output');
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                output.textContent = 'Please select a PDF file first';
+                return;
+            }
+
+            output.textContent = 'Starting PDF parse test...\n\n';
+            output.textContent += `File: ${file.name}\n`;
+            output.textContent += `Size: ${file.size} bytes\n`;
+            output.textContent += `Type: ${file.type}\n\n`;
+
+            try {
+                // Step 1: Read file as ArrayBuffer
+                output.textContent += 'Step 1: Reading file as ArrayBuffer...\n';
+                const arrayBuffer = await file.arrayBuffer();
+                output.textContent += `✓ ArrayBuffer created: ${arrayBuffer.byteLength} bytes\n\n`;
+
+                // Step 2: Load PDF with pdf.js
+                output.textContent += 'Step 2: Loading PDF with pdf.js...\n';
+                const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                const pdf = await loadingTask.promise;
+                output.textContent += `✓ PDF loaded: ${pdf.numPages} pages\n\n`;
+
+                // Step 3: Extract text from each page
+                output.textContent += 'Step 3: Extracting text from pages...\n';
+                let fullText = '';
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                    output.textContent += `✓ Page ${i}: ${pageText.length} characters\n`;
+                }
+
+                output.textContent += `\n✓ Total text extracted: ${fullText.length} characters\n\n`;
+                output.textContent += '=== EXTRACTED TEXT ===\n';
+                output.textContent += fullText.substring(0, 500) + '...\n\n';
+
+                // Step 4: Send to backend API
+                output.textContent += 'Step 4: Sending to backend API...\n';
+                const apiUrl = 'https://resume-tailor-ai-production-1944.up.railway.app/api/resume/parse';
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ resumeText: fullText })
+                });
+
+                output.textContent += `Response: ${response.status} ${response.statusText}\n`;
+
+                if (response.ok) {
+                    const data = await response.json();
+                    output.textContent += '✓ API Success!\n';
+                    output.textContent += JSON.stringify(data, null, 2).substring(0, 500) + '...\n';
+                } else {
+                    const errorText = await response.text();
+                    output.textContent += `✗ API Error: ${errorText}\n`;
+                }
+
+            } catch (error) {
+                output.textContent += `\n✗ ERROR: ${error.message}\n`;
+                output.textContent += `Stack: ${error.stack}\n`;
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings, ClipboardList, Database, Layout } from 'lucide-react';
+import { Home, FileText, Settings, Database, Layout } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { UpgradeModal } from '../modals/UpgradeModal';
@@ -8,7 +8,7 @@ import { UpgradeModal } from '../modals/UpgradeModal';
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'Resume Optimizer', href: '/optimizer', icon: FileText, highlight: true },
-  { name: 'Applications', href: '/applications', icon: ClipboardList },
+  // { name: 'Applications', href: '/applications', icon: ClipboardList }, // Hidden for MVP
   { name: 'Templates', href: '/templates', icon: Layout },
   { name: 'Master Resume', href: '/master-resume', icon: Database, badge: 'Advanced' },
   { name: 'Settings', href: '/settings', icon: Settings },
