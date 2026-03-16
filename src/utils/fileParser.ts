@@ -2,8 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { parsePDFAPI } from '../services/api';
 
-// Configure PDF.js worker - use unpkg CDN (most reliable across environments)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+// Configure PDF.js worker - use cdnjs (more reliable than unpkg)
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 // Detect if user is on mobile device
 function isMobileDevice(): boolean {
@@ -18,7 +18,7 @@ export async function parsePDF(file: File): Promise<string> {
     return await parsePDFAPI(file);
   }
 
-  // Use client-side parsing for desktop
+  // Use client-side parsing for desktop with fallback to backend
   try {
     console.log('[PDF Parser] Desktop detected, using client-side parsing');
     console.log('[PDF Parser] Starting PDF parse, file size:', file.size);
@@ -48,8 +48,16 @@ export async function parsePDF(file: File): Promise<string> {
     console.log('[PDF Parser] Total text length:', fullText.length);
     return fullText.trim();
   } catch (error) {
-    console.error('[PDF Parser] Error:', error);
-    throw new Error('Failed to parse PDF file. Please ensure it is a valid PDF.');
+    console.error('[PDF Parser] Client-side parsing failed:', error);
+    console.log('[PDF Parser] Falling back to backend API');
+
+    // Fallback to backend API if client-side parsing fails
+    try {
+      return await parsePDFAPI(file);
+    } catch (backendError) {
+      console.error('[PDF Parser] Backend API also failed:', backendError);
+      throw new Error('Failed to parse PDF file. Please ensure it is a valid PDF or try converting to DOCX format.');
+    }
   }
 }
 
