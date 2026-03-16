@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, CheckCircle2, FileDown, ArrowRight, ArrowLeft, Link as LinkIcon, Check, Eye, ChevronDown } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, CheckCircle2, FileDown, ArrowRight, ArrowLeft, Link as LinkIcon, ChevronDown } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
-import { TemplatePreview } from '../components/TemplatePreview';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 import { ResumeRenderer } from '../components/ResumeRenderer';
 import ReferralBanner from '../components/ReferralBanner';
@@ -243,14 +242,6 @@ export function OptimizerNew() {
       // Track error
       trackError('optimization_failed', errorMessage);
     }
-  };
-
-  const handleTemplateSelected = () => {
-    // Track template selection
-    trackFunnelStep('download_step', 4);
-
-    // Move to download step
-    setCurrentStep(4);
   };
 
   const handleDownload = async (format: 'pdf' | 'docx') => {
