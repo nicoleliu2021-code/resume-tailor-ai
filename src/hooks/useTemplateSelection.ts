@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getTemplateById } from '../data/templates';
-import type { ResumeTemplate } from '../types/template';
 
 const SELECTED_TEMPLATE_KEY = 'selectedTemplateId';
 const DEFAULT_TEMPLATE_ID = 'classic-ats';

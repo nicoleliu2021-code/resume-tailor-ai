@@ -3,7 +3,6 @@ import { Download, CheckCircle, ExternalLink } from 'lucide-react';
 import type { StructuredResume } from '../types/resume';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { TemplateSelectionModal } from './templates/TemplateSelectionModal';
-import { useTemplateSelection } from '../hooks/useTemplateSelection';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import type { ResumeVersion } from '../types/resumeVersion';
 
@@ -15,17 +14,14 @@ interface ExportMenuProps {
 
 export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps) {
   const { canUseFeature, incrementUsage } = useSubscription();
-  const { selectedTemplate } = useTemplateSelection();
   const [showMenu, setShowMenu] = useState(false);
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
   const [exportFormat, setExportFormat] = useState<'pdf' | 'docx' | null>(null);
   const [justExported, setJustExported] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
 
   // Handle template selection confirmation and export
   const handleTemplateConfirm = async (templateId: string) => {
     setShowTemplateSelection(false);
-    setIsExporting(true);
 
     try {
       if (!resume || !exportFormat) return;
@@ -63,7 +59,6 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
       console.error('Export error:', error);
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsExporting(false);
       setExportFormat(null);
     }
   };
