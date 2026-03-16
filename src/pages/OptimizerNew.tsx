@@ -147,6 +147,10 @@ export function OptimizerNew() {
 
       const optimizeData = await optimizeResponse.json();
 
+      console.log('[Optimizer] Optimization response:', optimizeData);
+      console.log('[Optimizer] Changes:', optimizeData.changes);
+      console.log('[Optimizer] Metadata:', optimizeData.metadata);
+
       await new Promise(resolve => setTimeout(resolve, 800));
 
       const mergedResume = {
@@ -157,6 +161,15 @@ export function OptimizerNew() {
         linkedin: resume.linkedin || '',
         location: resume.location || ''
       };
+
+      console.log('[Optimizer] Original resume:', resume);
+      console.log('[Optimizer] Optimized resume:', mergedResume);
+
+      // Compare to see if there are actual differences
+      const originalBullets = resume.experience?.flatMap(e => e.bullets) || [];
+      const optimizedBullets = mergedResume.experience?.flatMap(e => e.bullets) || [];
+      console.log('[Optimizer] Original bullets:', originalBullets);
+      console.log('[Optimizer] Optimized bullets:', optimizedBullets);
 
       setResume(mergedResume);
 

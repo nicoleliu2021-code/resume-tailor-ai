@@ -119,6 +119,10 @@ export async function exportToPDF(
 
     console.log('[Export] Image dimensions:', imgWidth, 'x', imgHeight, 'inches');
 
+    // Extract header information for multi-page headers
+    const resume = version.optimizedContent;
+    const headerHeight = 0.6; // inches for header on continuation pages
+
     // If content fits on one page, add it directly
     if (imgHeight <= pageHeight) {
       const imgData = canvas.toDataURL('image/png');
@@ -142,6 +146,10 @@ export async function exportToPDF(
           throw new Error('Failed to get canvas context');
         }
 
+        // Fill white background
+        pageCtx.fillStyle = '#ffffff';
+        pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+
         // Copy the relevant portion of the main canvas
         pageCtx.drawImage(
           canvas,
@@ -157,13 +165,30 @@ export async function exportToPDF(
         // Add new page if not the first page
         if (page > 0) {
           pdf.addPage();
+
+          // Add header to continuation pages
+          pdf.setFontSize(11);
+          pdf.setFont('helvetica', 'bold');
+          pdf.text(resume.name || '', 0.75, 0.4);
+
+          pdf.setFontSize(9);
+          pdf.setFont('helvetica', 'normal');
+          const contactInfo = [resume.email, resume.phone].filter(Boolean).join(' • ');
+          if (contactInfo) {
+            pdf.text(contactInfo, 0.75, 0.55);
+          }
+
+          // Add page number
+          pdf.setFontSize(8);
+          pdf.text(`Page ${page + 1} of ${pageCount}`, imgWidth - 0.75, 0.4, { align: 'right' });
         }
 
         // Calculate height for this page in inches
         const thisPageHeight = (pageCanvas.height * imgWidth) / canvas.width;
 
-        // Add the image to the PDF page
-        pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, thisPageHeight);
+        // Add the image to the PDF page, with offset for header on continuation pages
+        const yOffset = page > 0 ? headerHeight : 0;
+        pdf.addImage(pageImgData, 'PNG', 0, yOffset, imgWidth, thisPageHeight);
 
         console.log(`[Export] Added page ${page + 1}/${pageCount}`);
       }
