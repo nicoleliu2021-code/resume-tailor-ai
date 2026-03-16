@@ -13,7 +13,7 @@ import { Pricing } from './pages/Pricing';
 import { MasterResumeEditor } from './pages/MasterResumeEditor';
 import { SmartSelector } from './pages/SmartSelector';
 import { VersionLibrary } from './pages/VersionLibrary';
-import { TemplateGallery } from './pages/TemplateGallery';
+import { Templates } from './pages/Templates';
 import './App.css';
 
 function App() {
@@ -28,7 +28,7 @@ function App() {
                 <Route path="master-resume" element={<MasterResumeEditor />} />
                 <Route path="smart-selector" element={<SmartSelector />} />
                 <Route path="versions" element={<VersionLibrary />} />
-                <Route path="templates" element={<TemplateGallery />} />
+                <Route path="templates" element={<Templates />} />
                 <Route path="optimizer" element={<Optimizer />} />
                 <Route path="jobs" element={<Jobs />} />
                 <Route path="applications" element={<Applications />} />

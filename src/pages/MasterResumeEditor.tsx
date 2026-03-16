@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { Database, Plus, TrendingUp, Upload, Loader } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Database, Plus, TrendingUp, Upload, Loader, CheckCircle, ArrowRight } from 'lucide-react';
 import { getMasterResume, getStats, importFromStructuredResume, saveMasterResume } from '../services/masterResume';
 import { useResume } from '../contexts/ResumeContext';
 import { ExperienceLibrary } from '../components/master-resume/ExperienceLibrary';
@@ -22,7 +23,9 @@ export function MasterResumeEditor() {
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const { resume } = useResume();
 
   useEffect(() => {
@@ -96,6 +99,7 @@ export function MasterResumeEditor() {
           saveMasterResume(result.masterResume);
           setMasterResume(result.masterResume);
         }
+        setUploadSuccess(true);
       }
     } catch (error) {
       console.error('Error uploading resume:', error);
@@ -128,12 +132,56 @@ export function MasterResumeEditor() {
             <Database className="w-8 h-8 text-indigo-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Create Your Master Resume
+            Get Started with Your Master Resume
           </h2>
           <p className="text-gray-600 mb-6">
-            Store all your experiences, achievements, and skills in one place.
-            Never start from scratch again.
+            Import your existing resume or start fresh. Store all your experiences, achievements, and skills in one place.
           </p>
+
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".pdf,.doc,.docx,.txt"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+
+          {/* Primary: Upload Resume */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className="w-full mb-3 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            {isUploading ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                <span>Importing...</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-5 h-5" />
+                <span>Import Resume</span>
+              </>
+            )}
+          </button>
+
+          {uploadError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{uploadError}</p>
+            </div>
+          )}
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">or</span>
+            </div>
+          </div>
+
+          {/* Secondary: Create Empty */}
           <button
             onClick={() => {
               // Create empty master resume
@@ -158,10 +206,10 @@ export function MasterResumeEditor() {
               saveMasterResume(emptyResume);
               setMasterResume(emptyResume);
             }}
-            className="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+            className="w-full px-6 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
           >
             <Plus className="inline w-5 h-5 mr-2" />
-            Get Started
+            Start from Scratch
           </button>
         </div>
       </div>
@@ -213,6 +261,27 @@ export function MasterResumeEditor() {
           {uploadError && (
             <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-700">{uploadError}</p>
+            </div>
+          )}
+          {uploadSuccess && (
+            <div className="mt-3 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-green-900 mb-1">Resume Imported Successfully!</p>
+                  <p className="text-xs text-green-700 mb-3">Your data has been added to your master resume. Ready for the next step?</p>
+                  <button
+                    onClick={() => {
+                      setUploadSuccess(false);
+                      navigate('/templates');
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors"
+                  >
+                    <span>Choose a Template</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>
