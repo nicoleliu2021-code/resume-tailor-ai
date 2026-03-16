@@ -85,6 +85,11 @@ export function OptimizerNew() {
   };
 
   const handleOptimize = async () => {
+    if (!resume) {
+      setAnalysisError('Please upload a resume first');
+      return;
+    }
+
     if (!canUseFeature('jobAnalysisUsed')) {
       setAnalysisError('Job analysis limit reached');
       setShowUpgradeModal(true);
@@ -133,11 +138,11 @@ export function OptimizerNew() {
 
       const mergedResume = {
         ...optimizeData.optimizedResume,
-        name: resume.name,
-        email: resume.email,
-        phone: resume.phone,
-        linkedin: resume.linkedin,
-        location: resume.location
+        name: resume.name || '',
+        email: resume.email || '',
+        phone: resume.phone || '',
+        linkedin: resume.linkedin || '',
+        location: resume.location || ''
       };
 
       setResume(mergedResume);
