@@ -326,6 +326,9 @@ export function Optimizer() {
     return 'job';
   };
 
+  // Check if this is first time user
+  const isFirstTime = !resume && recentSessions.length === 0;
+
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-indigo-50">
       {/* Progress Steps */}
@@ -384,52 +387,112 @@ export function Optimizer() {
           // Upload Phase
           <div className="p-4 sm:p-6 lg:p-8">
             {loadingStep === 'analyzing' || loadingStep === 'optimizing' ? (
-              // Combined Analyzing & Optimizing Animation
-              <div className="h-[70vh] flex items-center justify-center">
-                <div className="max-w-md w-full text-center">
+              // Combined Analyzing & Optimizing Animation - Enhanced
+              <div className="h-[70vh] flex items-center justify-center p-4">
+                <div className="max-w-lg w-full text-center">
+                  {/* Animated Icon */}
                   <div className="relative mb-8">
-                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full blur-2xl opacity-60 animate-pulse"></div>
-                    <div className="relative w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl mx-auto">
-                      <Sparkles className="w-12 h-12 text-white animate-pulse" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-400 to-purple-600 rounded-full blur-3xl opacity-40 animate-pulse"></div>
+                    <div className="relative w-32 h-32 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl mx-auto ring-8 ring-indigo-100">
+                      <Sparkles className="w-16 h-16 text-white animate-pulse" />
                     </div>
                   </div>
 
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    {loadingStep === 'analyzing' ? 'Analyzing & Optimizing...' : 'Optimizing Your Resume...'}
+                  {/* Main Message */}
+                  <h2 className="text-4xl font-extrabold text-gray-900 mb-3">
+                    {loadingStep === 'analyzing' ? '✨ AI is Working...' : '🚀 Almost There...'}
                   </h2>
-                  <p className="text-gray-600 mb-8">This usually takes 30 seconds</p>
+                  <p className="text-xl text-gray-600 mb-2">
+                    {loadingStep === 'analyzing' ? 'Analyzing your resume against the job' : 'Optimizing your resume for maximum impact'}
+                  </p>
+                  <p className="text-sm text-gray-500 mb-10">Usually takes about 30 seconds</p>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-indigo-300">
-                      <Loader className="w-5 h-5 text-indigo-600 animate-spin" />
-                      <span className="font-medium text-gray-900">
-                        {loadingStep === 'analyzing' ? 'Comparing with job requirements...' : 'Strengthening your experience...'}
+                  {/* Progress Steps */}
+                  <div className="space-y-3 mb-8">
+                    <div className={`flex items-center gap-3 p-4 rounded-xl shadow-lg border-2 transition-all ${
+                      loadingStep === 'analyzing'
+                        ? 'bg-white border-indigo-300 scale-105'
+                        : 'bg-green-50 border-green-300'
+                    }`}>
+                      {loadingStep === 'analyzing' ? (
+                        <Loader className="w-6 h-6 text-indigo-600 animate-spin flex-shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-6 h-6 text-green-600 flex-shrink-0" />
+                      )}
+                      <span className={`font-semibold text-left ${
+                        loadingStep === 'analyzing' ? 'text-gray-900' : 'text-green-900'
+                      }`}>
+                        Comparing with job requirements
                       </span>
                     </div>
-                    {loadingStep === 'optimizing' && (
-                      <>
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-green-300">
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                          <span className="font-medium text-gray-900">Found 12 matching keywords</span>
-                        </div>
-                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-green-300">
-                          <CheckCircle2 className="w-5 h-5 text-green-600" />
-                          <span className="font-medium text-gray-900">Aligning with job requirements</span>
-                        </div>
-                      </>
-                    )}
+
+                    <div className={`flex items-center gap-3 p-4 rounded-xl shadow-lg border-2 transition-all ${
+                      loadingStep === 'optimizing'
+                        ? 'bg-white border-indigo-300 scale-105'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      {loadingStep === 'optimizing' ? (
+                        <Loader className="w-6 h-6 text-indigo-600 animate-spin flex-shrink-0" />
+                      ) : (
+                        <div className="w-6 h-6 border-3 border-gray-300 border-t-transparent rounded-full animate-spin flex-shrink-0"></div>
+                      )}
+                      <span className={`font-semibold text-left ${
+                        loadingStep === 'optimizing' ? 'text-gray-900' : 'text-gray-500'
+                      }`}>
+                        Strengthening bullet points
+                      </span>
+                    </div>
+
+                    <div className={`flex items-center gap-3 p-4 rounded-xl shadow-lg border-2 transition-all ${
+                      loadingStep === 'optimizing'
+                        ? 'bg-gray-50 border-gray-200'
+                        : 'bg-gray-50 border-gray-200'
+                    }`}>
+                      <div className="w-6 h-6 border-3 border-gray-300 border-t-transparent rounded-full flex-shrink-0"></div>
+                      <span className="font-semibold text-gray-500 text-left">
+                        Adding missing keywords
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="mt-8 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-1000 animate-pulse"
-                         style={{ width: loadingStep === 'analyzing' ? '40%' : '80%' }}>
+                  {/* Progress Bar */}
+                  <div className="relative">
+                    <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+                      <div
+                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out"
+                        style={{ width: loadingStep === 'analyzing' ? '33%' : '75%' }}
+                      >
+                        <div className="h-full w-full bg-white opacity-30 animate-pulse"></div>
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-500 mt-2 font-medium">
+                      {loadingStep === 'analyzing' ? 'Step 1 of 3' : 'Step 2 of 3'}
+                    </p>
                   </div>
                 </div>
               </div>
             ) : (
               // Upload Panels
               <div className="max-w-7xl mx-auto space-y-8">
+                {/* First-Time User Welcome */}
+                {isFirstTime && (
+                  <div className="max-w-3xl mx-auto mb-8 text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-lg">
+                      <Sparkles className="w-8 h-8 text-white" />
+                    </div>
+                    <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+                      Let's Optimize Your Resume
+                    </h1>
+                    <p className="text-lg text-gray-600 mb-2">
+                      Follow these 3 simple steps to create a tailored resume
+                    </p>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold mt-2">
+                      <Zap className="w-4 h-4" />
+                      <span>Takes about 60 seconds</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Step 1: Upload Resume */}
                 <div className="max-w-2xl mx-auto">
                   <ResumeImportPanel />

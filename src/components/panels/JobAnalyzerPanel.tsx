@@ -62,14 +62,14 @@ export function JobAnalyzerPanel() {
   };
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg hover:shadow-xl transition-shadow" data-job-panel>
+    <div className="bg-gradient-to-br from-white to-purple-50 rounded-2xl border-2 border-purple-200 p-6 shadow-lg hover:shadow-xl transition-all" data-job-panel>
       <div className="flex items-center gap-3 mb-4">
         <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
           <Briefcase className="w-6 h-6 text-white" />
         </div>
         <div className="flex-1">
-          <h2 className="text-lg font-bold text-gray-900">Paste Job Description or Job Post URL</h2>
-          <p className="text-sm text-gray-600 mt-0.5">We'll automatically detect and fetch from URLs</p>
+          <h2 className="text-lg font-bold text-gray-900">Paste Job Description</h2>
+          <p className="text-sm text-gray-600 mt-0.5">From LinkedIn, Indeed, or any job posting</p>
         </div>
       </div>
 
