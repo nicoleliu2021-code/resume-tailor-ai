@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { Download, CheckCircle, ExternalLink } from 'lucide-react';
 import type { StructuredResume } from '../types/resume';
 import { useSubscription } from '../contexts/SubscriptionContext';
+import { TemplateSelectionModal } from './templates/TemplateSelectionModal';
+import { useTemplateSelection } from '../hooks/useTemplateSelection';
+import { exportToPDF, exportToDOCX } from '../services/exportService';
+import type { ResumeVersion } from '../types/resumeVersion';
 
 interface ExportMenuProps {
   resume: StructuredResume | null;
@@ -11,8 +15,58 @@ interface ExportMenuProps {
 
 export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps) {
   const { canUseFeature, incrementUsage } = useSubscription();
+  const { selectedTemplate } = useTemplateSelection();
   const [showMenu, setShowMenu] = useState(false);
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'docx' | null>(null);
   const [justExported, setJustExported] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Handle template selection confirmation and export
+  const handleTemplateConfirm = async (templateId: string) => {
+    setShowTemplateSelection(false);
+    setIsExporting(true);
+
+    try {
+      if (!resume || !exportFormat) return;
+
+      // Convert StructuredResume to ResumeVersion format for export service
+      const version: ResumeVersion = {
+        id: `temp-${Date.now()}`,
+        name: resume.name || 'Resume',
+        slug: `temp-${Date.now()}`,
+        targetRole: 'Optimized Resume',
+        optimizedContent: resume,
+        selectedExperienceIds: resume.experience.map(exp => exp.id),
+        selectedAchievementIds: [],
+        selectedSkillIds: resume.skills.map(skill => skill.id),
+        selectedProjectIds: resume.projects?.map(proj => proj.id) || [],
+        selectedCertificationIds: [],
+        version: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        exportCount: 0,
+        viewCount: 0,
+        status: 'exported',
+        tags: [],
+      };
+
+      if (exportFormat === 'pdf') {
+        await exportToPDF(version, templateId);
+      } else {
+        await exportToDOCX(version, templateId);
+      }
+
+      setJustExported(true);
+      setTimeout(() => setJustExported(false), 3000);
+    } catch (error) {
+      console.error('Export error:', error);
+      alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsExporting(false);
+      setExportFormat(null);
+    }
+  };
 
   const exportAsPDF = async () => {
     if (!resume) return;
@@ -25,208 +79,10 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
 
     incrementUsage('exportsUsed');
 
-    try {
-      const jsPDF = (await import('jspdf')).default;
-      const doc = new jsPDF();
-
-      let yPos = 25.4;
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const pageHeight = doc.internal.pageSize.getHeight();
-      const margin = 25.4;
-      const maxWidth = pageWidth - (margin * 2);
-
-      const checkPageBreak = (requiredSpace: number = 15) => {
-        if (yPos + requiredSpace > pageHeight - margin) {
-          doc.addPage();
-          yPos = margin;
-        }
-      };
-
-      // Header - Name
-      doc.setFontSize(20);
-      doc.setFont('helvetica', 'bold');
-      const name = resume.name || 'Your Name';
-      doc.text(name, pageWidth / 2, yPos, { align: 'center' });
-      yPos += 6;
-
-      // Contact Info
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      const contactParts = [];
-      if (resume.location) contactParts.push(resume.location);
-      if (resume.email) contactParts.push(resume.email);
-      if (resume.phone) contactParts.push(resume.phone);
-      if (resume.linkedin) contactParts.push(resume.linkedin);
-
-      if (contactParts.length > 0) {
-        const contactText = contactParts.join(' | ');
-        doc.text(contactText, pageWidth / 2, yPos, { align: 'center' });
-        yPos += 8;
-      } else {
-        yPos += 5;
-      }
-
-      // Professional Summary
-      if (resume.summary) {
-        checkPageBreak(20);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PROFESSIONAL SUMMARY', margin, yPos);
-        yPos += 6;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        const summaryLines = doc.splitTextToSize(resume.summary, maxWidth);
-        summaryLines.forEach((line: string) => {
-          checkPageBreak();
-          doc.text(line, margin, yPos);
-          yPos += 5;
-        });
-        yPos += 6;
-      }
-
-      // Professional Experience
-      if (resume.experience.length > 0) {
-        checkPageBreak(20);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('PROFESSIONAL EXPERIENCE', margin, yPos);
-        yPos += 6;
-
-        resume.experience.forEach((exp, idx) => {
-          checkPageBreak(30);
-
-          // Company Name
-          doc.setFontSize(12);
-          doc.setFont('helvetica', 'bold');
-          doc.text(exp.company, margin, yPos);
-          yPos += 5.5;
-
-          // Role Title
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          doc.text(exp.role, margin, yPos);
-          yPos += 5;
-
-          // Location | Dates
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          const location = exp.location || 'City, State';
-          const startYear = exp.startDate.includes(',') ? exp.startDate.split(',')[1].trim() : exp.startDate;
-          const endYear = exp.current ? 'Present' : (exp.endDate.includes(',') ? exp.endDate.split(',')[1].trim() : exp.endDate);
-          doc.text(`${location} | ${startYear} – ${endYear}`, margin, yPos);
-          yPos += 7;
-
-          // Bullets
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'normal');
-          exp.bullets.forEach(bullet => {
-            checkPageBreak(8);
-            const bulletLines = doc.splitTextToSize(`• ${bullet}`, maxWidth - 3);
-            bulletLines.forEach((line: string, lineIdx: number) => {
-              checkPageBreak();
-              if (lineIdx === 0) {
-                doc.text(line, margin + 2, yPos);
-              } else {
-                doc.text(line.trim(), margin + 5, yPos);
-              }
-              yPos += 5;
-            });
-          });
-
-          if (idx < resume.experience.length - 1) {
-            yPos += 6;
-          }
-        });
-        yPos += 6;
-      }
-
-      // Core Skills
-      if (resume.skills.length > 0) {
-        checkPageBreak(15);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('CORE SKILLS', margin, yPos);
-        yPos += 6;
-
-        const categoryNames: Record<string, string> = {
-          'technical': 'Technical',
-          'tool': 'Tools & Technologies',
-          'soft': 'Professional Skills',
-          'language': 'Languages'
-        };
-
-        const skillsByCategory = resume.skills.reduce((acc, skill) => {
-          const category = skill.category || 'technical';
-          if (!acc[category]) acc[category] = [];
-          acc[category].push(skill.name);
-          return acc;
-        }, {} as Record<string, string[]>);
-
-        Object.entries(skillsByCategory).forEach(([category, skills], idx) => {
-          checkPageBreak(10);
-
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          const displayName = categoryNames[category] || category;
-          doc.text(displayName, margin, yPos);
-          yPos += 5;
-
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          const skillsText = skills.join(' • ');
-          const skillLines = doc.splitTextToSize(skillsText, maxWidth);
-          skillLines.forEach((line: string) => {
-            checkPageBreak();
-            doc.text(line, margin, yPos);
-            yPos += 5;
-          });
-
-          if (idx < Object.keys(skillsByCategory).length - 1) {
-            yPos += 3;
-          }
-        });
-        yPos += 6;
-      }
-
-      // Education
-      if (resume.education.length > 0) {
-        checkPageBreak(15);
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('EDUCATION', margin, yPos);
-        yPos += 6;
-
-        resume.education.forEach(edu => {
-          checkPageBreak(15);
-
-          doc.setFontSize(11);
-          doc.setFont('helvetica', 'bold');
-          const degreeText = `${edu.degree} in ${edu.field}`;
-          doc.text(degreeText, margin, yPos);
-          yPos += 5;
-
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'normal');
-          const eduLine = `${edu.school} | ${edu.startDate} – ${edu.endDate}`;
-          doc.text(eduLine, margin, yPos);
-          yPos += 4;
-
-          if (edu.gpa) {
-            doc.text(`GPA: ${edu.gpa}`, margin, yPos);
-            yPos += 4;
-          }
-          yPos += 2;
-        });
-      }
-
-      doc.save(`${name.replace(/\s+/g, '_')}_Resume.pdf`);
-      setJustExported(true);
-      setTimeout(() => setJustExported(false), 3000);
-    } catch (error) {
-      console.error('PDF export error:', error);
-      alert(`Failed to export PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // Show template selection modal
+    setExportFormat('pdf');
+    setShowTemplateSelection(true);
+    setShowMenu(false);
   };
 
   const exportAsDOCX = async () => {
@@ -239,286 +95,10 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
 
     incrementUsage('exportsUsed');
 
-    try {
-      const { Document, Packer, Paragraph, TextRun, AlignmentType } = await import('docx');
-      const { saveAs } = await import('file-saver');
-
-      const paragraphs: any[] = [];
-
-      // Header - Name
-      const name = resume.name || 'Your Name';
-      paragraphs.push(
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: name,
-              bold: true,
-              size: 40
-            })
-          ],
-          alignment: AlignmentType.CENTER,
-          spacing: { after: 120 }
-        })
-      );
-
-      // Contact Info
-      const contactParts = [];
-      if (resume.location) contactParts.push(resume.location);
-      if (resume.email) contactParts.push(resume.email);
-      if (resume.phone) contactParts.push(resume.phone);
-      if (resume.linkedin) contactParts.push(resume.linkedin);
-
-      if (contactParts.length > 0) {
-        paragraphs.push(
-          new Paragraph({
-            text: contactParts.join(' | '),
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 240 }
-          })
-        );
-      }
-
-      // Professional Summary
-      if (resume.summary) {
-        paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'PROFESSIONAL SUMMARY',
-                bold: true,
-                size: 24
-              })
-            ],
-            spacing: { after: 120, before: 0 }
-          }),
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: resume.summary,
-                size: 22
-              })
-            ],
-            spacing: { after: 240 }
-          })
-        );
-      }
-
-      // Professional Experience
-      if (resume.experience.length > 0) {
-        paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'PROFESSIONAL EXPERIENCE',
-                bold: true,
-                size: 24
-              })
-            ],
-            spacing: { after: 120, before: 240 }
-          })
-        );
-
-        resume.experience.forEach((exp, idx) => {
-          // Company Name
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: exp.company,
-                  bold: true,
-                  size: 24
-                })
-              ],
-              spacing: { after: 100 }
-            })
-          );
-
-          // Role Title
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: exp.role,
-                  bold: true,
-                  size: 22
-                })
-              ],
-              spacing: { after: 100 }
-            })
-          );
-
-          // Location | Dates
-          const location = exp.location || 'City, State';
-          const startYear = exp.startDate.includes(',') ? exp.startDate.split(',')[1].trim() : exp.startDate;
-          const endYear = exp.current ? 'Present' : (exp.endDate.includes(',') ? exp.endDate.split(',')[1].trim() : exp.endDate);
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${location} | ${startYear} – ${endYear}`,
-                  size: 20
-                })
-              ],
-              spacing: { after: 160 }
-            })
-          );
-
-          // Bullets
-          exp.bullets.forEach((bullet, bulletIdx) => {
-            paragraphs.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `• ${bullet}`,
-                    size: 22
-                  })
-                ],
-                spacing: { after: bulletIdx === exp.bullets.length - 1 ? 120 : 100 },
-                indent: { left: 360 }
-              })
-            );
-          });
-
-          if (idx < resume.experience.length - 1) {
-            paragraphs.push(new Paragraph({ text: '', spacing: { after: 200 } }));
-          } else {
-            paragraphs.push(new Paragraph({ text: '', spacing: { after: 240 } }));
-          }
-        });
-      }
-
-      // Core Skills
-      if (resume.skills.length > 0) {
-        paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'CORE SKILLS',
-                bold: true,
-                size: 24
-              })
-            ],
-            spacing: { after: 120, before: 240 }
-          })
-        );
-
-        const categoryNames: Record<string, string> = {
-          'technical': 'Technical',
-          'tool': 'Tools & Technologies',
-          'soft': 'Professional Skills',
-          'language': 'Languages'
-        };
-
-        const skillsByCategory = resume.skills.reduce((acc, skill) => {
-          const category = skill.category || 'technical';
-          if (!acc[category]) acc[category] = [];
-          acc[category].push(skill.name);
-          return acc;
-        }, {} as Record<string, string[]>);
-
-        Object.entries(skillsByCategory).forEach(([category, skills], idx) => {
-          const displayName = categoryNames[category] || category;
-          const isLast = idx === Object.keys(skillsByCategory).length - 1;
-
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: displayName,
-                  bold: true,
-                  size: 22
-                })
-              ],
-              spacing: { after: 100 }
-            })
-          );
-
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: skills.join(' • '),
-                  size: 20
-                })
-              ],
-              spacing: { after: isLast ? 240 : 180 }
-            })
-          );
-        });
-      }
-
-      // Education
-      if (resume.education.length > 0) {
-        paragraphs.push(
-          new Paragraph({
-            children: [
-              new TextRun({
-                text: 'EDUCATION',
-                bold: true,
-                size: 24
-              })
-            ],
-            spacing: { after: 120, before: 240 }
-          })
-        );
-
-        resume.education.forEach(edu => {
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${edu.degree} in ${edu.field}`,
-                  bold: true,
-                  size: 22
-                })
-              ],
-              spacing: { after: 100 }
-            })
-          );
-
-          paragraphs.push(
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: `${edu.school} | ${edu.startDate} – ${edu.endDate}`,
-                  size: 20
-                })
-              ],
-              spacing: { after: edu.gpa ? 80 : 180 }
-            })
-          );
-
-          if (edu.gpa) {
-            paragraphs.push(
-              new Paragraph({
-                children: [
-                  new TextRun({
-                    text: `GPA: ${edu.gpa}`,
-                    size: 20
-                  })
-                ],
-                spacing: { after: 180 }
-              })
-            );
-          }
-        });
-      }
-
-      const doc = new Document({
-        sections: [{
-          properties: {},
-          children: paragraphs
-        }]
-      });
-
-      const blob = await Packer.toBlob(doc);
-      saveAs(blob, `${name.replace(/\s+/g, '_')}_Resume.docx`);
-      setJustExported(true);
-      setTimeout(() => setJustExported(false), 3000);
-    } catch (error) {
-      console.error('DOCX export error:', error);
-      alert(`Failed to export DOCX: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
+    // Show template selection modal
+    setExportFormat('docx');
+    setShowTemplateSelection(true);
+    setShowMenu(false);
   };
 
   return (
@@ -600,6 +180,18 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
             </div>
           )}
         </div>
+      )}
+
+      {/* Template Selection Modal */}
+      {showTemplateSelection && resume && (
+        <TemplateSelectionModal
+          resume={resume}
+          onClose={() => {
+            setShowTemplateSelection(false);
+            setExportFormat(null);
+          }}
+          onConfirm={handleTemplateConfirm}
+        />
       )}
     </div>
   );
