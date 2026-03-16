@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, ArrowRight, Zap, Target, CheckCircle2, Clock, BookmarkCheck, ClipboardList } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, Zap, CheckCircle2, BookmarkCheck, ClipboardList } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { useOptimizationSession } from '../hooks/useOptimizationSession';
@@ -51,35 +51,6 @@ function calculateResumeScore(resume: any, jobAnalysis: any): number {
   return Math.round(Math.min(100, score));
 }
 
-// Quick Fix Card Component
-interface QuickFixProps {
-  icon: React.ReactNode;
-  title: string;
-  impact: string;
-  time: string;
-  onClick: () => void;
-}
-
-function QuickFixCard({ icon, title, impact, time, onClick }: QuickFixProps) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex flex-col items-start gap-3 p-4 bg-white border-2 border-gray-200 rounded-xl hover:border-indigo-400 hover:shadow-lg transition-all text-left group"
-    >
-      <div className="w-10 h-10 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-        {icon}
-      </div>
-      <div>
-        <p className="font-semibold text-gray-900 text-sm mb-1">{title}</p>
-        <p className="text-xs text-indigo-600 font-medium">{impact}</p>
-        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-          <Clock className="w-3 h-3" />
-          {time}
-        </p>
-      </div>
-    </button>
-  );
-}
 
 export function Optimizer() {
   const { resume, originalResume, setOriginalResume, jobDescription, jobUrl, jobAnalysis, setResume, setJobDescription, setJobUrl, setJobAnalysis } = useResume();
@@ -232,7 +203,7 @@ export function Optimizer() {
     }
   };
 
-  // Analyze job when both resume and job description exist
+  // Analyze and optimize job in one step
   const handleAnalyze = async () => {
     if (!canUseFeature('jobAnalysisUsed')) {
       setAnalysisError('Job analysis limit reached');
@@ -251,9 +222,11 @@ export function Optimizer() {
       const score = calculateResumeScore(resume, analysis);
       setResumeScore(score);
 
+      // Immediately proceed to optimization (skip score screen)
       await new Promise(resolve => setTimeout(resolve, 500));
-      setLoadingStep(null);
-      setViewMode('score');
+
+      // Start optimization automatically
+      handleOptimizeNow();
     } catch (err) {
       console.error('[Optimizer] Analysis error:', err);
       setAnalysisError(err instanceof Error ? err.message : 'Failed to analyze');
@@ -342,7 +315,6 @@ export function Optimizer() {
 
   // Determine what to show
   const showUpload = !resume || !jobDescription;
-  const showScore = viewMode === 'score' && !showUpload;
   const showOptimized = viewMode === 'optimized' && !showUpload;
 
   // Determine current step for progress indicator
@@ -411,8 +383,8 @@ export function Optimizer() {
         {showUpload ? (
           // Upload Phase
           <div className="p-4 sm:p-6 lg:p-8">
-            {loadingStep === 'analyzing' ? (
-              // Analyzing Animation
+            {loadingStep === 'analyzing' || loadingStep === 'optimizing' ? (
+              // Combined Analyzing & Optimizing Animation
               <div className="h-[70vh] flex items-center justify-center">
                 <div className="max-w-md w-full text-center">
                   <div className="relative mb-8">
@@ -423,19 +395,35 @@ export function Optimizer() {
                   </div>
 
                   <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Analyzing Your Resume...
+                    {loadingStep === 'analyzing' ? 'Analyzing & Optimizing...' : 'Optimizing Your Resume...'}
                   </h2>
-                  <p className="text-gray-600 mb-8">This takes about 10 seconds</p>
+                  <p className="text-gray-600 mb-8">This usually takes 30 seconds</p>
 
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-indigo-300">
                       <Loader className="w-5 h-5 text-indigo-600 animate-spin" />
-                      <span className="font-medium text-gray-900">Comparing with job requirements...</span>
+                      <span className="font-medium text-gray-900">
+                        {loadingStep === 'analyzing' ? 'Comparing with job requirements...' : 'Strengthening your experience...'}
+                      </span>
                     </div>
+                    {loadingStep === 'optimizing' && (
+                      <>
+                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-green-300">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          <span className="font-medium text-gray-900">Found 12 matching keywords</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-4 bg-white rounded-xl shadow-md border-2 border-green-300">
+                          <CheckCircle2 className="w-5 h-5 text-green-600" />
+                          <span className="font-medium text-gray-900">Aligning with job requirements</span>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="mt-8 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-1000 animate-pulse" style={{ width: '60%' }}></div>
+                    <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-1000 animate-pulse"
+                         style={{ width: loadingStep === 'analyzing' ? '40%' : '80%' }}>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -502,174 +490,6 @@ export function Optimizer() {
               </div>
             )}
           </div>
-        ) : showScore ? (
-          // Score + Optimize View
-          <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-5xl mx-auto">
-              {/* Resume Score Card */}
-              <div className="bg-white rounded-2xl border-2 border-gray-200 p-8 shadow-xl mb-8">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-to-br from-indigo-50 to-purple-50 border-4 border-indigo-200 mb-4">
-                    <div className="text-5xl font-extrabold bg-gradient-to-br from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                      {resumeScore}
-                    </div>
-                  </div>
-                  <h2 className="text-2xl font-bold text-gray-900 mb-2">Resume Score</h2>
-                  <p className="text-gray-600">
-                    {resumeScore >= 80 ? 'Great start! Let\'s make it even better.' :
-                     resumeScore >= 60 ? 'Good foundation. Optimization will significantly improve this.' :
-                     'Your resume needs improvement for this role.'}
-                  </p>
-                </div>
-
-                {/* Primary CTA - Optimize Now */}
-                <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border-2 border-indigo-200 mb-6">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        Quick AI Optimization (Recommended)
-                      </h3>
-                      <p className="text-gray-700 mb-1">
-                        Let AI optimize your entire resume in 30 seconds. We'll apply proven improvements automatically.
-                      </p>
-                      <p className="text-sm text-indigo-700 font-medium">
-                        Expected score after optimization: {Math.min(100, resumeScore + 15)}-{Math.min(100, resumeScore + 25)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleOptimizeNow}
-                    disabled={!!loadingStep}
-                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg hover:from-indigo-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
-                  >
-                    {loadingStep === 'optimizing' ? (
-                      <>
-                        <Loader className="w-5 h-5 animate-spin" />
-                        Optimizing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5" />
-                        Optimize My Resume Now
-                        <ArrowRight className="w-5 h-5" />
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Alternative - Smart Selector */}
-                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border-2 border-green-200 mb-6">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                        <Target className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="text-lg font-bold text-gray-900">
-                          Smart Content Selection
-                        </h3>
-                        <span className="px-2 py-0.5 bg-green-600 text-white text-xs rounded-full font-semibold">
-                          NEW
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-700 mb-3">
-                        Have a Master Resume? Let AI intelligently select which experiences and achievements to include for this specific job. More control, better results.
-                      </p>
-                      <a
-                        href="/smart-selector"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-sm"
-                      >
-                        <Target className="w-4 h-4" />
-                        Try Smart Selector
-                        <ArrowRight className="w-4 h-4" />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Or manual review */}
-                <div className="text-center text-sm text-gray-500 mb-6">
-                  Or review gaps manually below
-                </div>
-
-                {/* Quick Fixes Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <QuickFixCard
-                    icon={<Target className="w-5 h-5 text-indigo-600" />}
-                    title="Add Missing Keywords"
-                    impact="+8-12 points"
-                    time="5 min"
-                    onClick={() => alert('Manual keyword editing coming soon!')}
-                  />
-                  <QuickFixCard
-                    icon={<CheckCircle2 className="w-5 h-5 text-green-600" />}
-                    title="Strengthen Bullets"
-                    impact="+5-10 points"
-                    time="10 min"
-                    onClick={() => alert('Manual bullet editing coming soon!')}
-                  />
-                  <QuickFixCard
-                    icon={<Sparkles className="w-5 h-5 text-purple-600" />}
-                    title="Improve Summary"
-                    impact="+3-5 points"
-                    time="3 min"
-                    onClick={() => alert('Manual summary editing coming soon!')}
-                  />
-                </div>
-              </div>
-
-              {/* Recommended Jobs Panel (if score is very low) - TEMPORARILY DISABLED */}
-              {/* {resumeScore < 60 && resume && jobAnalysis && !swappingJob && (
-                <div className="mb-8">
-                  <RecommendedJobsPanel
-                    resume={resume}
-                    currentJobAnalysis={jobAnalysis}
-                    currentMatchScore={resumeScore}
-                    onSelectJob={(jobTitle) => {
-                      setSwappingJob(true);
-                      // Open job search in new tab
-                      const searchUrl = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(jobTitle)}`;
-                      window.open(searchUrl, '_blank');
-
-                      // Show guidance message
-                      setTimeout(() => {
-                        alert(`💡 Find a "${jobTitle}" job posting that interests you, then:\n\n1. Copy the full job description\n2. Come back here and paste it in "Step 2: Add Job Description"\n3. We'll re-analyze your resume for this better-fit role!`);
-                        setSwappingJob(false);
-                      }, 1000);
-                    }}
-                  />
-                </div>
-              )} */}
-
-              {/* Missing Elements (if score is low) */}
-              {resumeScore < 75 && jobAnalysis && (
-                <div className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-6">
-                  <h3 className="font-bold text-amber-900 mb-3 flex items-center gap-2">
-                    <span className="text-xl">⚠️</span>
-                    Gaps in Your Resume
-                  </h3>
-                  <div className="space-y-2">
-                    {jobAnalysis.atsKeywords && jobAnalysis.atsKeywords.slice(0, 5).map((keyword: string, i: number) => (
-                      <div key={i} className="flex items-start gap-2 text-sm">
-                        <span className="text-amber-600 font-bold">•</span>
-                        <span className="text-amber-900">
-                          Missing keyword: <span className="font-semibold">"{keyword}"</span>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
         ) : showOptimized ? (
           // Optimized View with Before/After
           <div className="p-4 sm:p-6 lg:p-8">
@@ -684,29 +504,32 @@ export function Optimizer() {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-2xl font-bold text-green-900 mb-1">
-                      Optimization Complete!
+                      ✅ Your Resume is Optimized!
                     </h2>
                     <p className="text-green-700 mb-3">
-                      Your resume has been optimized and is ready to export. Score improved from {resumeScore - 18} to <span className="font-bold">{resumeScore}</span>.
+                      Score improved from {Math.max(0, resumeScore - 18)} to <span className="font-bold">{resumeScore}</span>. You're now a strong match for this role.
                     </p>
-                    {jobUrl && (
-                      <div className="flex flex-wrap gap-3">
+
+                    {/* What to Do Next */}
+                    <div className="bg-white rounded-lg p-4 mb-4 border border-green-300">
+                      <p className="text-sm font-bold text-gray-900 mb-2">→ Next Step:</p>
+                      <p className="text-sm text-gray-700 mb-3">
+                        Scroll down to download your optimized resume, then apply to the job
+                      </p>
+                      {jobUrl && (
                         <a
                           href={jobUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-md hover:shadow-lg"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                           </svg>
-                          <span>Apply to This Job Now</span>
+                          <span>Apply on LinkedIn →</span>
                         </a>
-                        <p className="text-xs text-green-700 self-center">
-                          Opens job posting on LinkedIn
-                        </p>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

@@ -195,6 +195,10 @@ export function ResumeImportPanel({ onComplete }: Props) {
             <div className="flex-1">
               <p className="text-sm font-bold text-green-900">{fileName}</p>
               <p className="text-xs text-green-700 mt-0.5">Successfully uploaded and parsed</p>
+              <div className="mt-3 pt-3 border-t border-green-300">
+                <p className="text-sm font-semibold text-green-900 mb-1">→ Next Step:</p>
+                <p className="text-xs text-green-800">Scroll down and paste the job description you're applying for</p>
+              </div>
             </div>
           </div>
         </div>

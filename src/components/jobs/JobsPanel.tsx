@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare, Smartphone } from 'lucide-react';
+import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare } from 'lucide-react';
 import { JobCard } from './JobCard';
 import { JobPreviewModal } from './JobPreviewModal';
 import { BatchGenerateModal } from './BatchGenerateModal';
@@ -39,12 +39,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Auto-load jobs when resume is available
-  useEffect(() => {
-    if (resume && jobs.length === 0 && !loading) {
-      loadJobs();
-    }
-  }, [resume]);
+  // Don't auto-load jobs - user must click to expand
 
   const loadJobs = async () => {
     if (!resume) return;
@@ -103,28 +98,33 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
     return null;
   }
 
-  // Collapsed state - show floating button
+  // Collapsed state - show button to expand
   if (isCollapsed) {
     return (
-      <div className="fixed right-6 bottom-6 z-50">
-        <button
-          onClick={() => {
-            if (isMobile && jobs.length > 0) {
-              setShowMobileSheet(true);
-            } else {
-              onToggle?.();
-            }
-          }}
-          className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
-        >
-          <Lightbulb className="w-5 h-5" />
-          <span className="hidden sm:inline">
-            {jobs.length > 0 ? `${jobs.length} Recommended Jobs` : 'Discover Jobs'}
-          </span>
-          <span className="sm:hidden">{jobs.length}</span>
-          {isMobile ? <Smartphone className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
-        </button>
-      </div>
+      <button
+        onClick={() => {
+          if (jobs.length === 0) {
+            loadJobs(); // Load on first click
+          }
+          if (isMobile && jobs.length > 0) {
+            setShowMobileSheet(true);
+          } else {
+            onToggle?.();
+          }
+        }}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl hover:border-indigo-400 transition-all text-left"
+      >
+        <div className="flex items-center gap-3">
+          <Lightbulb className="w-5 h-5 text-indigo-600" />
+          <div>
+            <p className="text-sm font-semibold text-gray-900">💡 Let AI Suggest Career Paths</p>
+            <p className="text-xs text-gray-600">
+              {jobs.length > 0 ? `${jobs.length} role suggestions based on your background` : 'Click to see role ideas'}
+            </p>
+          </div>
+        </div>
+        <ChevronDown className="w-5 h-5 text-gray-400" />
+      </button>
     );
   }
 
@@ -137,11 +137,11 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
             <Lightbulb className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Recommended Jobs for Your Resume</h2>
+            <h2 className="text-lg font-bold text-gray-900">AI Career Path Suggestions</h2>
             <p className="text-xs text-gray-600">
               {selectionMode
                 ? `${selectedJobs.size} selected`
-                : 'Select one to tailor your resume'}
+                : 'Role ideas based on your background'}
             </p>
           </div>
         </div>
@@ -224,10 +224,11 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
         <>
           {/* Summary */}
           {!selectionMode ? (
-            <div className="mb-4 p-3 bg-indigo-100 border border-indigo-300 rounded-lg">
-              <p className="text-xs text-indigo-900 font-medium">
-                ✨ <strong>Found {jobs.length} roles</strong> categorized by match strength.
-                Strong matches are your best fit, stretch roles offer growth opportunities.
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-xs text-blue-900 font-medium">
+                💡 <strong>Found {jobs.length} role {jobs.length === 1 ? 'suggestion' : 'suggestions'}</strong> based on your background.
+                These aren't actual job postings - they're career paths you're qualified for.
+                Use these to search on LinkedIn or Indeed.
               </p>
             </div>
           ) : (

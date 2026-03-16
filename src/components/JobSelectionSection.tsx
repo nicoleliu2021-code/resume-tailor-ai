@@ -25,63 +25,48 @@ export function JobSelectionSection({
   isOptimizing,
 }: JobSelectionSectionProps) {
   return (
-    <div className="max-w-7xl mx-auto">
-      {/* Section Header */}
+    <div className="max-w-4xl mx-auto">
+      {/* Section Header - Simplified */}
       <div className="mb-6 text-center">
         <div className="inline-flex items-center justify-center gap-3 mb-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
             <Target className="w-6 h-6 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Choose a Job to Tailor Your Resume</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Paste the Job Description</h2>
         </div>
-        <p className="text-gray-600">Select one of the options below to get started</p>
+        <p className="text-gray-600">Tell us which job you're applying for</p>
       </div>
 
-      {/* Two Options Side by Side */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Option A: Paste Job Description */}
-        <div className="flex flex-col">
-          <div className="mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full font-semibold text-sm">
-              <span className="w-6 h-6 bg-indigo-600 text-white rounded-full flex items-center justify-center text-xs">
-                A
-              </span>
-              Option A
-            </div>
-          </div>
-          <JobAnalyzerPanel />
-        </div>
+      {/* Primary: Paste Job Description */}
+      <div className="mb-6">
+        <JobAnalyzerPanel />
+      </div>
 
-        {/* Option B: Select Recommended Job */}
-        <div className="flex flex-col">
-          <div className="mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-purple-100 text-purple-700 rounded-full font-semibold text-sm">
-              <span className="w-6 h-6 bg-purple-600 text-white rounded-full flex items-center justify-center text-xs">
-                B
-              </span>
-              Option B
-            </div>
-          </div>
-          <JobsPanel
-            resume={resume}
-            onJobSelect={(jobDescription, jobTitle, jobUrl) => {
-              // Generate a unique ID for the selected job
-              const jobId = `selected-${Date.now()}`;
-              onJobSelect(jobDescription, jobTitle, jobUrl, jobId);
-            }}
-            isCollapsed={jobsPanelCollapsed}
-            onToggle={onJobsPanelToggle}
-            selectedJobId={selectedJobId}
-          />
+      {/* Divider */}
+      <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-300"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-4 bg-gradient-to-br from-indigo-50 via-white to-purple-50 text-gray-500 font-medium">
+            or
+          </span>
         </div>
       </div>
 
-      {/* Helper Text */}
-      <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-        <p className="text-sm text-blue-900 text-center">
-          <span className="font-semibold">💡 Tip:</span> Choose Option A if you have a specific job posting,
-          or Option B to explore jobs matched to your resume
-        </p>
+      {/* Secondary: AI Suggestions - Collapsed by default */}
+      <div className="mb-6">
+        <JobsPanel
+          resume={resume}
+          onJobSelect={(jobDescription, jobTitle, jobUrl) => {
+            // Generate a unique ID for the selected job
+            const jobId = `selected-${Date.now()}`;
+            onJobSelect(jobDescription, jobTitle, jobUrl, jobId);
+          }}
+          isCollapsed={jobsPanelCollapsed}
+          onToggle={onJobsPanelToggle}
+          selectedJobId={selectedJobId}
+        />
       </div>
 
       {/* Optimize Button - Shows when job is selected */}

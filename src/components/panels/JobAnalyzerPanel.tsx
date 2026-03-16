@@ -113,21 +113,29 @@ The more detail, the better your optimized resume."
             </div>
           )}
 
-          {/* Character Count */}
+          {/* Character Count & Next Step */}
           {jobDescription && !isFetchingUrl && (
-            <div className="mt-2 flex items-center justify-between text-xs">
-              <span className="text-gray-500">
-                {jobDescription.split(/\s+/).length} words • {jobDescription.length} characters
-              </span>
-              {jobDescription.split(/\s+/).length > 50 ? (
-                <span className="text-green-600 font-semibold flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
-                  Good length
+            <>
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-gray-500">
+                  {jobDescription.split(/\s+/).length} words • {jobDescription.length} characters
                 </span>
-              ) : (
-                <span className="text-amber-600 text-xs font-medium">Add more detail for best results</span>
+                {jobDescription.split(/\s+/).length > 50 ? (
+                  <span className="text-green-600 font-semibold flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3" />
+                    Good length
+                  </span>
+                ) : (
+                  <span className="text-amber-600 text-xs font-medium">Add more detail for best results</span>
+                )}
+              </div>
+              {jobDescription.split(/\s+/).length > 50 && (
+                <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-sm font-semibold text-green-900 mb-1">→ Next Step:</p>
+                  <p className="text-xs text-green-800">Scroll down and click "Optimize My Resume" to generate your tailored resume</p>
+                </div>
               )}
-            </div>
+            </>
           )}
         </div>
 
