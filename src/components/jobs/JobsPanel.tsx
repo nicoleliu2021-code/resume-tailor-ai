@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Lightbulb, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare } from 'lucide-react';
+import { Briefcase, Loader, AlertCircle, ChevronDown, ChevronUp, X, Zap, CheckSquare, Search } from 'lucide-react';
 import { JobCard } from './JobCard';
 import { JobPreviewModal } from './JobPreviewModal';
 import { BatchGenerateModal } from './BatchGenerateModal';
 import { MobileJobSheet } from './MobileJobSheet';
 import { ApplicationTracker } from './ApplicationTracker';
-import { discoverJobsAPI } from '../../services/api';
+import { searchRealJobs, getLatestJobTitle, type RealJob } from '../../services/jobSearchAPI';
 import type { StructuredResume, JobMatch } from '../../types/resume';
 
 interface Props {
@@ -28,6 +28,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
   const [showMobileSheet, setShowMobileSheet] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [trackingJob, setTrackingJob] = useState<JobMatch | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Detect mobile
   useEffect(() => {
@@ -48,16 +49,47 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resume]);
 
-  const loadJobs = async () => {
+  const loadJobs = async (customQuery?: string) => {
     if (!resume) return;
 
     setLoading(true);
     setError('');
 
     try {
-      const response = await discoverJobsAPI(resume);
-      setJobs(response.jobs);
-      console.log('[JobsPanel] Loaded', response.totalFound, 'jobs');
+      // Use custom query or get latest job title from resume
+      const query = customQuery || searchQuery || getLatestJobTitle(resume);
+      const location = resume.location || 'United States';
+
+      console.log('[JobsPanel] Searching for real jobs:', { query, location });
+
+      const response = await searchRealJobs(query, location, 15);
+
+      // Convert RealJobs to JobMatch format for existing UI
+      const convertedJobs: JobMatch[] = response.jobs.map((job, index) => ({
+        job: {
+          id: job.job_id,
+          title: job.job_title,
+          company: job.employer_name,
+          location: [job.job_city, job.job_state].filter(Boolean).join(', ') || job.job_country || 'Remote',
+          remote: job.job_is_remote || false,
+          description: job.job_description,
+          requiredSkills: job.job_required_skills || [],
+          preferredSkills: [],
+          yearsOfExperience: 0,
+          seniorityLevel: 'mid',
+          industry: '',
+          tools: [],
+          salary: job.job_salary || undefined,
+          jobUrl: job.job_apply_link || undefined,
+        },
+        fitScore: 85 - index * 2, // Decrease score slightly for each job
+        matchReasons: ['Matches your job title', 'Based on your experience'],
+        missingSkills: [],
+        matchType: index < 5 ? 'direct' : index < 10 ? 'stretch' : 'adjacent',
+      }));
+
+      setJobs(convertedJobs);
+      console.log('[JobsPanel] Loaded', response.jobs.length, 'real job postings');
     } catch (err) {
       console.error('[JobsPanel] Error loading jobs:', err);
       setError(err instanceof Error ? err.message : 'Failed to load jobs');
@@ -122,11 +154,11 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
         className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-white border-2 border-indigo-200 rounded-xl hover:border-indigo-400 transition-all text-left"
       >
         <div className="flex items-center gap-3">
-          <Lightbulb className="w-5 h-5 text-indigo-600" />
+          <Briefcase className="w-5 h-5 text-indigo-600" />
           <div>
-            <p className="text-sm font-semibold text-gray-900">💡 Let AI Suggest Career Paths</p>
+            <p className="text-sm font-semibold text-gray-900">🔍 Browse Real Job Postings</p>
             <p className="text-xs text-gray-600">
-              {jobs.length > 0 ? `${jobs.length} role suggestions based on your background` : 'Click to see role ideas'}
+              {jobs.length > 0 ? `${jobs.length} jobs from LinkedIn, Indeed & more` : 'Click to discover jobs'}
             </p>
           </div>
         </div>
@@ -141,14 +173,14 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center shadow-md flex-shrink-0">
-            <Lightbulb className="w-5 h-5 text-white" />
+            <Briefcase className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-gray-900">AI Career Path Suggestions</h2>
+            <h2 className="text-lg font-bold text-gray-900">Real Job Postings</h2>
             <p className="text-xs text-gray-600">
               {selectionMode
                 ? `${selectedJobs.size} selected`
-                : 'Role ideas based on your background'}
+                : 'Live jobs from LinkedIn, Indeed, and more'}
             </p>
           </div>
         </div>
@@ -178,6 +210,38 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
         </div>
       </div>
 
+      {/* Search Bar */}
+      <div className="mb-4">
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  loadJobs(searchQuery);
+                }
+              }}
+              placeholder={`Search jobs... (e.g., "${getLatestJobTitle(resume || {})}")`}
+              className="w-full pl-10 pr-4 py-2.5 border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm"
+            />
+          </div>
+          <button
+            onClick={() => loadJobs(searchQuery)}
+            disabled={loading}
+            className="px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center gap-2 text-sm"
+          >
+            <Search className="w-4 h-4" />
+            Search
+          </button>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">
+          💡 Leave empty to search for "{getLatestJobTitle(resume || {})}" based on your latest role
+        </p>
+      </div>
+
       {/* Loading State */}
       {loading && (
         <div className="flex flex-col items-center justify-center py-12">
@@ -196,7 +260,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
               <p className="text-sm font-semibold text-red-900">Failed to Load Jobs</p>
               <p className="text-xs text-red-700 mt-1">{error}</p>
               <button
-                onClick={loadJobs}
+                onClick={() => loadJobs()}
                 className="mt-2 text-xs font-semibold text-red-700 hover:text-red-900 underline"
               >
                 Try Again
@@ -210,19 +274,17 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
       {!loading && !error && jobs.length === 0 && (
         <div className="text-center py-12">
           <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
-            <Lightbulb className="w-8 h-8 text-gray-400" />
+            <Briefcase className="w-8 h-8 text-gray-400" />
           </div>
           <p className="text-sm font-medium text-gray-700 mb-1">No jobs found</p>
-          <p className="text-xs text-gray-500 mb-3">Try adding more details to your resume</p>
+          <p className="text-xs text-gray-500 mb-3">Try searching for a different job title or click Search to load jobs</p>
 
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-left max-w-md mx-auto">
-            <p className="text-xs text-blue-900 font-semibold mb-2">💡 Tips to improve matches:</p>
-            <ul className="text-xs text-blue-800 space-y-1">
-              <li>• Add 3-5 specific skills (e.g., "React", "Python", "Product Strategy")</li>
-              <li>• Include job titles from your experience</li>
-              <li>• Add years of experience or education details</li>
-            </ul>
-          </div>
+          <button
+            onClick={() => loadJobs()}
+            className="mt-4 px-6 py-2.5 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+          >
+            Load Jobs for "{getLatestJobTitle(resume || {})}"
+          </button>
         </div>
       )}
 
@@ -231,11 +293,10 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
         <>
           {/* Summary */}
           {!selectionMode ? (
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-900 font-medium">
-                💡 <strong>Found {jobs.length} role {jobs.length === 1 ? 'suggestion' : 'suggestions'}</strong> based on your background.
-                These aren't actual job postings - they're career paths you're qualified for.
-                Use these to search on LinkedIn or Indeed.
+            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-xs text-green-900 font-medium">
+                ✅ <strong>Found {jobs.length} real job {jobs.length === 1 ? 'posting' : 'postings'}</strong> from LinkedIn, Indeed, and other job boards.
+                Click any job to view details and apply directly on the company's website.
               </p>
             </div>
           ) : (
@@ -368,7 +429,7 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
           {!selectionMode && (
             <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs text-blue-900">
-                <strong>💡 Tip:</strong> Each job shows why it matches your background and which skills are missing.
+                <strong>💡 Tip:</strong> Click "Tailor Resume" to generate a customized version for each job, or click the job card to see full details and apply directly.
               </p>
             </div>
           )}
