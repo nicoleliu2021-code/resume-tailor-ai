@@ -1,28 +1,16 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, Zap, CheckCircle2, BookmarkCheck, ClipboardList } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, Zap, CheckCircle2, FileDown } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
-import { ImprovementReportModal } from '../components/ImprovementReportModal';
-import { InsightsModal } from '../components/insights/InsightsModal';
-import { TemplateSelectionModal } from '../components/templates/TemplateSelectionModal';
-import { RecentOptimizations } from '../components/RecentOptimizations';
-import { ProgressSteps } from '../components/ProgressSteps';
-import { JobSelectionSection } from '../components/JobSelectionSection';
+import { EmailCaptureModal } from '../components/modals/EmailCaptureModal';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
-import { SavedJobsPanel } from '../components/jobs/SavedJobsPanel';
-import { ApplicationTracker } from '../components/jobs/ApplicationTracker';
 import { analyzeJobAPI } from '../services/api';
-import { getSavedJobs } from '../services/savedJobs';
-import { generateOptimizationInsights } from '../services/insights';
-import type { OptimizationSession } from '../services/optimizationSession';
-import type { OptimizationInsights } from '../types/insights';
+import { exportToPDF } from '../services/exportService';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
 type LoadingStep = 'analyzing' | 'optimizing' | null;
-type ViewMode = 'upload' | 'score' | 'optimized';
 
 // Calculate resume score based on analysis
 function calculateResumeScore(resume: any, jobAnalysis: any): number {
@@ -54,38 +42,15 @@ function calculateResumeScore(resume: any, jobAnalysis: any): number {
 
 
 export function Optimizer() {
-  const { resume, originalResume, setOriginalResume, jobDescription, jobUrl, jobAnalysis, setResume, setJobDescription, setJobUrl, setJobAnalysis } = useResume();
+  const { resume, originalResume, setOriginalResume, jobDescription, jobAnalysis, setResume, setJobDescription, setJobAnalysis } = useResume();
   const { canUseFeature, incrementUsage } = useSubscription();
-  const { saveSession, loadSession, recentSessions, activeSessionId } = useOptimizationSession();
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [analysisError, setAnalysisError] = useState('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('upload');
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
-  const [jobsPanelCollapsed, setJobsPanelCollapsed] = useState(false);
-  const [savedJobsPanelOpen, setSavedJobsPanelOpen] = useState(false);
-  const [savedJobsCount, setSavedJobsCount] = useState(0);
-  const [applicationTrackerOpen, setApplicationTrackerOpen] = useState(false);
-  const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
-  const [showImprovementReport, setShowImprovementReport] = useState(false);
-  const [showInsightsModal, setShowInsightsModal] = useState(false);
-  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
-  const [optimizationInsights, setOptimizationInsights] = useState<OptimizationInsights | null>(null);
-  const [hasRestoredSession, setHasRestoredSession] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-
-  // Update saved jobs count
-  useEffect(() => {
-    const updateSavedCount = () => {
-      const saved = getSavedJobs();
-      setSavedJobsCount(saved.length);
-    };
-    updateSavedCount();
-    // Listen for storage changes (in case saved from another tab)
-    window.addEventListener('storage', updateSavedCount);
-    return () => window.removeEventListener('storage', updateSavedCount);
-  }, []);
+  const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -95,113 +60,60 @@ export function Optimizer() {
     }
   }, [resume, jobAnalysis]);
 
-  // Auto-restore active session on page load
-  useEffect(() => {
-    if (!hasRestoredSession && activeSessionId && !resume) {
-      const session = loadSession(activeSessionId);
-      if (session) {
-        console.log('[Optimizer] Restoring session:', activeSessionId);
-        setOriginalResume(session.originalResume);
-        setResume(session.optimizedResume);
-        setJobDescription(session.jobDescription);
-        setJobUrl(session.jobUrl);
-        setCurrentJobTitle(session.jobTitle);
-        setViewMode('optimized');
-        setHasRestoredSession(true);
-      }
-    }
-  }, [activeSessionId, hasRestoredSession, resume, loadSession, setOriginalResume, setResume, setJobDescription, setJobUrl]);
-
-  // Handler to restore a session from recent optimizations
-  const handleRestoreSession = (session: OptimizationSession) => {
-    console.log('[Optimizer] Manually restoring session:', session.id);
-    setOriginalResume(session.originalResume);
-    setResume(session.optimizedResume);
-    setJobDescription(session.jobDescription);
-    setJobUrl(session.jobUrl);
-    setCurrentJobTitle(session.jobTitle);
-    setViewMode('optimized');
-    setShowImprovementReport(false);
-  };
-
-  // Handler to save current optimization session
-  const handleSaveSession = () => {
-    if (!originalResume || !resume || !jobDescription) {
-      console.warn('[Optimizer] Cannot save session: missing data');
-      return;
-    }
-
-    // Calculate metrics for the session
-    const bulletsBefore = originalResume.experience.reduce((sum, exp) => sum + exp.bullets.length, 0);
-    const bulletsAfter = resume.experience.reduce((sum, exp) => sum + exp.bullets.length, 0);
-
-    const originalWords = new Set(
-      originalResume.experience
-        .flatMap(exp => exp.bullets)
-        .join(' ')
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(w => w.length > 3)
-    );
-
-    const optimizedWords = new Set(
-      resume.experience
-        .flatMap(exp => exp.bullets)
-        .join(' ')
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(w => w.length > 3)
-    );
-
-    const newWords = [...optimizedWords].filter(w => !originalWords.has(w));
-
-    const quantifiers = /\d+%|\d+x|\d+\+|increased|reduced|improved|achieved|delivered|generated/gi;
-    const optimizedQuantified = (resume.experience.flatMap(exp => exp.bullets).join(' ').match(quantifiers) || []).length;
-    const impactScore = Math.min(95, 60 + Math.floor((optimizedQuantified / Math.max(1, bulletsAfter)) * 100));
-
-    const hasStructuredExperience = resume.experience.length > 0;
-    const hasSkills = resume.skills.length > 0;
-    const hasEducation = resume.education.length > 0;
-    const readabilityScore = Math.min(98, 65 + (hasStructuredExperience ? 15 : 0) + (hasSkills ? 10 : 0) + (hasEducation ? 8 : 0));
-
-    const impactSummary = {
-      bulletPoints: {
-        before: bulletsBefore,
-        after: bulletsAfter,
-        change: Math.max(0, bulletsAfter - bulletsBefore),
-      },
-      keywords: {
-        added: Math.min(newWords.length, 25),
-        enhanced: Math.floor(newWords.length * 0.6),
-      },
-      impactScore,
-      readabilityScore,
-    };
-
-    const sessionId = saveSession(
-      originalResume,
-      resume,
-      jobDescription,
-      jobUrl,
-      currentJobTitle || jobAnalysis?.roleTitle || 'Untitled Position',
-      impactSummary
-    );
-
-    console.log('[Optimizer] Saved session:', sessionId);
-  };
-
   const handleStartOver = () => {
     if (confirm('Start over? All progress will be lost.')) {
       setResume(null);
       setOriginalResume(null);
       setJobDescription('');
-      setJobUrl('');
-      setCurrentJobTitle('');
       setJobAnalysis(null);
       setLoadingStep(null);
       setAnalysisError('');
-      setViewMode('upload');
       setResumeScore(0);
+    }
+  };
+
+  const handleDownloadClick = () => {
+    setShowEmailCapture(true);
+  };
+
+  const handleEmailSubmit = async (email: string) => {
+    console.log('[Optimizer] Email captured:', email);
+    setShowEmailCapture(false);
+    setIsExporting(true);
+
+    try {
+      if (!resume) {
+        throw new Error('No resume to export');
+      }
+
+      // Create a minimal ResumeVersion object for export (MVP - simplified)
+      const version: any = {
+        id: Date.now().toString(),
+        name: `${resume.name || 'Resume'} - Optimized`,
+        slug: '',
+        targetRole: '',
+        selectedExperienceIds: [],
+        selectedAchievementIds: [],
+        selectedSkillIds: [],
+        selectedProjectIds: [],
+        originalContent: originalResume || resume,
+        optimizedContent: resume,
+        jobDescription: jobDescription,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Use the default ATS-friendly template
+      await exportToPDF(version, 'professional-ats', (progress) => {
+        console.log('[Optimizer] Export progress:', progress);
+      });
+
+      setIsExporting(false);
+    } catch (error) {
+      console.error('[Optimizer] Export error:', error);
+      setIsExporting(false);
+      alert('Failed to export resume. Please try again.');
     }
   };
 
@@ -224,11 +136,11 @@ export function Optimizer() {
       const score = calculateResumeScore(resume, analysis);
       setResumeScore(score);
 
-      // Immediately proceed to optimization (skip score screen)
+      // Immediately proceed to optimization
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Start optimization automatically
-      handleOptimizeNow();
+      handleOptimizeNow(analysis);
     } catch (err) {
       console.error('[Optimizer] Analysis error:', err);
       setAnalysisError(err instanceof Error ? err.message : 'Failed to analyze');
@@ -237,8 +149,9 @@ export function Optimizer() {
   };
 
   // One-click optimize
-  const handleOptimizeNow = async () => {
-    if (!resume || !jobAnalysis) return;
+  const handleOptimizeNow = async (analysis?: any) => {
+    const analysisToUse = analysis || jobAnalysis;
+    if (!resume || !analysisToUse) return;
 
     try {
       setLoadingStep('optimizing');
@@ -258,7 +171,7 @@ export function Optimizer() {
         },
         body: JSON.stringify({
           resume: resume,
-          jobAnalysis: jobAnalysis
+          jobAnalysis: analysisToUse
         }),
       });
 
@@ -284,21 +197,10 @@ export function Optimizer() {
       setResume(mergedResume);
 
       // Recalculate score
-      const newScore = calculateResumeScore(mergedResume, jobAnalysis);
+      const newScore = calculateResumeScore(mergedResume, analysisToUse);
       setResumeScore(newScore);
 
-      // Generate AI insights
-      const insights = generateOptimizationInsights(
-        resume,
-        mergedResume,
-        currentJobTitle || jobAnalysis?.roleTitle || 'this position'
-      );
-      setOptimizationInsights(insights);
-
       setLoadingStep(null);
-
-      // Show insights modal first
-      setShowInsightsModal(true);
 
       console.log('[Optimizer] Optimization complete!', optimizeData.changes);
     } catch (err) {
@@ -310,33 +212,18 @@ export function Optimizer() {
 
   // Auto-analyze when resume and job description are present
   useEffect(() => {
-    if (resume && jobDescription && !jobAnalysis && viewMode === 'upload' && !loadingStep) {
+    if (resume && jobDescription && !jobAnalysis && !loadingStep && !originalResume) {
       handleAnalyze();
     }
-  }, [resume, jobDescription, jobAnalysis, viewMode, loadingStep]);
+  }, [resume, jobDescription, jobAnalysis, loadingStep, originalResume]);
 
   // Determine what to show
   const showUpload = !resume || !jobDescription;
-  const showOptimized = viewMode === 'optimized' && !showUpload;
-
-  // Determine current step for progress indicator
-  const getCurrentStep = (): 'upload' | 'job' | 'optimize' | 'review' => {
-    if (loadingStep === 'analyzing' || loadingStep === 'optimizing') return 'optimize';
-    if (showOptimized) return 'review';
-    if (!resume) return 'upload';
-    if (!jobDescription) return 'job';
-    return 'job';
-  };
-
-  // Check if this is first time user
-  const isFirstTime = !resume && recentSessions.length === 0;
+  const showOptimized = originalResume && resume && !showUpload;
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-gray-50 to-indigo-50">
-      {/* Progress Steps */}
-      {!loadingStep && <ProgressSteps currentStep={getCurrentStep()} />}
-
-      {/* Header - Minimized */}
+      {/* Header */}
       {!loadingStep && (
         <div className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 backdrop-blur-sm px-4 sm:px-6 lg:px-8 py-3 shadow-sm">
           <div className="flex items-center justify-between gap-3">
@@ -346,29 +233,6 @@ export function Optimizer() {
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Application Tracker Button */}
-              <button
-                onClick={() => setApplicationTrackerOpen(true)}
-                className="flex items-center gap-2 px-3 py-1.5 border border-purple-300 text-purple-700 rounded-lg font-medium hover:bg-purple-50 transition-colors text-xs"
-              >
-                <ClipboardList className="w-4 h-4" />
-                <span className="hidden sm:inline">Applications</span>
-              </button>
-
-              {/* Saved Jobs Button */}
-              <button
-                onClick={() => setSavedJobsPanelOpen(true)}
-                className="relative flex items-center gap-2 px-3 py-1.5 border border-indigo-300 text-indigo-700 rounded-lg font-medium hover:bg-indigo-50 transition-colors text-xs"
-              >
-                <BookmarkCheck className="w-4 h-4" />
-                <span className="hidden sm:inline">Saved</span>
-                {savedJobsCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {savedJobsCount}
-                  </span>
-                )}
-              </button>
-
               {!showUpload && (
                 <button
                   onClick={handleStartOver}
@@ -389,7 +253,7 @@ export function Optimizer() {
           // Upload Phase
           <div className="p-4 sm:p-6 lg:p-8">
             {loadingStep === 'analyzing' || loadingStep === 'optimizing' ? (
-              // Combined Analyzing & Optimizing Animation - Enhanced
+              // Combined Analyzing & Optimizing Animation
               <div className="h-[70vh] flex items-center justify-center p-4">
                 <div className="max-w-lg w-full text-center">
                   {/* Animated Icon */}
@@ -441,18 +305,7 @@ export function Optimizer() {
                       <span className={`font-semibold text-left ${
                         loadingStep === 'optimizing' ? 'text-gray-900' : 'text-gray-500'
                       }`}>
-                        Strengthening bullet points
-                      </span>
-                    </div>
-
-                    <div className={`flex items-center gap-3 p-4 rounded-xl shadow-lg border-2 transition-all ${
-                      loadingStep === 'optimizing'
-                        ? 'bg-gray-50 border-gray-200'
-                        : 'bg-gray-50 border-gray-200'
-                    }`}>
-                      <div className="w-6 h-6 border-3 border-gray-300 border-t-transparent rounded-full flex-shrink-0"></div>
-                      <span className="font-semibold text-gray-500 text-left">
-                        Adding missing keywords
+                        Strengthening bullet points & adding keywords
                       </span>
                     </div>
                   </div>
@@ -462,80 +315,71 @@ export function Optimizer() {
                     <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
                       <div
                         className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 transition-all duration-1000 ease-out"
-                        style={{ width: loadingStep === 'analyzing' ? '33%' : '75%' }}
+                        style={{ width: loadingStep === 'analyzing' ? '50%' : '90%' }}
                       >
                         <div className="h-full w-full bg-white opacity-30 animate-pulse"></div>
                       </div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2 font-medium">
-                      {loadingStep === 'analyzing' ? 'Step 1 of 3' : 'Step 2 of 3'}
+                      {loadingStep === 'analyzing' ? 'Step 1 of 2' : 'Step 2 of 2'}
                     </p>
                   </div>
                 </div>
               </div>
             ) : (
               // Upload Panels
-              <div className="max-w-7xl mx-auto space-y-8">
-                {/* First-Time User Welcome */}
-                {isFirstTime && (
-                  <div className="max-w-3xl mx-auto mb-8 text-center">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-lg">
-                      <Sparkles className="w-8 h-8 text-white" />
-                    </div>
-                    <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
-                      Let's Optimize Your Resume
-                    </h1>
-                    <p className="text-lg text-gray-600 mb-2">
-                      Follow these 3 simple steps to create a tailored resume
-                    </p>
-                    <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold mt-2">
-                      <Zap className="w-4 h-4" />
-                      <span>Takes about 60 seconds</span>
-                    </div>
+              <div className="max-w-3xl mx-auto space-y-8">
+                {/* Welcome */}
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-lg">
+                    <Sparkles className="w-8 h-8 text-white" />
                   </div>
-                )}
+                  <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mb-3">
+                    Optimize Your Resume in 30 Seconds
+                  </h1>
+                  <p className="text-lg text-gray-600 mb-2">
+                    Upload your resume and paste the job description
+                  </p>
+                </div>
 
                 {/* Step 1: Upload Resume */}
-                <div className="max-w-2xl mx-auto">
+                <div>
                   <ResumeImportPanel />
                 </div>
 
-                {/* Step 2: Choose Job - Shows after resume upload */}
+                {/* Step 2: Paste Job Description */}
                 {resume && (
-                  <>
-                    <JobSelectionSection
-                      resume={resume}
-                      selectedJobId={selectedJobId}
-                      onJobSelect={(jobDescription: string, jobTitle: string, jobUrl?: string, jobId?: string) => {
-                        console.log('[Optimizer] Job selected:', jobTitle);
-                        setJobDescription(jobDescription);
-                        setCurrentJobTitle(jobTitle);
-                        setJobUrl(jobUrl || '');
-                        setSelectedJobId(jobId || null);
-                        // Scroll to optimize button when ready
-                        setTimeout(() => {
-                          window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                        }, 300);
-                      }}
-                      jobsPanelCollapsed={jobsPanelCollapsed}
-                      onJobsPanelToggle={() => setJobsPanelCollapsed(!jobsPanelCollapsed)}
-                      hasJobDescription={!!jobDescription}
-                      onOptimize={async () => {
-                        // First analyze the job
-                        await handleAnalyze();
-                        // Then immediately optimize
-                        setTimeout(() => {
-                          handleOptimizeNow();
-                        }, 1000);
-                      }}
-                      isOptimizing={!!loadingStep}
+                  <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white font-bold text-sm">
+                        2
+                      </div>
+                      <h2 className="text-xl font-bold text-gray-900">Paste Job Description</h2>
+                    </div>
+
+                    <textarea
+                      value={jobDescription}
+                      onChange={(e) => setJobDescription(e.target.value)}
+                      placeholder="Paste the full job description here..."
+                      className="w-full h-64 p-4 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all resize-none text-sm"
                     />
-                  </>
+
+                    {jobDescription && (
+                      <button
+                        onClick={handleAnalyze}
+                        disabled={!!loadingStep}
+                        className="mt-4 w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Sparkles className="w-6 h-6" />
+                        Optimize My Resume
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {/* Error Display */}
                 {analysisError && (
-                  <div className="max-w-2xl mx-auto p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                  <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl">
                     <p className="text-sm text-red-800 font-medium">{analysisError}</p>
                     <button
                       onClick={() => setAnalysisError('')}
@@ -545,20 +389,13 @@ export function Optimizer() {
                     </button>
                   </div>
                 )}
-
-                {/* Recent Optimizations - Shows when there are saved sessions */}
-                {recentSessions.length > 0 && (
-                  <div className="max-w-4xl mx-auto">
-                    <RecentOptimizations onRestore={handleRestoreSession} />
-                  </div>
-                )}
               </div>
             )}
           </div>
         ) : showOptimized ? (
-          // Optimized View with Before/After
+          // Optimized View with Before/After and Download
           <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-4xl mx-auto">
               {/* Success Header */}
               <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-6 mb-6">
                 <div className="flex items-start gap-4">
@@ -571,30 +408,19 @@ export function Optimizer() {
                     <h2 className="text-2xl font-bold text-green-900 mb-1">
                       ✅ Your Resume is Optimized!
                     </h2>
-                    <p className="text-green-700 mb-3">
-                      Score improved from {Math.max(0, resumeScore - 18)} to <span className="font-bold">{resumeScore}</span>. You're now a strong match for this role.
+                    <p className="text-green-700 mb-4">
+                      Match score: <span className="font-bold text-2xl">{resumeScore}%</span> • Your resume is now tailored for this role
                     </p>
 
-                    {/* What to Do Next */}
-                    <div className="bg-white rounded-lg p-4 mb-4 border border-green-300">
-                      <p className="text-sm font-bold text-gray-900 mb-2">→ Next Step:</p>
-                      <p className="text-sm text-gray-700 mb-3">
-                        Scroll down to download your optimized resume, then apply to the job
-                      </p>
-                      {jobUrl && (
-                        <a
-                          href={jobUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors text-sm"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                          <span>Apply on LinkedIn →</span>
-                        </a>
-                      )}
-                    </div>
+                    {/* Download Button */}
+                    <button
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleDownloadClick}
+                      disabled={isExporting}
+                    >
+                      <FileDown className="w-5 h-5" />
+                      {isExporting ? 'Generating PDF...' : 'Download Optimized Resume'}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -713,103 +539,12 @@ export function Optimizer() {
         featureName="Resume Optimization"
       />
 
-      {/* AI Insights Modal - Shows first after optimization */}
-      {showInsightsModal && optimizationInsights && (
-        <InsightsModal
-          insights={optimizationInsights}
-          onContinue={() => {
-            setShowInsightsModal(false);
-            setShowImprovementReport(true);
-          }}
-          onViewComparison={() => {
-            setShowInsightsModal(false);
-            setViewMode('optimized');
-            setShowBefore(true);
-          }}
-        />
-      )}
-
-      {/* Improvement Report Modal - Shows after insights */}
-      {showImprovementReport && originalResume && resume && (
-        <ImprovementReportModal
-          originalResume={originalResume}
-          optimizedResume={resume}
-          jobTitle={currentJobTitle || jobAnalysis?.roleTitle || 'this position'}
-          jobUrl={jobUrl}
-          jobDescription={jobDescription}
-          matchScore={resumeScore}
-          whyItMatches={jobAnalysis?.coreResponsibilities?.slice(0, 3) || ['Experience aligned with role requirements', 'Skills match job description', 'Background fits the position']}
-          missingSkills={jobAnalysis?.technicalSkills?.slice(0, 3) || []}
-          onContinue={() => {
-            setShowImprovementReport(false);
-            setShowTemplateSelection(true);
-          }}
-          onApplyNow={() => {
-            setShowImprovementReport(false);
-            if (jobUrl) {
-              window.open(jobUrl, '_blank');
-            }
-          }}
-          onExport={() => {
-            setShowImprovementReport(false);
-            setViewMode('optimized');
-            // Scroll to export button and trigger click
-            setTimeout(() => {
-              const exportButton = document.querySelector('[data-export-button]') as HTMLButtonElement;
-              if (exportButton) {
-                exportButton.click();
-              }
-            }, 300);
-          }}
-          onClose={() => {
-            setShowImprovementReport(false);
-            setViewMode('optimized');
-          }}
-          onSaveSession={handleSaveSession}
-        />
-      )}
-
-      {/* Saved Jobs Panel */}
-      <SavedJobsPanel
-        isOpen={savedJobsPanelOpen}
-        onClose={() => {
-          setSavedJobsPanelOpen(false);
-          // Refresh saved jobs count
-          const saved = getSavedJobs();
-          setSavedJobsCount(saved.length);
-        }}
-        onJobSelect={(jobDescription, jobTitle, jobUrl) => {
-          setJobDescription(jobDescription);
-          setCurrentJobTitle(jobTitle);
-          setJobUrl(jobUrl || '');
-          setViewMode('upload');
-          setTimeout(() => {
-            const element = document.querySelector('[data-job-panel]');
-            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 100);
-        }}
+      {/* Email Capture Modal */}
+      <EmailCaptureModal
+        isOpen={showEmailCapture}
+        onClose={() => setShowEmailCapture(false)}
+        onSubmit={handleEmailSubmit}
       />
-
-      {/* Application Tracker */}
-      <ApplicationTracker
-        isOpen={applicationTrackerOpen}
-        onClose={() => setApplicationTrackerOpen(false)}
-      />
-
-      {/* Template Selection Modal - Shows after improvement report */}
-      {showTemplateSelection && resume && (
-        <TemplateSelectionModal
-          resume={resume}
-          onClose={() => {
-            setShowTemplateSelection(false);
-            setViewMode('optimized');
-          }}
-          onConfirm={() => {
-            setShowTemplateSelection(false);
-            setViewMode('optimized');
-          }}
-        />
-      )}
     </div>
   );
 }

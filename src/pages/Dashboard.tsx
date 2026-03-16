@@ -1,65 +1,10 @@
-import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Zap, Lock, CheckCircle2, Database, ArrowRight, Briefcase } from 'lucide-react';
-import { getMasterResume, getStats } from '../services/masterResume';
-import { getAllVersions } from '../services/resumeVersions';
-import type { MasterResumeStats } from '../types/masterResume';
+import { Sparkles, Zap, CheckCircle2 } from 'lucide-react';
 
 export function Dashboard() {
-  const [stats, setStats] = useState<MasterResumeStats | null>(null);
-  const [versionCount, setVersionCount] = useState(0);
-  const [hasMasterResume, setHasMasterResume] = useState(false);
-
-  useEffect(() => {
-    const masterResume = getMasterResume();
-    if (masterResume) {
-      setHasMasterResume(true);
-      const resumeStats = getStats();
-      setStats(resumeStats);
-    }
-    const versions = getAllVersions();
-    setVersionCount(versions.length);
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 p-4 sm:p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Quick Stats Bar - Shows if user has master resume */}
-        {hasMasterResume && stats && (
-          <div className="mb-8 bg-white rounded-xl shadow-md border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-                <Database className="w-4 h-4 text-indigo-600" />
-                Your Master Resume
-              </h2>
-              <Link
-                to="/master-resume"
-                className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
-              >
-                View →
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-xs text-gray-600">Experiences</p>
-                <p className="text-xl font-bold text-gray-900">{stats.totalExperiences}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Skills</p>
-                <p className="text-xl font-bold text-gray-900">{stats.totalSkills}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Versions</p>
-                <p className="text-xl font-bold text-gray-900">{versionCount}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-600">Profile Strength</p>
-                <p className="text-xl font-bold text-indigo-600">{stats.completionScore}%</p>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 mb-6 shadow-lg">
@@ -116,76 +61,11 @@ export function Dashboard() {
               <span className="font-medium">ATS-Friendly PDFs</span>
             </div>
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-green-600" />
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
               <span className="font-medium">Free to Try</span>
             </div>
           </div>
         </div>
-
-
-
-        {/* Master Resume CTA - Shows for users without master resume AND with versions */}
-        {!hasMasterResume && versionCount > 0 && (
-          <div className="mb-16 px-4">
-            <div className="max-w-3xl mx-auto bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl p-8 border-2 border-indigo-200 shadow-lg">
-              <div className="text-center mb-6">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                  💡 Want Better Results with Less Effort?
-                </h2>
-                <p className="text-gray-700 max-w-2xl mx-auto">
-                  Create a Master Resume to store all your experiences, then use <strong>Smart Selector</strong> to let AI pick the best ones for each job.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Database className="w-4 h-4 text-indigo-600" />
-                    <h4 className="font-semibold text-gray-900 text-sm">Store Everything</h4>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    One place for all your work history
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-4 h-4 text-purple-600" />
-                    <h4 className="font-semibold text-gray-900 text-sm">AI Picks Best Content</h4>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    Automatic selection per job
-                  </p>
-                </div>
-                <div className="bg-white rounded-lg p-4 border border-indigo-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Briefcase className="w-4 h-4 text-green-600" />
-                    <h4 className="font-semibold text-gray-900 text-sm">Faster Tailoring</h4>
-                  </div>
-                  <p className="text-xs text-gray-600">
-                    Apply to multiple jobs quickly
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-center">
-                <Link
-                  to="/master-resume"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-semibold hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg"
-                >
-                  <Database className="w-5 h-5" />
-                  Set Up Master Resume
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <p className="text-xs text-gray-600 mt-2">
-                  10 min one-time setup
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* How It Works Section - Simplified */}
         <div className="px-4 mb-16">
