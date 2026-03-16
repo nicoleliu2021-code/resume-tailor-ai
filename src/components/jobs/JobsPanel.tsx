@@ -5,7 +5,7 @@ import { JobPreviewModal } from './JobPreviewModal';
 import { BatchGenerateModal } from './BatchGenerateModal';
 import { MobileJobSheet } from './MobileJobSheet';
 import { ApplicationTracker } from './ApplicationTracker';
-import { searchRealJobs, getLatestJobTitle, type RealJob } from '../../services/jobSearchAPI';
+import { searchRealJobs, getLatestJobTitle } from '../../services/jobSearchAPI';
 import type { StructuredResume, JobMatch } from '../../types/resume';
 
 interface Props {
