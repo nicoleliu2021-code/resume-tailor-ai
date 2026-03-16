@@ -107,6 +107,7 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
               content = resume.experience.map((exp, idx) => (
                 <div
                   key={idx}
+                  className="experience-entry avoid-page-break"
                   style={{
                     marginBottom: '14px',
                     breakInside: 'avoid',
@@ -182,6 +183,7 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
               content = resume.education.map((edu, idx) => (
                 <div
                   key={idx}
+                  className="education-entry avoid-page-break"
                   style={{
                     marginBottom: '12px',
                     breakInside: 'avoid',
@@ -243,6 +245,7 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
               content = resume.projects.map((project, idx) => (
                 <div
                   key={idx}
+                  className="project-entry avoid-page-break"
                   style={{
                     marginBottom: '12px',
                     breakInside: 'avoid',
@@ -275,7 +278,15 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
           case 'certifications':
             if ((resume as any).certifications && (resume as any).certifications.length > 0) {
               content = (resume as any).certifications.map((cert: any, idx: number) => (
-                <div key={idx} style={{ marginBottom: '8px' }}>
+                <div
+                  key={idx}
+                  className="avoid-page-break"
+                  style={{
+                    marginBottom: '8px',
+                    breakInside: 'avoid',
+                    pageBreakInside: 'avoid',
+                  }}
+                >
                   <span style={{ fontSize: `${style.fontSize.body}px`, fontWeight: '600', color: style.primaryColor }}>
                     {cert.name}
                   </span>

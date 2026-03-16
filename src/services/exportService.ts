@@ -86,118 +86,54 @@ export async function exportToPDF(
 
     onProgress?.({ status: 'exporting', progress: 60, message: 'Generating PDF...' });
 
-    // Use jsPDF with html2canvas for better quality
-    console.log('[Export] Loading jsPDF and html2canvas...');
-    const jsPDF = (await import('jspdf')).default;
-    const html2canvas = (await import('html2canvas')).default;
+    // Use html2pdf.js for proper CSS-based page breaking
+    console.log('[Export] Loading html2pdf...');
+    const html2pdf = (await import('html2pdf.js')).default;
 
-    console.log('[Export] Capturing HTML as canvas...');
-    // Capture the React-rendered element directly (not iframe)
-    const canvas = await html2canvas(resumeWrapper.firstChild as HTMLElement, {
-      scale: 2,
-      useCORS: true,
-      logging: true,
-      backgroundColor: '#ffffff',
-      allowTaint: false,
-      foreignObjectRendering: false,
-    });
-
-    console.log('[Export] Canvas created:', canvas.width, 'x', canvas.height);
-
-    // Create PDF from canvas
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'in',
-      format: 'letter',
-    });
-
-    const imgWidth = 8.5; // Letter width in inches
-    const pageHeight = 11; // Letter height in inches
-
-    // Calculate scaling - canvas width should fit within 8.5 inches
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    console.log('[Export] Image dimensions:', imgWidth, 'x', imgHeight, 'inches');
-
-    // Extract header information for multi-page headers
-    const resume = version.optimizedContent;
-    const headerHeight = 0.6; // inches for header on continuation pages
-
-    // If content fits on one page, add it directly
-    if (imgHeight <= pageHeight) {
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-    } else {
-      // Multi-page: split the canvas into page-sized chunks
-      const pageCount = Math.ceil(imgHeight / pageHeight);
-      console.log('[Export] Multi-page resume, splitting into', pageCount, 'pages');
-
-      // Calculate pixels per page
-      const pageHeightPixels = Math.floor((canvas.height * pageHeight) / imgHeight);
-
-      for (let page = 0; page < pageCount; page++) {
-        // Create a temporary canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = Math.min(pageHeightPixels, canvas.height - (page * pageHeightPixels));
-
-        const pageCtx = pageCanvas.getContext('2d');
-        if (!pageCtx) {
-          throw new Error('Failed to get canvas context');
-        }
-
-        // Fill white background
-        pageCtx.fillStyle = '#ffffff';
-        pageCtx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-
-        // Copy the relevant portion of the main canvas
-        pageCtx.drawImage(
-          canvas,
-          0, page * pageHeightPixels, // Source x, y
-          canvas.width, pageCanvas.height, // Source width, height
-          0, 0, // Destination x, y
-          canvas.width, pageCanvas.height // Destination width, height
-        );
-
-        // Convert page canvas to image
-        const pageImgData = pageCanvas.toDataURL('image/png');
-
-        // Add new page if not the first page
-        if (page > 0) {
-          pdf.addPage();
-
-          // Add header to continuation pages
-          pdf.setFontSize(11);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(resume.name || '', 0.75, 0.4);
-
-          pdf.setFontSize(9);
-          pdf.setFont('helvetica', 'normal');
-          const contactInfo = [resume.email, resume.phone].filter(Boolean).join(' • ');
-          if (contactInfo) {
-            pdf.text(contactInfo, 0.75, 0.55);
-          }
-
-          // Add page number
-          pdf.setFontSize(8);
-          pdf.text(`Page ${page + 1} of ${pageCount}`, imgWidth - 0.75, 0.4, { align: 'right' });
-        }
-
-        // Calculate height for this page in inches
-        const thisPageHeight = (pageCanvas.height * imgWidth) / canvas.width;
-
-        // Add the image to the PDF page, with offset for header on continuation pages
-        const yOffset = page > 0 ? headerHeight : 0;
-        pdf.addImage(pageImgData, 'PNG', 0, yOffset, imgWidth, thisPageHeight);
-
-        console.log(`[Export] Added page ${page + 1}/${pageCount}`);
-      }
-    }
-
-    // Download the PDF
     const fileName = sanitizeFileName(version.name) + '.pdf';
-    console.log('[Export] Saving PDF:', fileName);
-    pdf.save(fileName);
+    console.log('[Export] Generating PDF with CSS page breaks:', fileName);
+
+    // Add header to continuation pages using CSS
+    const resume = version.optimizedContent;
+    const headerDiv = document.createElement('div');
+    headerDiv.style.display = 'none';
+    headerDiv.className = 'pdf-header';
+    headerDiv.innerHTML = `
+      <div style="font-size: 10px; padding: 12px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 12px;">
+        <div style="font-weight: bold;">${resume.name || ''}</div>
+        <div style="color: #6b7280; margin-top: 2px;">
+          ${[resume.email, resume.phone].filter(Boolean).join(' • ')}
+        </div>
+      </div>
+    `;
+
+    // Configure html2pdf options for proper page breaking
+    const opt = {
+      margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number], // top, left, bottom, right in inches
+      filename: fileName,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      },
+      jsPDF: {
+        unit: 'in',
+        format: 'letter',
+        orientation: 'portrait' as const,
+      },
+      pagebreak: {
+        mode: ['avoid-all', 'css', 'legacy'],
+        avoid: ['h2', '.experience-entry', '.education-entry', '.project-entry'],
+      },
+    };
+
+    // Generate and download PDF
+    console.log('[Export] Generating PDF...');
+    await html2pdf().set(opt).from(resumeWrapper.firstChild as HTMLElement).save();
+
+    console.log('[Export] PDF saved successfully');
 
     onProgress?.({ status: 'complete', progress: 100, message: 'Download complete!' });
 
