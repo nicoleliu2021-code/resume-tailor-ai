@@ -7,9 +7,23 @@ import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { TemplatePreview } from '../components/TemplatePreview';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 import { ResumeRenderer } from '../components/ResumeRenderer';
+import ReferralBanner from '../components/ReferralBanner';
+import ExitIntentModal from '../components/ExitIntentModal';
+import SocialProof from '../components/SocialProof';
 import { analyzeJobAPI } from '../services/api';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import { RESUME_TEMPLATES, getTemplateById } from '../data/templates';
+import { getAvailableCredits, useCredit } from '../services/referralService';
+import {
+  trackFunnelStep,
+  trackResumeUploaded,
+  trackJobDescriptionAdded,
+  trackOptimizationStarted,
+  trackOptimizationCompleted,
+  trackTemplateChanged,
+  trackExport,
+  trackError,
+} from '../services/analytics';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -67,6 +81,15 @@ export function OptimizerNew() {
     }
   }, [resume, jobAnalysis]);
 
+  // Track template changes
+  const prevTemplateRef = useState(selectedTemplateId);
+  useEffect(() => {
+    if (prevTemplateRef[0] !== selectedTemplateId && prevTemplateRef[0] !== '') {
+      trackTemplateChanged(prevTemplateRef[0], selectedTemplateId);
+    }
+    prevTemplateRef[1](selectedTemplateId);
+  }, [selectedTemplateId]);
+
   // Pre-render disabled for now - was causing conflicts with actual download
   // useEffect(() => {
   //   if (currentStep === 4 && resume && !isPreRendering) {
@@ -90,9 +113,13 @@ export function OptimizerNew() {
   };
 
   const handleResumeUploaded = () => {
+    // Track resume upload
+    trackFunnelStep('resume_uploaded', 1);
+
     // Auto-advance to step 2 after resume upload
     setTimeout(() => {
       setCurrentStep(2);
+      trackFunnelStep('job_description_step', 2);
     }, 500);
   };
 
@@ -102,7 +129,9 @@ export function OptimizerNew() {
       return;
     }
 
-    if (!canUseFeature('jobAnalysisUsed')) {
+    // Check if user has referral credits or subscription quota
+    const hasReferralCredit = getAvailableCredits() > 0;
+    if (!hasReferralCredit && !canUseFeature('jobAnalysisUsed')) {
       setAnalysisError('Job analysis limit reached');
       setShowUpgradeModal(true);
       return;
@@ -111,9 +140,24 @@ export function OptimizerNew() {
     try {
       setLoadingStep('analyzing');
 
+      // Track job description added
+      trackJobDescriptionAdded('paste', jobDescription.length);
+
+      const startTime = Date.now();
       const analysis = await analyzeJobAPI(jobDescription);
-      incrementUsage('jobAnalysisUsed');
+
+      // Use referral credit if available, otherwise use subscription quota
+      if (hasReferralCredit) {
+        useCredit();
+        console.log('[Referral] Used 1 referral credit');
+      } else {
+        incrementUsage('jobAnalysisUsed');
+      }
+
       setJobAnalysis(analysis);
+
+      // Track optimization started
+      trackOptimizationStarted(analysis.roleTitle);
 
       const score = calculateResumeScore(resume, analysis);
       setResumeScore(score);
@@ -177,18 +221,35 @@ export function OptimizerNew() {
 
       setLoadingStep(null);
 
+      // Track optimization completed
+      const durationSeconds = Math.round((Date.now() - startTime) / 1000);
+      trackOptimizationCompleted({
+        bulletsChanged: optimizeData.metadata?.totalBulletsChanged || 0,
+        keywordsAdded: optimizeData.metadata?.totalKeywordsAdded || 0,
+        templateId: selectedTemplateId,
+        durationSeconds,
+      });
+
       // Move to template selection
       setCurrentStep(3);
+      trackFunnelStep('template_selection', 3);
 
       console.log('[Optimizer] Optimization complete!', optimizeData.changes);
     } catch (err) {
       console.error('[Optimizer] Optimization error:', err);
-      setAnalysisError(err instanceof Error ? err.message : 'Failed to optimize');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to optimize';
+      setAnalysisError(errorMessage);
       setLoadingStep(null);
+
+      // Track error
+      trackError('optimization_failed', errorMessage);
     }
   };
 
   const handleTemplateSelected = () => {
+    // Track template selection
+    trackFunnelStep('download_step', 4);
+
     // Move to download step
     setCurrentStep(4);
   };
@@ -232,6 +293,9 @@ export function OptimizerNew() {
         });
       }
 
+      // Track successful export
+      trackExport(format, selectedTemplateId);
+
       console.log(`[Download] ${format.toUpperCase()} export completed successfully`);
       setIsExporting(false);
     } catch (error) {
@@ -240,6 +304,9 @@ export function OptimizerNew() {
       setIsExporting(false);
       const errorMessage = error instanceof Error ? error.message : 'Failed to export resume. Please try again.';
       setExportError(errorMessage);
+
+      // Track export error
+      trackError('export_failed', errorMessage);
     }
   };
 
@@ -296,9 +363,38 @@ export function OptimizerNew() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 mb-4 shadow-lg">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Step 1: Upload Your Resume</h2>
-                <p className="text-gray-600">AI will tailor it to match the exact job you want</p>
+                <h1 className="text-4xl font-extrabold text-gray-900 mb-3">
+                  Beat ATS. Land Interviews.
+                </h1>
+                <p className="text-xl text-gray-700 mb-2">
+                  AI-powered resume optimization in under 2 minutes
+                </p>
+                <p className="text-sm text-gray-500">
+                  75% of resumes never reach human eyes. Make yours stand out.
+                </p>
+
+                {/* Trust signals */}
+                <div className="flex items-center justify-center gap-6 mt-6 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>Free to try</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>No credit card</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    <span>2-min setup</span>
+                  </div>
+                </div>
               </div>
+
+              {/* Referral Banner - Get Free Credits */}
+              <ReferralBanner />
+
+              {/* Social Proof */}
+              <SocialProof />
 
               <ResumeImportPanel onComplete={handleResumeUploaded} />
             </div>
@@ -311,8 +407,8 @@ export function OptimizerNew() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 mb-4 shadow-lg">
                   <Sparkles className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Step 2: Add Job Details</h2>
-                <p className="text-gray-600">Paste the job description or provide a URL</p>
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Target Your Dream Job</h2>
+                <p className="text-gray-600">Paste the job description to get ATS-optimized bullets and keywords</p>
               </div>
 
               <div className="bg-white rounded-2xl border-2 border-gray-200 p-6 shadow-lg">
@@ -408,8 +504,8 @@ export function OptimizerNew() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 mb-4 shadow-lg">
                   <CheckCircle2 className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Step 3: Choose Your Template</h2>
-                <p className="text-gray-600">Select a professional template for your resume</p>
+                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Pick Your Professional Look</h2>
+                <p className="text-gray-600">All templates are ATS-friendly and recruiter-approved</p>
               </div>
 
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -511,10 +607,10 @@ export function OptimizerNew() {
                     <CheckCircle2 className="w-8 h-8 text-white" />
                   </div>
                   <h2 className="text-2xl font-extrabold text-gray-900 mb-3">
-                    Resume is Ready!
+                    Your ATS-Optimized Resume is Ready!
                   </h2>
                   <p className="text-gray-600 mb-4">
-                    Your resume has been optimized and is ready to download
+                    Download now and start getting more interviews
                   </p>
 
                   {/* Match Score */}
@@ -524,6 +620,11 @@ export function OptimizerNew() {
                       <span className="text-3xl font-bold text-green-600">{resumeScore}%</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Referral Banner */}
+                <div className="mb-6">
+                  <ReferralBanner />
                 </div>
 
                 {/* Template Selector */}
@@ -644,6 +745,9 @@ export function OptimizerNew() {
         onSelect={setSelectedTemplateId}
         selectedTemplateId={selectedTemplateId}
       />
+
+      {/* Exit Intent Email Capture */}
+      <ExitIntentModal />
     </div>
   );
 }

@@ -2,6 +2,14 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { initializeAnalytics } from './services/analytics'
+import { captureReferralCode } from './services/referralService'
+
+// Initialize analytics on app load
+initializeAnalytics();
+
+// Capture referral code if present in URL
+captureReferralCode();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
