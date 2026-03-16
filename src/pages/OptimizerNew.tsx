@@ -55,10 +55,10 @@ export function OptimizerNew() {
   const [resumeScore, setResumeScore] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState('classic-professional');
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
   const [jobUrl, setJobUrl] = useState('');
   const [useJobUrl, setUseJobUrl] = useState(false);
   const [previewModalTemplate, setPreviewModalTemplate] = useState<typeof RESUME_TEMPLATES[0] | null>(null);
-  const [isPreRendering, setIsPreRendering] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -68,40 +68,13 @@ export function OptimizerNew() {
     }
   }, [resume, jobAnalysis]);
 
-  // Pre-render PDF when reaching Step 4 or changing templates (for faster downloads)
-  useEffect(() => {
-    if (currentStep === 4 && resume && !isPreRendering) {
-      setIsPreRendering(true);
-
-      const version: any = {
-        id: Date.now().toString(),
-        name: `${resume.name || 'Resume'} - Optimized`,
-        slug: '',
-        targetRole: '',
-        selectedExperienceIds: [],
-        selectedAchievementIds: [],
-        selectedSkillIds: [],
-        selectedProjectIds: [],
-        originalContent: originalResume || resume,
-        optimizedContent: resume,
-        jobDescription: jobDescription,
-        status: 'draft',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Pre-render in background to warm up canvas/html2canvas (makes actual export faster)
-      exportToPDF(version, selectedTemplateId, (progress) => {
-        console.log('[Pre-render] Progress:', progress);
-      }).then(() => {
-        console.log('[Pre-render] PDF pre-rendered successfully');
-        setIsPreRendering(false);
-      }).catch((error) => {
-        console.error('[Pre-render] Error:', error);
-        setIsPreRendering(false);
-      });
-    }
-  }, [currentStep, selectedTemplateId, resume]);
+  // Pre-render disabled for now - was causing conflicts with actual download
+  // useEffect(() => {
+  //   if (currentStep === 4 && resume && !isPreRendering) {
+  //     setIsPreRendering(true);
+  //     // ... pre-render logic
+  //   }
+  // }, [currentStep, selectedTemplateId, resume]);
 
   const handleStartOver = () => {
     if (confirm('Start over? All progress will be lost.')) {
@@ -210,11 +183,15 @@ export function OptimizerNew() {
 
   const handleDownload = async () => {
     setIsExporting(true);
+    setExportError('');
 
     try {
       if (!resume) {
         throw new Error('No resume to export');
       }
+
+      console.log('[Download] Starting export with template:', selectedTemplateId);
+      console.log('[Download] Resume data:', resume);
 
       const version: any = {
         id: Date.now().toString(),
@@ -234,15 +211,17 @@ export function OptimizerNew() {
       };
 
       await exportToPDF(version, selectedTemplateId, (progress) => {
-        console.log('[Optimizer] Export progress:', progress);
+        console.log('[Download] Export progress:', progress.message, progress.progress + '%');
       });
 
+      console.log('[Download] Export completed successfully');
       setIsExporting(false);
     } catch (error) {
-      console.error('[Optimizer] Export error:', error);
+      console.error('[Download] Export error:', error);
+      console.error('[Download] Error details:', error instanceof Error ? error.stack : 'No stack');
       setIsExporting(false);
       const errorMessage = error instanceof Error ? error.message : 'Failed to export resume. Please try again.';
-      alert(errorMessage);
+      setExportError(errorMessage);
     }
   };
 
@@ -568,6 +547,27 @@ export function OptimizerNew() {
                     </>
                   )}
                 </button>
+
+                {/* Export Error Display */}
+                {exportError && (
+                  <div className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl">
+                    <div className="flex items-start gap-2">
+                      <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-white text-xs font-bold">!</span>
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold text-red-900 mb-1">Export Failed</p>
+                        <p className="text-sm text-red-700">{exportError}</p>
+                        <button
+                          onClick={() => setExportError('')}
+                          className="mt-2 text-xs text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Compare Toggle */}
                 {originalResume && (
