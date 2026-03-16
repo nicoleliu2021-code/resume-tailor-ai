@@ -4,6 +4,7 @@ import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { EmailCaptureModal } from '../components/modals/EmailCaptureModal';
+import { TemplateSelectionModal } from '../components/templates/TemplateSelectionModal';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { analyzeJobAPI } from '../services/api';
 import { exportToPDF } from '../services/exportService';
@@ -50,6 +51,8 @@ export function Optimizer() {
   const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [showEmailCapture, setShowEmailCapture] = useState(false);
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState('classic-professional');
   const [isExporting, setIsExporting] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
@@ -73,6 +76,14 @@ export function Optimizer() {
   };
 
   const handleDownloadClick = () => {
+    // Show template selection first
+    setShowTemplateSelection(true);
+  };
+
+  const handleTemplateSelected = (templateId: string) => {
+    setSelectedTemplateId(templateId);
+    setShowTemplateSelection(false);
+    // Show email capture after template selection
     setShowEmailCapture(true);
   };
 
@@ -104,16 +115,18 @@ export function Optimizer() {
         updatedAt: new Date().toISOString(),
       };
 
-      // Use the default ATS-friendly template
-      await exportToPDF(version, 'professional-ats', (progress) => {
+      // Use the selected template
+      await exportToPDF(version, selectedTemplateId, (progress) => {
         console.log('[Optimizer] Export progress:', progress);
       });
 
       setIsExporting(false);
     } catch (error) {
       console.error('[Optimizer] Export error:', error);
+      console.error('[Optimizer] Error details:', error);
       setIsExporting(false);
-      alert('Failed to export resume. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export resume. Please try again.';
+      alert(errorMessage);
     }
   };
 
@@ -368,10 +381,19 @@ export function Optimizer() {
                       <button
                         onClick={handleAnalyze}
                         disabled={!!loadingStep}
-                        className="mt-4 w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="mt-4 w-full flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                       >
-                        <Sparkles className="w-6 h-6" />
-                        Optimize My Resume
+                        {loadingStep ? (
+                          <>
+                            <Loader className="w-6 h-6 animate-spin" />
+                            Optimizing...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-6 h-6" />
+                            Optimize My Resume
+                          </>
+                        )}
                       </button>
                     )}
                   </div>
@@ -538,6 +560,15 @@ export function Optimizer() {
         onClose={() => setShowUpgradeModal(false)}
         featureName="Resume Optimization"
       />
+
+      {/* Template Selection Modal */}
+      {showTemplateSelection && resume && (
+        <TemplateSelectionModal
+          resume={resume}
+          onClose={() => setShowTemplateSelection(false)}
+          onConfirm={handleTemplateSelected}
+        />
+      )}
 
       {/* Email Capture Modal */}
       <EmailCaptureModal
