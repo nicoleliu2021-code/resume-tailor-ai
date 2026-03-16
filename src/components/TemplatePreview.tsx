@@ -1,4 +1,4 @@
-import { ResumeTemplate } from '../types/template';
+import type { ResumeTemplate } from '../types/template';
 
 interface Props {
   template: ResumeTemplate;
