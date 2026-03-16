@@ -64,6 +64,16 @@ export async function parseDOCX(file: File): Promise<string> {
   }
 }
 
+export async function parseTXT(file: File): Promise<string> {
+  try {
+    const text = await file.text();
+    return text.trim();
+  } catch (error) {
+    console.error('Error parsing TXT:', error);
+    throw new Error('Failed to read text file.');
+  }
+}
+
 export async function parseResumeFile(file: File): Promise<string> {
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
@@ -73,7 +83,9 @@ export async function parseResumeFile(file: File): Promise<string> {
     case 'docx':
     case 'doc':
       return await parseDOCX(file);
+    case 'txt':
+      return await parseTXT(file);
     default:
-      throw new Error('Unsupported file format. Please upload a PDF or DOCX file.');
+      throw new Error('Unsupported file format. Please upload a PDF, DOCX, or TXT file.');
   }
 }

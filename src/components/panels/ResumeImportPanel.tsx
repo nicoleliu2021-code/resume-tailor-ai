@@ -98,7 +98,7 @@ export function ResumeImportPanel({ onComplete }: Props) {
       <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-indigo-500 hover:bg-indigo-50/30 transition-all cursor-pointer group">
         <input
           type="file"
-          accept=".pdf,.docx,.doc"
+          accept=".pdf,.docx,.doc,.txt"
           onChange={handleFileUpload}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isLoading}
@@ -134,7 +134,7 @@ export function ResumeImportPanel({ onComplete }: Props) {
             <p className="text-base font-semibold text-gray-800 mb-1">
               Click to upload or drag and drop
             </p>
-            <p className="text-sm text-gray-500 mb-4">PDF or DOCX format (MAX. 10MB)</p>
+            <p className="text-sm text-gray-500 mb-4">PDF, DOCX, or TXT format (MAX. 10MB)</p>
 
             {/* File format indicators */}
             <div className="flex items-center justify-center gap-3 mt-4">
@@ -150,6 +150,10 @@ export function ResumeImportPanel({ onComplete }: Props) {
                     FASTER
                   </span>
                 )}
+              </div>
+              <div className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 rounded-lg">
+                <FileText className="w-4 h-4 text-gray-500" />
+                <span className="text-xs font-medium text-gray-700">TXT</span>
               </div>
             </div>
 
