@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Database, Plus, TrendingUp } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Database, Plus, TrendingUp, Upload, Loader } from 'lucide-react';
 import { getMasterResume, getStats, importFromStructuredResume, saveMasterResume } from '../services/masterResume';
 import { useResume } from '../contexts/ResumeContext';
 import { ExperienceLibrary } from '../components/master-resume/ExperienceLibrary';
@@ -9,7 +9,10 @@ import { ProjectsLibrary } from '../components/master-resume/ProjectsLibrary';
 import { CertificationsLibrary } from '../components/master-resume/CertificationsLibrary';
 import { SummariesLibrary } from '../components/master-resume/SummariesLibrary';
 import { StatsBar } from '../components/master-resume/StatsBar';
+import { parseResumeAPI } from '../services/api';
+import { parseResumeFile } from '../utils/fileParser';
 import type { MasterResume } from '../types/masterResume';
+import type { StructuredResume } from '../types/resume';
 
 type TabType = 'experiences' | 'skills' | 'education' | 'projects' | 'certifications' | 'summaries';
 
@@ -17,6 +20,9 @@ export function MasterResumeEditor() {
   const [masterResume, setMasterResume] = useState<MasterResume | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('experiences');
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { resume } = useResume();
 
   useEffect(() => {
@@ -45,6 +51,62 @@ export function MasterResumeEditor() {
   const refreshMasterResume = () => {
     const updated = getMasterResume();
     setMasterResume(updated);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError('');
+
+    try {
+      // Step 1: Extract text from file
+      const text = await parseResumeFile(file);
+
+      // Step 2: Parse into structured resume
+      const parsedResume: StructuredResume = await parseResumeAPI(text);
+
+      // Import and merge with existing master resume
+      const result = importFromStructuredResume(parsedResume);
+      if (result.success && result.masterResume) {
+        // If master resume exists, merge; otherwise, just save
+        const current = getMasterResume();
+        if (current) {
+          // Merge logic: add new items that don't exist
+          const merged: MasterResume = {
+            ...current,
+            experiences: [...current.experiences, ...result.masterResume.experiences.filter(exp =>
+              !current.experiences.some(e => e.company === exp.company && e.role === exp.role)
+            )],
+            skills: [...current.skills, ...result.masterResume.skills.filter(skill =>
+              !current.skills.some(s => s.name.toLowerCase() === skill.name.toLowerCase())
+            )],
+            education: [...current.education, ...result.masterResume.education.filter(edu =>
+              !current.education.some(e => e.school === edu.school && e.degree === edu.degree)
+            )],
+            projects: [...current.projects, ...result.masterResume.projects.filter(proj =>
+              !current.projects.some(p => p.name === proj.name)
+            )],
+            updatedAt: new Date(),
+          };
+          saveMasterResume(merged);
+          setMasterResume(merged);
+        } else {
+          saveMasterResume(result.masterResume);
+          setMasterResume(result.masterResume);
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading resume:', error);
+      setUploadError(error instanceof Error ? error.message : 'Failed to parse resume');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
   };
 
   if (isLoading) {
@@ -113,13 +175,46 @@ export function MasterResumeEditor() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Database className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Master Resume</h1>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <Database className="w-8 h-8 text-indigo-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Master Resume</h1>
+            </div>
+            <div className="flex items-center gap-3">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.doc,.docx,.txt"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader className="w-5 h-5 animate-spin" />
+                    <span>Importing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-5 h-5" />
+                    <span>Import Resume</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
           <p className="text-gray-600">
             Your complete professional history - all experiences, achievements, and skills
           </p>
+          {uploadError && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-700">{uploadError}</p>
+            </div>
+          )}
         </div>
 
         {/* Stats Bar */}

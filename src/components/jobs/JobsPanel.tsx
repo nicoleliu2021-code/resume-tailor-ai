@@ -39,7 +39,14 @@ export function JobsPanel({ resume, onJobSelect, isCollapsed = false, onToggle, 
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Don't auto-load jobs - user must click to expand
+  // Auto-load jobs when resume becomes available
+  useEffect(() => {
+    if (resume && jobs.length === 0 && !loading && !error) {
+      console.log('[JobsPanel] Auto-loading jobs after resume upload');
+      loadJobs();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resume]);
 
   const loadJobs = async () => {
     if (!resume) return;

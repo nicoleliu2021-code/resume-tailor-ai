@@ -6,6 +6,7 @@ import { useOptimizationSession } from '../hooks/useOptimizationSession';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ImprovementReportModal } from '../components/ImprovementReportModal';
 import { InsightsModal } from '../components/insights/InsightsModal';
+import { TemplateSelectionModal } from '../components/templates/TemplateSelectionModal';
 import { RecentOptimizations } from '../components/RecentOptimizations';
 import { ProgressSteps } from '../components/ProgressSteps';
 import { JobSelectionSection } from '../components/JobSelectionSection';
@@ -69,6 +70,7 @@ export function Optimizer() {
   const [currentJobTitle, setCurrentJobTitle] = useState<string>('');
   const [showImprovementReport, setShowImprovementReport] = useState(false);
   const [showInsightsModal, setShowInsightsModal] = useState(false);
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
   const [optimizationInsights, setOptimizationInsights] = useState<OptimizationInsights | null>(null);
   const [hasRestoredSession, setHasRestoredSession] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -740,7 +742,7 @@ export function Optimizer() {
           missingSkills={jobAnalysis?.technicalSkills?.slice(0, 3) || []}
           onContinue={() => {
             setShowImprovementReport(false);
-            setViewMode('optimized');
+            setShowTemplateSelection(true);
           }}
           onApplyNow={() => {
             setShowImprovementReport(false);
@@ -793,6 +795,21 @@ export function Optimizer() {
         isOpen={applicationTrackerOpen}
         onClose={() => setApplicationTrackerOpen(false)}
       />
+
+      {/* Template Selection Modal - Shows after improvement report */}
+      {showTemplateSelection && resume && (
+        <TemplateSelectionModal
+          resume={resume}
+          onClose={() => {
+            setShowTemplateSelection(false);
+            setViewMode('optimized');
+          }}
+          onConfirm={() => {
+            setShowTemplateSelection(false);
+            setViewMode('optimized');
+          }}
+        />
+      )}
     </div>
   );
 }
