@@ -1,6 +1,8 @@
 import { getTemplateById } from '../data/templates';
 import type { ResumeVersion } from '../types/resumeVersion';
-import type { ResumeTemplate } from '../types/template';
+import { createElement } from 'react';
+import { createRoot } from 'react-dom/client';
+import { ResumeRenderer } from '../components/ResumeRenderer';
 
 /**
  * Export Service
@@ -52,15 +54,34 @@ export async function exportToPDF(
     container.style.left = '-9999px';
     container.style.top = '0';
     container.style.width = '816px'; // 8.5 inches at 96 DPI
+    container.style.zIndex = '-9999';
     document.body.appendChild(container);
 
-    // Generate the resume HTML with template styling
-    const resumeHTML = generateResumeHTML(version.optimizedContent, template);
-    console.log('[Export] Generated HTML length:', resumeHTML.length);
-    container.innerHTML = resumeHTML;
+    // Create a wrapper div for the resume
+    const resumeWrapper = document.createElement('div');
+    container.appendChild(resumeWrapper);
 
-    if (!container.firstChild) {
-      throw new Error('Failed to render resume HTML');
+    // Render React component into the wrapper
+    console.log('[Export] Rendering React component...');
+    const root = createRoot(resumeWrapper);
+
+    // Render and wait for it to complete
+    await new Promise<void>((resolve) => {
+      root.render(
+        createElement(ResumeRenderer, {
+          resume: version.optimizedContent,
+          template: template,
+          scale: 1,
+        })
+      );
+      // Give React time to render
+      setTimeout(resolve, 500);
+    });
+
+    console.log('[Export] React component rendered');
+
+    if (!resumeWrapper.firstChild) {
+      throw new Error('Failed to render resume component');
     }
 
     onProgress?.({ status: 'exporting', progress: 60, message: 'Generating PDF...' });
@@ -71,14 +92,14 @@ export async function exportToPDF(
     const html2canvas = (await import('html2canvas')).default;
 
     console.log('[Export] Capturing HTML as canvas...');
-    // Capture the HTML as canvas
-    const canvas = await html2canvas(container.firstChild as HTMLElement, {
+    // Capture the React-rendered element directly (not iframe)
+    const canvas = await html2canvas(resumeWrapper.firstChild as HTMLElement, {
       scale: 2,
       useCORS: true,
-      logging: false,
+      logging: true,
       backgroundColor: '#ffffff',
-      windowWidth: 816,
-      windowHeight: 1056,
+      allowTaint: false,
+      foreignObjectRendering: false,
     });
 
     console.log('[Export] Canvas created:', canvas.width, 'x', canvas.height);
@@ -129,242 +150,6 @@ export async function exportToPDF(
     });
     throw error;
   }
-}
-
-/**
- * Generate HTML string for resume with template styling
- */
-function generateResumeHTML(resume: any, template: ResumeTemplate): string {
-  const { style, sections } = template;
-  const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-
-  // Generate header HTML
-  const headerHTML = `
-    <div style="margin-bottom: 24px; text-align: ${style.headerAlignment}; font-family: ${style.fontFamily}; color: ${style.primaryColor};">
-      ${generateHeaderContent(resume, template)}
-    </div>
-  `;
-
-  // Generate sections HTML
-  const sectionsHTML = sortedSections
-    .filter((s) => s.enabled)
-    .map((section) => generateSectionHTML(section, resume, template))
-    .join('');
-
-  return `
-    <div style="width: 8.5in; min-height: 11in; padding: 0.75in; background: white; font-family: ${style.fontFamily};">
-      ${headerHTML}
-      ${sectionsHTML}
-    </div>
-  `;
-}
-
-function generateHeaderContent(resume: any, template: ResumeTemplate): string {
-  const { style } = template;
-
-  if (template.style.headerStyle === 'banner') {
-    return `
-      <div style="padding: 24px 16px; margin: 0 -32px 16px; background: ${style.accentColor}10; border-left: 4px solid ${style.accentColor};">
-        <h1 style="font-size: ${style.fontSize.name}px; font-weight: bold; margin: 0 0 4px; color: ${style.primaryColor};">
-          ${resume.name || ''}
-        </h1>
-        <div style="font-size: 12px; color: ${style.secondaryColor};">
-          ${[resume.email, resume.phone, resume.location, resume.linkedin]
-            .filter(Boolean)
-            .join(' • ')}
-        </div>
-      </div>
-    `;
-  }
-
-  return `
-    <h1 style="font-size: ${style.fontSize.name}px; font-weight: bold; margin: 0 0 8px; color: ${style.primaryColor};">
-      ${resume.name || ''}
-    </h1>
-    <div style="font-size: 12px; color: ${style.secondaryColor};">
-      ${[resume.email, resume.phone, resume.location, resume.linkedin]
-        .filter(Boolean)
-        .join(' • ')}
-    </div>
-  `;
-}
-
-function generateSectionHTML(
-  section: any,
-  resume: any,
-  template: ResumeTemplate
-): string {
-  const { style } = template;
-
-  const sectionTitleStyle = `
-    font-size: ${style.fontSize.sectionTitle}px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
-    color: ${style.primaryColor};
-    ${style.sectionTitleStyle === 'bold-border' ? `border-bottom: 3px solid ${style.accentColor}; padding-bottom: 6px;` : ''}
-    ${style.sectionTitleStyle === 'bold-underline' ? `border-bottom: 2px solid ${style.accentColor}; padding-bottom: 4px;` : ''}
-    ${style.sectionTitleStyle === 'bold-background' ? `background: ${style.accentColor}15; padding: 6px 12px; margin-left: -12px; margin-right: -12px;` : ''}
-  `;
-
-  let content = '';
-
-  switch (section.key) {
-    case 'summary':
-      content = generateSummaryHTML(resume, style);
-      break;
-    case 'experience':
-      content = generateExperienceHTML(resume, style);
-      break;
-    case 'education':
-      content = generateEducationHTML(resume, style);
-      break;
-    case 'skills':
-      content = generateSkillsHTML(resume, style);
-      break;
-    case 'projects':
-      content = generateProjectsHTML(resume, style);
-      break;
-  }
-
-  if (!content) return '';
-
-  return `
-    <div style="margin-bottom: 24px;">
-      <h2 style="${sectionTitleStyle}">${section.title}</h2>
-      ${content}
-    </div>
-  `;
-}
-
-function generateSummaryHTML(resume: any, style: any): string {
-  if (!resume.summary) return '';
-  return `<p style="font-size: ${style.fontSize.body}px; color: ${style.textColor}; line-height: 1.6; margin: 0;">${resume.summary}</p>`;
-}
-
-function generateExperienceHTML(resume: any, style: any): string {
-  if (!resume.experience || resume.experience.length === 0) return '';
-
-  return resume.experience
-    .map(
-      (exp: any) => `
-    <div style="margin-bottom: 16px;">
-      <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 4px;">
-        <div>
-          <h3 style="font-size: ${style.fontSize.body}px; font-weight: 600; margin: 0; color: ${style.primaryColor};">
-            ${exp.role || exp.title}
-          </h3>
-          <div style="font-size: ${style.fontSize.body}px; font-weight: 500; color: ${style.accentColor}; margin-top: 2px;">
-            ${exp.company}
-          </div>
-        </div>
-        <div style="text-align: right; font-size: ${style.fontSize.small}px; color: ${style.secondaryColor};">
-          <div>${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}</div>
-          ${exp.location ? `<div>${exp.location}</div>` : ''}
-        </div>
-      </div>
-      ${
-        exp.bullets && exp.bullets.length > 0
-          ? `
-        <ul style="margin: 8px 0 0 20px; padding: 0; list-style-type: disc;">
-          ${exp.bullets
-            .map(
-              (bullet: string) =>
-                `<li style="font-size: ${style.fontSize.body}px; color: ${style.textColor}; line-height: 1.5; margin-bottom: 4px;">${bullet}</li>`
-            )
-            .join('')}
-        </ul>
-      `
-          : ''
-      }
-    </div>
-  `
-    )
-    .join('');
-}
-
-function generateEducationHTML(resume: any, style: any): string {
-  if (!resume.education || resume.education.length === 0) return '';
-
-  return resume.education
-    .map(
-      (edu: any) => `
-    <div style="margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: start;">
-        <div>
-          <h3 style="font-size: ${style.fontSize.body}px; font-weight: 600; margin: 0; color: ${style.primaryColor};">
-            ${edu.school}
-          </h3>
-          <div style="font-size: ${style.fontSize.body}px; color: ${style.textColor}; margin-top: 2px;">
-            ${edu.degree} in ${edu.field}
-          </div>
-        </div>
-        <div style="text-align: right; font-size: ${style.fontSize.small}px; color: ${style.secondaryColor};">
-          <div>${edu.startDate} - ${edu.endDate}</div>
-          ${edu.gpa ? `<div>GPA: ${edu.gpa}</div>` : ''}
-        </div>
-      </div>
-    </div>
-  `
-    )
-    .join('');
-}
-
-function generateSkillsHTML(resume: any, style: any): string {
-  if (!resume.skills || resume.skills.length === 0) return '';
-
-  const skillsByCategory = resume.skills.reduce((acc: any, skill: any) => {
-    if (!acc[skill.category]) {
-      acc[skill.category] = [];
-    }
-    acc[skill.category].push(skill.name);
-    return acc;
-  }, {});
-
-  return Object.entries(skillsByCategory)
-    .map(
-      ([category, skills]: [string, any]) => `
-    <div style="margin-bottom: 8px;">
-      <span style="font-size: ${style.fontSize.body}px; font-weight: 600; color: ${style.primaryColor}; text-transform: capitalize;">
-        ${category}:
-      </span>
-      <span style="font-size: ${style.fontSize.body}px; color: ${style.textColor};">
-        ${skills.join(', ')}
-      </span>
-    </div>
-  `
-    )
-    .join('');
-}
-
-function generateProjectsHTML(resume: any, style: any): string {
-  if (!resume.projects || resume.projects.length === 0) return '';
-
-  return resume.projects
-    .map(
-      (project: any) => `
-    <div style="margin-bottom: 12px;">
-      <h3 style="font-size: ${style.fontSize.body}px; font-weight: 600; margin: 0; color: ${style.primaryColor};">
-        ${project.name}
-        ${project.url ? `<span style="font-size: ${style.fontSize.small}px; color: ${style.accentColor}; margin-left: 8px;">(${project.url})</span>` : ''}
-      </h3>
-      <p style="font-size: ${style.fontSize.body}px; color: ${style.textColor}; line-height: 1.5; margin: 4px 0;">
-        ${project.description}
-      </p>
-      ${
-        project.technologies && project.technologies.length > 0
-          ? `
-        <div style="font-size: ${style.fontSize.small}px; color: ${style.secondaryColor}; margin-top: 4px;">
-          Technologies: ${project.technologies.join(', ')}
-        </div>
-      `
-          : ''
-      }
-    </div>
-  `
-    )
-    .join('');
 }
 
 function sanitizeFileName(name: string): string {
