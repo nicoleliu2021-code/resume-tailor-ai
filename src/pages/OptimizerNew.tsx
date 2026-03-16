@@ -8,7 +8,7 @@ import { TemplatePreview } from '../components/TemplatePreview';
 import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
 import { ResumeRenderer } from '../components/ResumeRenderer';
 import { analyzeJobAPI } from '../services/api';
-import { exportToPDF } from '../services/exportService';
+import { exportToPDF, exportToDOCX } from '../services/exportService';
 import { RESUME_TEMPLATES, getTemplateById } from '../data/templates';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
@@ -51,7 +51,6 @@ export function OptimizerNew() {
   const [loadingStep, setLoadingStep] = useState<LoadingStep>(null);
   const [analysisError, setAnalysisError] = useState('');
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showBefore, setShowBefore] = useState(false);
   const [resumeScore, setResumeScore] = useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = useState('classic-professional');
   const [isExporting, setIsExporting] = useState(false);
@@ -194,7 +193,7 @@ export function OptimizerNew() {
     setCurrentStep(4);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (format: 'pdf' | 'docx') => {
     setIsExporting(true);
     setExportError('');
 
@@ -203,7 +202,7 @@ export function OptimizerNew() {
         throw new Error('No resume to export');
       }
 
-      console.log('[Download] Starting export with template:', selectedTemplateId);
+      console.log(`[Download] Starting ${format.toUpperCase()} export with template:`, selectedTemplateId);
       console.log('[Download] Resume data:', resume);
 
       const version: any = {
@@ -223,11 +222,17 @@ export function OptimizerNew() {
         updatedAt: new Date().toISOString(),
       };
 
-      await exportToPDF(version, selectedTemplateId, (progress) => {
-        console.log('[Download] Export progress:', progress.message, progress.progress + '%');
-      });
+      if (format === 'pdf') {
+        await exportToPDF(version, selectedTemplateId, (progress) => {
+          console.log('[Download] Export progress:', progress.message, progress.progress + '%');
+        });
+      } else {
+        await exportToDOCX(version, selectedTemplateId, (progress) => {
+          console.log('[Download] Export progress:', progress.message, progress.progress + '%');
+        });
+      }
 
-      console.log('[Download] Export completed successfully');
+      console.log(`[Download] ${format.toUpperCase()} export completed successfully`);
       setIsExporting(false);
     } catch (error) {
       console.error('[Download] Export error:', error);
@@ -542,24 +547,44 @@ export function OptimizerNew() {
                   </div>
                 </div>
 
-                {/* Download Button */}
-                <button
-                  onClick={handleDownload}
-                  disabled={isExporting}
-                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-3"
-                >
-                  {isExporting ? (
-                    <>
-                      <Loader className="w-6 h-6 animate-spin" />
-                      Generating PDF...
-                    </>
-                  ) : (
-                    <>
-                      <FileDown className="w-6 h-6" />
-                      Download Resume PDF
-                    </>
-                  )}
-                </button>
+                {/* Download Buttons */}
+                <div className="space-y-3">
+                  <button
+                    onClick={() => handleDownload('pdf')}
+                    disabled={isExporting}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader className="w-6 h-6 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="w-6 h-6" />
+                        Download PDF
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => handleDownload('docx')}
+                    disabled={isExporting}
+                    className="w-full flex items-center justify-center gap-3 px-6 py-4 border-2 border-indigo-600 text-indigo-600 rounded-xl font-bold text-lg hover:bg-indigo-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isExporting ? (
+                      <>
+                        <Loader className="w-6 h-6 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="w-6 h-6" />
+                        Download DOCX
+                      </>
+                    )}
+                  </button>
+                </div>
 
                 {/* Export Error Display */}
                 {exportError && (
@@ -581,37 +606,6 @@ export function OptimizerNew() {
                     </div>
                   </div>
                 )}
-
-                {/* Compare Toggle */}
-                {originalResume && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-xl">
-                    <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Compare Versions
-                    </label>
-                    <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
-                      <button
-                        onClick={() => setShowBefore(false)}
-                        className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                          !showBefore
-                            ? 'bg-indigo-600 text-white shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        Optimized
-                      </button>
-                      <button
-                        onClick={() => setShowBefore(true)}
-                        className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                          showBefore
-                            ? 'bg-gray-700 text-white shadow-sm'
-                            : 'text-gray-600 hover:text-gray-900'
-                        }`}
-                      >
-                        Original
-                      </button>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -622,7 +616,7 @@ export function OptimizerNew() {
                   {resume && (
                     <div className="overflow-x-auto">
                       <ResumeRenderer
-                        resume={showBefore ? (originalResume || resume) : resume}
+                        resume={resume}
                         template={getTemplateById(selectedTemplateId)!}
                         scale={0.85}
                       />
