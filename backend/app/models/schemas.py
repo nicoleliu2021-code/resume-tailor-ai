@@ -7,14 +7,14 @@ class Experience(BaseModel):
     role: str
     startDate: Optional[str] = None
     endDate: Optional[str] = None
-    current: bool
-    bullets: List[str]
+    current: bool = False
+    bullets: List[str] = []
 
 class Education(BaseModel):
     id: str
-    school: str
-    degree: str
-    field: str
+    school: Optional[str] = None
+    degree: Optional[str] = None
+    field: Optional[str] = None
     startDate: Optional[str] = None
     endDate: Optional[str] = None
     gpa: Optional[str] = None
@@ -22,14 +22,14 @@ class Education(BaseModel):
 class Skill(BaseModel):
     id: str
     name: str
-    category: str
+    category: Optional[str] = None
     proficiency: Optional[str] = None
 
 class Project(BaseModel):
     id: str
     name: str
-    description: str
-    technologies: List[str]
+    description: Optional[str] = None
+    technologies: List[str] = []
     url: Optional[str] = None
 
 class StructuredResume(BaseModel):
@@ -39,10 +39,10 @@ class StructuredResume(BaseModel):
     linkedin: Optional[str] = None
     location: Optional[str] = None
     summary: Optional[str] = None
-    experience: List[Experience]
-    education: List[Education]
-    skills: List[Skill]
-    projects: List[Project]
+    experience: List[Experience] = []
+    education: List[Education] = []
+    skills: List[Skill] = []
+    projects: List[Project] = []
     rawText: Optional[str] = None
 
 class JobAnalysis(BaseModel):
