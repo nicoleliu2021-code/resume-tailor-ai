@@ -16,7 +16,6 @@ import { RESUME_TEMPLATES, getTemplateById } from '../data/templates';
 import { getAvailableCredits, useCredit } from '../services/referralService';
 import {
   trackFunnelStep,
-  trackResumeUploaded,
   trackJobDescriptionAdded,
   trackOptimizationStarted,
   trackOptimizationCompleted,

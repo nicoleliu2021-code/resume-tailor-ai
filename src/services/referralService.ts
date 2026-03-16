@@ -7,7 +7,6 @@ import { trackReferralShared, trackSignUp } from './analytics';
 
 const REFERRAL_STORAGE_KEY = 'resumefit_referral';
 const USER_REFERRAL_CODE_KEY = 'resumefit_user_code';
-const REFERRAL_CREDITS_KEY = 'resumefit_credits';
 const REFERRER_CODE_KEY = 'resumefit_referrer';
 
 export interface ReferralData {
