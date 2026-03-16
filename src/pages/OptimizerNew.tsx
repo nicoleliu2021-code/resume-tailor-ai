@@ -166,8 +166,8 @@ export function OptimizerNew() {
       console.log('[Optimizer] Optimized resume:', mergedResume);
 
       // Compare to see if there are actual differences
-      const originalBullets = resume.experience?.flatMap(e => e.bullets) || [];
-      const optimizedBullets = mergedResume.experience?.flatMap(e => e.bullets) || [];
+      const originalBullets = resume.experience?.flatMap((e: any) => e.bullets) || [];
+      const optimizedBullets = mergedResume.experience?.flatMap((e: any) => e.bullets) || [];
       console.log('[Optimizer] Original bullets:', originalBullets);
       console.log('[Optimizer] Optimized bullets:', optimizedBullets);
 
