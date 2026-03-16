@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { RotateCcw, Loader, Sparkles, CheckCircle2, FileDown, ArrowRight, ArrowLeft, Link as LinkIcon, Check } from 'lucide-react';
+import { RotateCcw, Loader, Sparkles, CheckCircle2, FileDown, ArrowRight, ArrowLeft, Link as LinkIcon, Check, Eye, ChevronDown } from 'lucide-react';
 import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
 import { TemplatePreview } from '../components/TemplatePreview';
+import { TemplatePreviewModal } from '../components/TemplatePreviewModal';
+import { ResumeRenderer } from '../components/ResumeRenderer';
 import { analyzeJobAPI } from '../services/api';
 import { exportToPDF } from '../services/exportService';
-import { RESUME_TEMPLATES } from '../data/templates';
+import { RESUME_TEMPLATES, getTemplateById } from '../data/templates';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-production-1944.up.railway.app';
 
@@ -55,6 +57,8 @@ export function OptimizerNew() {
   const [isExporting, setIsExporting] = useState(false);
   const [jobUrl, setJobUrl] = useState('');
   const [useJobUrl, setUseJobUrl] = useState(false);
+  const [previewModalTemplate, setPreviewModalTemplate] = useState<typeof RESUME_TEMPLATES[0] | null>(null);
+  const [isPreRendering, setIsPreRendering] = useState(false);
 
   // Calculate score when resume and jobAnalysis are available
   useEffect(() => {
@@ -63,6 +67,41 @@ export function OptimizerNew() {
       setResumeScore(score);
     }
   }, [resume, jobAnalysis]);
+
+  // Pre-render PDF when reaching Step 4 or changing templates (for faster downloads)
+  useEffect(() => {
+    if (currentStep === 4 && resume && !isPreRendering) {
+      setIsPreRendering(true);
+
+      const version: any = {
+        id: Date.now().toString(),
+        name: `${resume.name || 'Resume'} - Optimized`,
+        slug: '',
+        targetRole: '',
+        selectedExperienceIds: [],
+        selectedAchievementIds: [],
+        selectedSkillIds: [],
+        selectedProjectIds: [],
+        originalContent: originalResume || resume,
+        optimizedContent: resume,
+        jobDescription: jobDescription,
+        status: 'draft',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Pre-render in background to warm up canvas/html2canvas (makes actual export faster)
+      exportToPDF(version, selectedTemplateId, (progress) => {
+        console.log('[Pre-render] Progress:', progress);
+      }).then(() => {
+        console.log('[Pre-render] PDF pre-rendered successfully');
+        setIsPreRendering(false);
+      }).catch((error) => {
+        console.error('[Pre-render] Error:', error);
+        setIsPreRendering(false);
+      });
+    }
+  }, [currentStep, selectedTemplateId, resume]);
 
   const handleStartOver = () => {
     if (confirm('Start over? All progress will be lost.')) {
@@ -380,40 +419,66 @@ export function OptimizerNew() {
                 {RESUME_TEMPLATES.slice(0, 6).map((template) => (
                   <div
                     key={template.id}
-                    onClick={() => setSelectedTemplateId(template.id)}
-                    className={`group relative bg-white rounded-xl border-2 p-4 cursor-pointer transition-all hover:shadow-lg ${
+                    className={`group relative bg-white rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
                       selectedTemplateId === template.id
-                        ? 'border-indigo-600 ring-2 ring-indigo-200'
-                        : 'border-gray-200 hover:border-indigo-300'
+                        ? 'border-indigo-600 ring-4 ring-indigo-100'
+                        : 'border-gray-200 hover:border-indigo-300 hover:-translate-y-1'
                     }`}
+                    style={{ height: '420px' }}
                   >
                     {selectedTemplateId === template.id && (
-                      <div className="absolute top-3 right-3 z-10 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                        <Check className="w-5 h-5 text-white" />
+                      <div className="absolute top-3 right-3 z-10 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
+                        <Check className="w-6 h-6 text-white" />
                       </div>
                     )}
 
-                    {/* Template Preview */}
-                    <div className="mb-3 h-56 overflow-hidden rounded-lg shadow-sm">
-                      <TemplatePreview template={template} />
+                    {/* Template Preview - Cropped top 35% - Click to open modal */}
+                    <div
+                      className="relative group/preview"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPreviewModalTemplate(template);
+                      }}
+                    >
+                      <TemplatePreview template={template} height={300} cropPercent={0.35} />
+
+                      {/* Hover overlay with preview button */}
+                      <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/40 transition-all flex items-center justify-center">
+                        <button
+                          className="opacity-0 group-hover/preview:opacity-100 transition-opacity px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-lg"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPreviewModalTemplate(template);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          Full Preview
+                        </button>
+                      </div>
                     </div>
 
-                    <h3 className="font-bold text-gray-900 mb-1 text-sm">{template.name}</h3>
-                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{template.description}</p>
+                    {/* Template Info - Click to select */}
+                    <div
+                      className="p-4"
+                      onClick={() => setSelectedTemplateId(template.id)}
+                    >
+                      <h3 className="font-bold text-gray-900 mb-1.5 text-base">{template.name}</h3>
+                      <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">{template.description}</p>
 
-                    <div className="flex items-center gap-2 text-xs flex-wrap">
-                      <span className={`px-2 py-1 rounded ${
-                        template.atsSafetyTier === 'excellent'
-                          ? 'bg-green-100 text-green-700'
-                          : template.atsSafetyTier === 'good'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-amber-100 text-amber-700'
-                      }`}>
-                        ATS {template.atsSafetyTier.toUpperCase()}
-                      </span>
-                      {template.tier === 'premium' && (
-                        <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded">Pro</span>
-                      )}
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
+                        <span className={`px-2.5 py-1 rounded-md font-semibold ${
+                          template.atsSafetyTier === 'excellent'
+                            ? 'bg-green-100 text-green-700'
+                            : template.atsSafetyTier === 'good'
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          ATS {template.atsSafetyTier.toUpperCase()}
+                        </span>
+                        {template.tier === 'premium' && (
+                          <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-md font-semibold">Premium</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -439,26 +504,57 @@ export function OptimizerNew() {
           </div>
 
           {/* Step 4: Download */}
-          <div className="min-w-full h-full overflow-y-auto p-4 sm:p-8">
-            <div className="max-w-3xl mx-auto">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-2xl p-8">
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-500 mb-4 shadow-lg">
-                    <CheckCircle2 className="w-10 h-10 text-white" />
+          <div className="min-w-full h-full flex overflow-hidden">
+            {/* Left Sidebar - Success Info & Actions */}
+            <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-6 border-r border-gray-200 bg-white">
+              <div className="max-w-md">
+                {/* Success Message */}
+                <div className="mb-8">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500 mb-4 shadow-lg">
+                    <CheckCircle2 className="w-8 h-8 text-white" />
                   </div>
-                  <h2 className="text-3xl font-extrabold text-green-900 mb-2">
-                    ✅ Your Resume is Optimized!
+                  <h2 className="text-2xl font-extrabold text-gray-900 mb-3">
+                    Resume is Ready!
                   </h2>
-                  <p className="text-lg text-green-700 mb-2">
-                    Match score: <span className="font-bold text-2xl">{resumeScore}%</span>
+                  <p className="text-gray-600 mb-4">
+                    Your resume has been optimized and is ready to download
                   </p>
-                  <p className="text-green-600">Your resume is now perfectly tailored for this role</p>
+
+                  {/* Match Score */}
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-green-900">Match Score</span>
+                      <span className="text-3xl font-bold text-green-600">{resumeScore}%</span>
+                    </div>
+                  </div>
                 </div>
 
+                {/* Template Selector */}
+                <div className="mb-6">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Template
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={selectedTemplateId}
+                      onChange={(e) => setSelectedTemplateId(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg font-medium text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all appearance-none pr-10"
+                    >
+                      {RESUME_TEMPLATES.map(template => (
+                        <option key={template.id} value={template.id}>
+                          {template.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+
+                {/* Download Button */}
                 <button
                   onClick={handleDownload}
                   disabled={isExporting}
-                  className="w-full flex items-center justify-center gap-3 px-8 py-4 bg-green-600 text-white rounded-xl font-bold text-lg shadow-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-3"
                 >
                   {isExporting ? (
                     <>
@@ -468,56 +564,58 @@ export function OptimizerNew() {
                   ) : (
                     <>
                       <FileDown className="w-6 h-6" />
-                      Download Optimized Resume
+                      Download Resume PDF
                     </>
                   )}
                 </button>
 
-                {originalResume && resume && (
-                  <div className="mt-8 bg-white rounded-xl p-6 border-2 border-gray-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bold text-gray-900">Compare Versions</h3>
-                      <div className="flex items-center gap-3 bg-gray-100 rounded-lg p-1">
-                        <button
-                          onClick={() => setShowBefore(false)}
-                          className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                            !showBefore
-                              ? 'bg-white text-indigo-600 shadow-md'
-                              : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        >
-                          Optimized
-                        </button>
-                        <button
-                          onClick={() => setShowBefore(true)}
-                          className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                            showBefore
-                              ? 'bg-white text-gray-700 shadow-md'
-                              : 'text-gray-600 hover:text-gray-900'
-                          }`}
-                        >
-                          Original
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="max-h-96 overflow-y-auto">
-                      {showBefore ? (
-                        <div className="prose max-w-none text-sm">
-                          <h4 className="font-bold">{originalResume.name}</h4>
-                          <p className="text-gray-600">{originalResume.email} | {originalResume.phone}</p>
-                          {originalResume.summary && <p>{originalResume.summary}</p>}
-                        </div>
-                      ) : (
-                        <div className="prose max-w-none text-sm">
-                          <h4 className="font-bold">{resume.name}</h4>
-                          <p className="text-gray-600">{resume.email} | {resume.phone}</p>
-                          {resume.summary && <p className="bg-yellow-100 p-2 rounded">{resume.summary}</p>}
-                        </div>
-                      )}
+                {/* Compare Toggle */}
+                {originalResume && (
+                  <div className="mt-6 p-4 bg-gray-50 rounded-xl">
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                      Compare Versions
+                    </label>
+                    <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200">
+                      <button
+                        onClick={() => setShowBefore(false)}
+                        className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
+                          !showBefore
+                            ? 'bg-indigo-600 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        Optimized
+                      </button>
+                      <button
+                        onClick={() => setShowBefore(true)}
+                        className={`flex-1 px-4 py-2 rounded-md font-semibold text-sm transition-all ${
+                          showBefore
+                            ? 'bg-gray-700 text-white shadow-sm'
+                            : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        Original
+                      </button>
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Right Panel - Resume Preview */}
+            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+              <div className="max-w-4xl mx-auto">
+                <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
+                  {resume && (
+                    <div className="overflow-x-auto">
+                      <ResumeRenderer
+                        resume={showBefore ? (originalResume || resume) : resume}
+                        template={getTemplateById(selectedTemplateId)!}
+                        scale={0.85}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -529,6 +627,15 @@ export function OptimizerNew() {
         isOpen={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         featureName="Resume Optimization"
+      />
+
+      {/* Template Preview Modal */}
+      <TemplatePreviewModal
+        template={previewModalTemplate}
+        isOpen={!!previewModalTemplate}
+        onClose={() => setPreviewModalTemplate(null)}
+        onSelect={setSelectedTemplateId}
+        selectedTemplateId={selectedTemplateId}
       />
     </div>
   );

@@ -28,40 +28,60 @@ export async function exportToPDF(
   templateId: string,
   onProgress?: (progress: ExportProgress) => void
 ): Promise<void> {
+  let container: HTMLElement | null = null;
+
   try {
+    console.log('[Export] Starting PDF export', { templateId, version });
     onProgress?.({ status: 'preparing', progress: 10, message: 'Loading template...' });
 
     const template = getTemplateById(templateId);
     if (!template) {
-      throw new Error('Template not found');
+      throw new Error(`Template not found: ${templateId}`);
     }
 
+    if (!version.optimizedContent) {
+      throw new Error('No resume content to export');
+    }
+
+    console.log('[Export] Template loaded:', template.name);
     onProgress?.({ status: 'rendering', progress: 30, message: 'Rendering resume...' });
 
     // Create a temporary container for rendering
-    const container = document.createElement('div');
+    container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
     container.style.top = '0';
+    container.style.width = '816px'; // 8.5 inches at 96 DPI
     document.body.appendChild(container);
 
     // Generate the resume HTML with template styling
     const resumeHTML = generateResumeHTML(version.optimizedContent, template);
+    console.log('[Export] Generated HTML length:', resumeHTML.length);
     container.innerHTML = resumeHTML;
+
+    if (!container.firstChild) {
+      throw new Error('Failed to render resume HTML');
+    }
 
     onProgress?.({ status: 'exporting', progress: 60, message: 'Generating PDF...' });
 
     // Use jsPDF with html2canvas for better quality
+    console.log('[Export] Loading jsPDF and html2canvas...');
     const jsPDF = (await import('jspdf')).default;
     const html2canvas = (await import('html2canvas')).default;
 
+    console.log('[Export] Capturing HTML as canvas...');
     // Capture the HTML as canvas
     const canvas = await html2canvas(container.firstChild as HTMLElement, {
       scale: 2,
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
+      windowWidth: 816,
+      windowHeight: 1056,
     });
+
+    console.log('[Export] Canvas created:', canvas.width, 'x', canvas.height);
 
     // Create PDF from canvas
     const imgData = canvas.toDataURL('image/png');
@@ -77,14 +97,31 @@ export async function exportToPDF(
     pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 
     // Download the PDF
-    pdf.save(sanitizeFileName(version.name) + '.pdf');
+    const fileName = sanitizeFileName(version.name) + '.pdf';
+    console.log('[Export] Saving PDF:', fileName);
+    pdf.save(fileName);
 
     onProgress?.({ status: 'complete', progress: 100, message: 'Download complete!' });
 
     // Cleanup
-    document.body.removeChild(container);
+    if (container && container.parentNode) {
+      document.body.removeChild(container);
+    }
+
+    console.log('[Export] PDF export complete');
   } catch (error) {
     console.error('[Export] PDF export error:', error);
+    console.error('[Export] Error stack:', error instanceof Error ? error.stack : 'No stack');
+
+    // Cleanup on error
+    if (container && container.parentNode) {
+      try {
+        document.body.removeChild(container);
+      } catch (cleanupError) {
+        console.error('[Export] Cleanup error:', cleanupError);
+      }
+    }
+
     onProgress?.({
       status: 'error',
       progress: 0,
