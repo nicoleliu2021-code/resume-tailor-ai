@@ -382,6 +382,9 @@ async def optimize_resume_with_guardrails(resume: StructuredResume, job_analysis
     Enhanced resume optimization with detailed change tracking, fabrication risk scoring, and explanations.
     Returns structured data showing before/after for every change with confidence scores and risk assessment.
     """
+    print(f"[OPTIMIZE] Starting optimization with guardrails for: {resume.name}")
+    print(f"[OPTIMIZE] Target role: {job_analysis.roleTitle}")
+    print(f"[OPTIMIZE] MOCK_MODE: {MOCK_MODE}")
 
     if MOCK_MODE:
         # Return mock data with enhanced structure
@@ -518,7 +521,19 @@ async def optimize_resume_with_guardrails(resume: StructuredResume, job_analysis
                 response_format={"type": "json_object"}
             )
 
-            bullets_data = json.loads(response.choices[0].message.content)
+            bullets_response = json.loads(response.choices[0].message.content)
+
+            # Handle response - might be array directly or wrapped in object
+            if isinstance(bullets_response, list):
+                bullets_data = bullets_response
+            elif 'bullets' in bullets_response:
+                bullets_data = bullets_response['bullets']
+            elif 'bulletChanges' in bullets_response:
+                bullets_data = bullets_response['bulletChanges']
+            else:
+                # Assume it's wrapped in an object, take first array value
+                bullets_data = next((v for v in bullets_response.values() if isinstance(v, list)), [])
+
             bullet_changes = [BulletChange(**b) for b in bullets_data]
 
             # Build optimized bullets
@@ -545,8 +560,17 @@ async def optimize_resume_with_guardrails(resume: StructuredResume, job_analysis
 
         except Exception as e:
             print(f"Bullet optimization error for {exp.company}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             # Keep original if optimization fails
             optimized_experience.append(exp.model_copy(deep=True))
+            # Add empty change tracking for this experience
+            experience_changes_list.append(ExperienceChanges(
+                experienceId=exp.id,
+                experienceTitle=exp.role,
+                company=exp.company,
+                bulletChanges=[]
+            ))
 
     # Step 3: Calculate Metadata
     total_bullets_changed = sum(
@@ -610,6 +634,12 @@ async def optimize_resume_with_guardrails(resume: StructuredResume, job_analysis
 
     if metadata.highRiskChanges > 0:
         changes_summary.append(f"⚠️ {metadata.highRiskChanges} high-risk changes flagged for review")
+
+    print(f"[OPTIMIZE] Optimization complete!")
+    print(f"[OPTIMIZE] Total changes: {len(changes_summary)}")
+    print(f"[OPTIMIZE] Bullets changed: {metadata.totalBulletsChanged}")
+    print(f"[OPTIMIZE] Keywords added: {metadata.totalKeywordsAdded}")
+    print(f"[OPTIMIZE] Authenticity score: {metadata.overallAuthenticityScore}/100")
 
     return optimized_resume, changes_summary, summary_change, experience_changes_list, metadata
 

@@ -128,23 +128,25 @@ FABRICATION RISK EXAMPLES:
 - Optimized: "Architected mobile platform serving 2.3M daily active users with 99.9% uptime"
 - Reasoning: Too specific, implies infrastructure ownership not in original, invents precise metrics
 
-Return ONLY valid JSON array in this exact format:
-[
-  {
-    "bulletIndex": 0,
-    "originalBullet": "the exact original text",
-    "optimizedBullet": "improved version or KEEP_ORIGINAL",
-    "changeType": "no_change|enhanced|rewritten|keyword_added",
-    "explanation": "Why this change was made and how it improves job alignment",
-    "keywordsAdded": ["keyword1"],
-    "metricsAdded": ["team size: 8", "percentage: 30%"],
-    "confidenceScore": 85,
-    "fabricationRisk": "none|low|medium|high",
-    "reasoning": "Justification for confidence/risk assessment",
-    "warningFlags": ["flag if user should review this change"],
-    "impactOnATS": "How this improves ATS matching"
-  }
-]
+Return ONLY valid JSON in this exact format:
+{
+  "bullets": [
+    {
+      "bulletIndex": 0,
+      "originalBullet": "the exact original text",
+      "optimizedBullet": "improved version or KEEP_ORIGINAL",
+      "changeType": "no_change|enhanced|rewritten|keyword_added",
+      "explanation": "Why this change was made and how it improves job alignment",
+      "keywordsAdded": ["keyword1"],
+      "metricsAdded": ["team size: 8", "percentage: 30%"],
+      "confidenceScore": 85,
+      "fabricationRisk": "none|low|medium|high",
+      "reasoning": "Justification for confidence/risk assessment",
+      "warningFlags": ["flag if user should review this change"],
+      "impactOnATS": "How this improves ATS matching"
+    }
+  ]
+}
 
 IMPORTANT:
 - Use "KEEP_ORIGINAL" for optimizedBullet if the original is already strong or changes would add too much risk
