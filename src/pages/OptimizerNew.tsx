@@ -490,8 +490,8 @@ export function OptimizerNew() {
           {/* Step 3 (formerly 4): Download */}
           <div className="min-w-full h-full flex overflow-hidden">
             {/* Left Sidebar - Success Info & Actions */}
-            <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-6 pb-24 border-r border-gray-200 bg-white">
-              <div className="max-w-md">
+            <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-4 sm:p-6 pb-24 border-r border-gray-200 bg-white">
+              <div className="max-w-md mx-auto">
                 {/* Success Message */}
                 <div className="mb-8">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-500 mb-4 shadow-lg">
@@ -602,7 +602,7 @@ export function OptimizerNew() {
             </div>
 
             {/* Right Panel - Resume Preview */}
-            <div className="flex-1 overflow-y-auto p-6 bg-gray-50">
+            <div className="hidden md:block flex-1 overflow-y-auto p-6 bg-gray-50">
               <div className="max-w-4xl mx-auto">
                 <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
                   {resume && (

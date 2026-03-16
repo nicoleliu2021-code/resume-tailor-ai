@@ -38,18 +38,18 @@ export default function ReferralBanner() {
   const referralLink = getReferralLink();
 
   return (
-    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-6 mb-6">
+    <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200 rounded-xl p-4 sm:p-6 mb-6">
       <div className="flex items-start justify-between">
-        <div className="flex items-start gap-4 flex-1">
-          <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-            <Gift className="w-6 h-6 text-white" />
+        <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </div>
 
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-1">
               Get 5 Free Optimizations
             </h3>
-            <p className="text-sm text-gray-600 mb-3">
+            <p className="text-xs sm:text-sm text-gray-600 mb-3">
               Share ResumeFit with friends and you both get 5 free resume optimizations!
             </p>
 
@@ -60,39 +60,39 @@ export default function ReferralBanner() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2">
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 <input
                   type="text"
                   readOnly
                   value={referralLink}
-                  className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0"
+                  className="flex-1 px-2 sm:px-3 py-2 bg-white border border-gray-300 rounded-lg text-xs sm:text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-0 truncate"
                   onClick={(e) => (e.target as HTMLInputElement).select()}
                 />
                 <button
                   onClick={handleCopy}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 text-sm font-medium whitespace-nowrap"
+                  className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium whitespace-nowrap flex-shrink-0"
                 >
                   {copied ? (
                     <>
-                      <Check className="w-4 h-4" />
+                      <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Copied!
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       Copy Link
                     </>
                   )}
                 </button>
               </div>
 
-              <div className="relative">
+              <div className="relative sm:w-auto w-full">
                 <button
                   onClick={() => setShowShareMenu(!showShareMenu)}
-                  className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 text-sm font-medium"
+                  className="w-full sm:w-auto px-3 sm:px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-medium"
                 >
-                  <Share2 className="w-4 h-4" />
+                  <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   Share
                 </button>
 
