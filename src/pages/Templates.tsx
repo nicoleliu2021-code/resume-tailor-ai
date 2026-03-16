@@ -1,17 +1,23 @@
-import { useState } from 'react';
-import { Layout, Eye, CheckCircle, Crown, Shield } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Layout, Eye, CheckCircle, Crown, Shield, Upload, Loader } from 'lucide-react';
 import { RESUME_TEMPLATES } from '../data/templates';
 import { TemplateRenderer } from '../components/templates/TemplateRenderer';
 import { useResume } from '../contexts/ResumeContext';
 import { useNavigate } from 'react-router-dom';
 import { useTemplateSelection } from '../hooks/useTemplateSelection';
+import { parseResumeFile } from '../utils/fileParser';
+import { parseResumeAPI } from '../services/api';
 import type { ATSSafetyTier } from '../types/template';
+import type { StructuredResume } from '../types/resume';
 
 export function Templates() {
-  const { resume } = useResume();
+  const { resume, setResume, setOriginalResume } = useResume();
   const navigate = useNavigate();
   const { selectedTemplateId, selectTemplate } = useTemplateSelection();
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getATSBadgeColor = (tier: ATSSafetyTier) => {
     switch (tier) {
@@ -32,6 +38,50 @@ export function Templates() {
         return <Shield className="w-3 h-3" />;
       case 'fair':
         return <Shield className="w-3 h-3" />;
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadError('');
+
+    try {
+      console.log('[Templates] Starting file parsing:', file.name);
+
+      // Step 1: Extract text from file
+      const text = await parseResumeFile(file);
+      console.log('[Templates] Extracted text length:', text.length);
+
+      // Step 2: Parse into structured resume
+      const parsedResume: StructuredResume = await parseResumeAPI(text);
+      console.log('[Templates] Received structured resume');
+
+      setResume(parsedResume);
+      setOriginalResume(parsedResume);
+
+      // Auto-import to master resume
+      const { importFromStructuredResume, saveMasterResume, getMasterResume } = await import('../services/masterResume');
+      const existingMaster = getMasterResume();
+
+      if (!existingMaster) {
+        console.log('[Templates] Auto-importing to master resume...');
+        const result = importFromStructuredResume(parsedResume);
+        if (result.success && result.masterResume) {
+          saveMasterResume(result.masterResume);
+        }
+      }
+    } catch (error) {
+      console.error('[Templates] Error uploading resume:', error);
+      setUploadError(error instanceof Error ? error.message : 'Failed to parse resume');
+    } finally {
+      setIsUploading(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -141,18 +191,56 @@ export function Templates() {
           </p>
         </div>
 
-        {/* No Resume Warning */}
+        {/* Resume Upload Section */}
         {!resume && (
-          <div className="mb-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-900">
+          <div className="mb-6 p-6 bg-blue-50 border-2 border-blue-200 rounded-xl">
+            <p className="text-sm text-blue-900 mb-4">
               <strong>💡 Tip:</strong> Upload your resume first to preview how each template will look with your content.
             </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
             <button
-              onClick={() => navigate('/optimizer')}
-              className="mt-3 px-4 py-2 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploading}
+              className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              Upload Resume
+              {isUploading ? (
+                <>
+                  <Loader className="w-5 h-5 animate-spin" />
+                  <span>Uploading...</span>
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" />
+                  <span>Upload Resume</span>
+                </>
+              )}
             </button>
+
+            {uploadError && (
+              <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700">{uploadError}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Resume Uploaded - Success Message */}
+        {resume && (
+          <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600" />
+              <p className="text-sm text-green-900">
+                <strong>Resume loaded!</strong> Click on any template to preview it with your content.
+              </p>
+            </div>
           </div>
         )}
 
