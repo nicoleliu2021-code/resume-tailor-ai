@@ -105,17 +105,69 @@ export async function exportToPDF(
     console.log('[Export] Canvas created:', canvas.width, 'x', canvas.height);
 
     // Create PDF from canvas
-    const imgData = canvas.toDataURL('image/png');
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'in',
       format: 'letter',
     });
 
-    const imgWidth = 8.5;
+    const imgWidth = 8.5; // Letter width in inches
+    const pageHeight = 11; // Letter height in inches
+
+    // Calculate scaling - canvas width should fit within 8.5 inches
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    console.log('[Export] Image dimensions:', imgWidth, 'x', imgHeight, 'inches');
+
+    // If content fits on one page, add it directly
+    if (imgHeight <= pageHeight) {
+      const imgData = canvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+    } else {
+      // Multi-page: split the canvas into page-sized chunks
+      const pageCount = Math.ceil(imgHeight / pageHeight);
+      console.log('[Export] Multi-page resume, splitting into', pageCount, 'pages');
+
+      // Calculate pixels per page
+      const pageHeightPixels = Math.floor((canvas.height * pageHeight) / imgHeight);
+
+      for (let page = 0; page < pageCount; page++) {
+        // Create a temporary canvas for this page
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = Math.min(pageHeightPixels, canvas.height - (page * pageHeightPixels));
+
+        const pageCtx = pageCanvas.getContext('2d');
+        if (!pageCtx) {
+          throw new Error('Failed to get canvas context');
+        }
+
+        // Copy the relevant portion of the main canvas
+        pageCtx.drawImage(
+          canvas,
+          0, page * pageHeightPixels, // Source x, y
+          canvas.width, pageCanvas.height, // Source width, height
+          0, 0, // Destination x, y
+          canvas.width, pageCanvas.height // Destination width, height
+        );
+
+        // Convert page canvas to image
+        const pageImgData = pageCanvas.toDataURL('image/png');
+
+        // Add new page if not the first page
+        if (page > 0) {
+          pdf.addPage();
+        }
+
+        // Calculate height for this page in inches
+        const thisPageHeight = (pageCanvas.height * imgWidth) / canvas.width;
+
+        // Add the image to the PDF page
+        pdf.addImage(pageImgData, 'PNG', 0, 0, imgWidth, thisPageHeight);
+
+        console.log(`[Export] Added page ${page + 1}/${pageCount}`);
+      }
+    }
 
     // Download the PDF
     const fileName = sanitizeFileName(version.name) + '.pdf';
