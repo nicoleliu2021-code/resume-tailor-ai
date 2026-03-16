@@ -146,8 +146,9 @@ export function TemplateSelectionModal({ resume, onClose, onConfirm }: TemplateS
           {/* Header */}
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-1">Choose Your Template</h2>
-              <p className="text-gray-600">Select a format for your resume export</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Choose Your Resume Style</h2>
+              <p className="text-gray-600 mb-1">All templates are ATS-friendly and include your optimized content</p>
+              <p className="text-sm text-gray-500">You can download with different styles anytime</p>
             </div>
             <button
               onClick={onClose}

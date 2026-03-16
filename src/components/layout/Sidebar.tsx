@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Settings, Sparkles, HelpCircle, CreditCard, ClipboardList, Briefcase, Database, FolderOpen, Layout } from 'lucide-react';
+import { Home, FileText, Settings, ClipboardList, Database, FolderOpen } from 'lucide-react';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { SUBSCRIPTION_PLANS } from '../../types/subscription';
 import { UpgradeModal } from '../modals/UpgradeModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Master Resume', href: '/master-resume', icon: Database },
-  { name: 'Smart Selector', href: '/smart-selector', icon: Sparkles },
-  { name: 'Version Library', href: '/versions', icon: FolderOpen },
-  { name: 'Templates', href: '/templates', icon: Layout },
-  { name: 'Resume Optimizer', href: '/optimizer', icon: FileText },
-  { name: 'Job Discovery', href: '/jobs', icon: Briefcase },
+  { name: 'Resume Optimizer', href: '/optimizer', icon: FileText, highlight: true },
   { name: 'Applications', href: '/applications', icon: ClipboardList },
-  { name: 'How It Works', href: '/how-it-works', icon: HelpCircle },
-  { name: 'Pricing', href: '/pricing', icon: CreditCard },
+  { name: 'Version Library', href: '/versions', icon: FolderOpen },
+  { name: 'Master Resume', href: '/master-resume', icon: Database, badge: 'Advanced' },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
@@ -47,14 +42,23 @@ export function Sidebar() {
             <Link
               key={item.name}
               to={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                 isActive
                   ? 'bg-white/20 text-white shadow-lg'
+                  : (item as any).highlight
+                  ? 'bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white hover:from-indigo-500/30 hover:to-purple-500/30'
                   : 'text-purple-100 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <div className="flex items-center gap-3">
+                <item.icon className="h-5 w-5" />
+                {item.name}
+              </div>
+              {(item as any).badge && (
+                <span className="px-1.5 py-0.5 bg-yellow-500 text-yellow-900 text-[10px] font-bold rounded uppercase">
+                  {(item as any).badge}
+                </span>
+              )}
             </Link>
           );
         })}
