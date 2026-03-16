@@ -229,7 +229,7 @@ export function Optimizer() {
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Zap className="w-5 h-5 text-indigo-600" />
-              <h1 className="text-lg font-bold text-gray-900">Resume Optimizer</h1>
+              <h1 className="text-lg font-bold text-gray-900">ResumeFit</h1>
             </div>
 
             <div className="flex items-center gap-2">

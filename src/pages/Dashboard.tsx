@@ -29,8 +29,8 @@ export function Dashboard() {
 
           {/* Subheadline - Clearer benefit */}
           <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed mb-10 px-4">
-            AI optimizes your resume for any job in 30 seconds.<br />
-            No manual editing. No guesswork. Just results.
+            Tailor your resume. Land the job.<br />
+            AI-powered optimization in 30 seconds.
           </p>
 
           {/* Main CTA - Single, massive */}

@@ -7,7 +7,7 @@ import { UpgradeModal } from '../modals/UpgradeModal';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Resume Optimizer', href: '/optimizer', icon: FileText, highlight: true },
+  { name: 'Optimizer', href: '/optimizer', icon: FileText, highlight: true },
   // Hidden for MVP:
   // { name: 'Applications', href: '/applications', icon: ClipboardList },
   // { name: 'Templates', href: '/templates', icon: Layout },
@@ -30,8 +30,8 @@ export function Sidebar() {
           <FileText className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-lg font-bold">RoleForge AI</h1>
-          <p className="text-xs text-purple-200">Tailor & Land</p>
+          <h1 className="text-lg font-bold tracking-tight">ResumeFit</h1>
+          <p className="text-[11px] text-purple-200 leading-tight">Tailor. Land. Win.</p>
         </div>
       </div>
 

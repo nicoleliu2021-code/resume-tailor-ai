@@ -1,7 +1,7 @@
 {
-  "name": "RoleForge AI - Tailor & Land",
-  "short_name": "RoleForge AI",
-  "description": "AI-powered resume optimization and tailoring tool for job seekers",
+  "name": "ResumeFit - Tailor your resume. Land the job.",
+  "short_name": "ResumeFit",
+  "description": "Tailor your resume for any job in 30 seconds with AI-powered optimization",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#6366f1",
