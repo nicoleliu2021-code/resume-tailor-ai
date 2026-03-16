@@ -55,12 +55,18 @@ export async function parsePDF(file: File): Promise<string> {
 
 export async function parseDOCX(file: File): Promise<string> {
   try {
+    console.log('[DOCX Parser] Starting DOCX parse, file size:', file.size);
     const arrayBuffer = await file.arrayBuffer();
+    console.log('[DOCX Parser] ArrayBuffer created, size:', arrayBuffer.byteLength);
     const result = await mammoth.extractRawText({ arrayBuffer });
+    console.log('[DOCX Parser] Text extracted, length:', result.value.length);
+    if (!result.value || result.value.trim().length === 0) {
+      throw new Error('The document appears to be empty or could not be read.');
+    }
     return result.value.trim();
   } catch (error) {
-    console.error('Error parsing DOCX:', error);
-    throw new Error('Failed to parse DOCX file. Please ensure it is a valid DOCX.');
+    console.error('[DOCX Parser] Error:', error);
+    throw new Error('Failed to parse DOCX file. Please ensure it is a valid DOCX format (not legacy .doc format).');
   }
 }
 
@@ -77,12 +83,16 @@ export async function parseTXT(file: File): Promise<string> {
 export async function parseResumeFile(file: File): Promise<string> {
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
+  console.log('[File Parser] Parsing file:', file.name, 'type:', fileExtension);
+
   switch (fileExtension) {
     case 'pdf':
       return await parsePDF(file);
     case 'docx':
-    case 'doc':
       return await parseDOCX(file);
+    case 'doc':
+      // Legacy .doc format - not supported by mammoth
+      throw new Error('Legacy .doc format is not supported. Please save your document as .docx format and try again.');
     case 'txt':
       return await parseTXT(file);
     default:

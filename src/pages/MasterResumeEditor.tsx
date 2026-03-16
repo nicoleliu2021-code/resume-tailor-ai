@@ -142,7 +142,7 @@ export function MasterResumeEditor() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf,.doc,.docx,.txt"
+            accept=".pdf,.docx,.txt"
             onChange={handleFileUpload}
             className="hidden"
           />
@@ -232,7 +232,7 @@ export function MasterResumeEditor() {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".pdf,.doc,.docx,.txt"
+                accept=".pdf,.docx,.txt"
                 onChange={handleFileUpload}
                 className="hidden"
               />

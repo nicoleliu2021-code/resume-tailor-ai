@@ -98,7 +98,7 @@ export function ResumeImportPanel({ onComplete }: Props) {
       <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-10 text-center hover:border-indigo-500 hover:bg-indigo-50/30 transition-all cursor-pointer group">
         <input
           type="file"
-          accept=".pdf,.docx,.doc,.txt"
+          accept=".pdf,.docx,.txt"
           onChange={handleFileUpload}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           disabled={isLoading}
@@ -165,6 +165,13 @@ export function ResumeImportPanel({ onComplete }: Props) {
                 </p>
               </div>
             )}
+
+            {/* Format note */}
+            <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <p className="text-xs text-gray-600">
+                <strong>Note:</strong> Only modern .docx format is supported. If you have a .doc file, please save it as .docx in Word.
+              </p>
+            </div>
           </div>
         )}
       </div>
