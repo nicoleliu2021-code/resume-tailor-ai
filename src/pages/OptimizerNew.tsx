@@ -4,6 +4,7 @@ import { useResume } from '../contexts/ResumeContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { UpgradeModal } from '../components/modals/UpgradeModal';
 import { ResumeImportPanel } from '../components/panels/ResumeImportPanel';
+import { TemplatePreview } from '../components/TemplatePreview';
 import { analyzeJobAPI } from '../services/api';
 import { exportToPDF } from '../services/exportService';
 import { RESUME_TEMPLATES } from '../data/templates';
@@ -380,26 +381,27 @@ export function OptimizerNew() {
                   <div
                     key={template.id}
                     onClick={() => setSelectedTemplateId(template.id)}
-                    className={`relative bg-white rounded-xl border-2 p-6 cursor-pointer transition-all hover:shadow-lg ${
+                    className={`group relative bg-white rounded-xl border-2 p-4 cursor-pointer transition-all hover:shadow-lg ${
                       selectedTemplateId === template.id
                         ? 'border-indigo-600 ring-2 ring-indigo-200'
                         : 'border-gray-200 hover:border-indigo-300'
                     }`}
                   >
                     {selectedTemplateId === template.id && (
-                      <div className="absolute top-4 right-4 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center">
+                      <div className="absolute top-3 right-3 z-10 w-8 h-8 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
                         <Check className="w-5 h-5 text-white" />
                       </div>
                     )}
 
-                    <div className="mb-4 h-48 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-sm font-medium">
-                      {template.name}
+                    {/* Template Preview */}
+                    <div className="mb-3 h-56 overflow-hidden rounded-lg shadow-sm">
+                      <TemplatePreview template={template} />
                     </div>
 
-                    <h3 className="font-bold text-gray-900 mb-1">{template.name}</h3>
-                    <p className="text-sm text-gray-600 mb-3">{template.description}</p>
+                    <h3 className="font-bold text-gray-900 mb-1 text-sm">{template.name}</h3>
+                    <p className="text-xs text-gray-600 mb-3 line-clamp-2">{template.description}</p>
 
-                    <div className="flex items-center gap-2 text-xs">
+                    <div className="flex items-center gap-2 text-xs flex-wrap">
                       <span className={`px-2 py-1 rounded ${
                         template.atsSafetyTier === 'excellent'
                           ? 'bg-green-100 text-green-700'
