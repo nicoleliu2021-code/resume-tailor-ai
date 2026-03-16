@@ -3,6 +3,7 @@ import { Download, CheckCircle, ExternalLink } from 'lucide-react';
 import type { StructuredResume } from '../types/resume';
 import { useSubscription } from '../contexts/SubscriptionContext';
 import { TemplateSelectionModal } from './templates/TemplateSelectionModal';
+import { PostExportModal } from './modals/PostExportModal';
 import { exportToPDF, exportToDOCX } from '../services/exportService';
 import type { ResumeVersion } from '../types/resumeVersion';
 
@@ -18,6 +19,7 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
   const [exportFormat, setExportFormat] = useState<'pdf' | 'docx' | null>(null);
   const [justExported, setJustExported] = useState(false);
+  const [showPostExportModal, setShowPostExportModal] = useState(false);
 
   // Handle template selection confirmation and export
   const handleTemplateConfirm = async (templateId: string) => {
@@ -55,6 +57,9 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
 
       setJustExported(true);
       setTimeout(() => setJustExported(false), 3000);
+
+      // Show post-export modal
+      setShowPostExportModal(true);
     } catch (error) {
       console.error('Export error:', error);
       alert(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -193,6 +198,13 @@ export function ExportMenu({ resume, onUpgradeNeeded, jobUrl }: ExportMenuProps)
           onConfirm={handleTemplateConfirm}
         />
       )}
+
+      {/* Post-Export Modal */}
+      <PostExportModal
+        isOpen={showPostExportModal}
+        onClose={() => setShowPostExportModal(false)}
+        jobUrl={jobUrl}
+      />
     </div>
   );
 }
