@@ -490,7 +490,7 @@ export function OptimizerNew() {
           {/* Step 3 (formerly 4): Download */}
           <div className="min-w-full h-full flex overflow-hidden">
             {/* Left Sidebar - Success Info & Actions */}
-            <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-6 border-r border-gray-200 bg-white">
+            <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-6 pb-24 border-r border-gray-200 bg-white">
               <div className="max-w-md">
                 {/* Success Message */}
                 <div className="mb-8">
