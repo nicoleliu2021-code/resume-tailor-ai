@@ -111,9 +111,58 @@ class OptimizeResumeRequest(BaseModel):
     resume: StructuredResume
     jobAnalysis: JobAnalysis
 
+class BulletChange(BaseModel):
+    """Detailed information about a single bullet point change"""
+    bulletIndex: int
+    originalBullet: str
+    optimizedBullet: str
+    changeType: str  # "no_change" | "enhanced" | "rewritten" | "keyword_added"
+    explanation: str
+    keywordsAdded: List[str]
+    metricsAdded: List[str]
+    confidenceScore: int  # 0-100
+    fabricationRisk: str  # "none" | "low" | "medium" | "high"
+    reasoning: str
+    warningFlags: List[str]
+    impactOnATS: Optional[str] = None
+
+class ExperienceChanges(BaseModel):
+    """Changes for a single experience entry"""
+    experienceId: str
+    experienceTitle: str
+    company: str
+    bulletChanges: List[BulletChange]
+
+class SummaryChange(BaseModel):
+    """Detailed information about summary optimization"""
+    originalSummary: str
+    optimizedSummary: str
+    changeType: str  # "no_change" | "enhanced" | "rewritten" | "keyword_added"
+    explanation: str
+    keywordsAdded: List[str]
+    metricsAdded: List[str]
+    confidenceScore: int
+    fabricationRisk: str
+    reasoning: str
+    warningFlags: List[str]
+
+class OptimizationMetadata(BaseModel):
+    """Overall optimization statistics and quality metrics"""
+    totalBulletsChanged: int
+    totalKeywordsAdded: int
+    averageConfidenceScore: float
+    highRiskChanges: int  # Count of high fabrication risk changes
+    mediumRiskChanges: int
+    blockedChanges: int  # Changes that were blocked due to high risk
+    overallAuthenticityScore: int  # 0-100
+    atsImprovementEstimate: int  # Estimated ATS score improvement
+
 class OptimizeResumeResponse(BaseModel):
     optimizedResume: StructuredResume
-    changes: List[str]  # Summary of changes made
+    changes: List[str]  # Summary of changes made (backwards compatible)
+    summaryChange: Optional[SummaryChange] = None
+    experienceChanges: List[ExperienceChanges] = []
+    metadata: Optional[OptimizationMetadata] = None
 
 class ImproveBulletRequest(BaseModel):
     bullet: str

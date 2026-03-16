@@ -3,9 +3,13 @@ import json
 from dotenv import load_dotenv
 from openai import OpenAI
 from typing import List, Dict
-from app.models.schemas import StructuredResume, JobAnalysis, GapAnalysis, ChatMessage
+from app.models.schemas import (
+    StructuredResume, JobAnalysis, GapAnalysis, ChatMessage,
+    BulletChange, ExperienceChanges, SummaryChange, OptimizationMetadata
+)
 from app.services.mock_data import MOCK_RESUME_STRUCTURE, MOCK_JOB_ANALYSIS, MOCK_TAILORED_RESUME, MOCK_GAP_ANALYSIS
 from app.services.elite_prompt import ELITE_SYSTEM_PROMPT, ELITE_OPTIMIZATION_INSTRUCTIONS
+from app.services import structured_prompts
 
 load_dotenv()
 
@@ -371,6 +375,243 @@ Guidelines:
         return response.choices[0].message.content.strip()
     except Exception as e:
         raise Exception(f"Failed to get chat response: {str(e)}")
+
+
+async def optimize_resume_with_guardrails(resume: StructuredResume, job_analysis: JobAnalysis):
+    """
+    Enhanced resume optimization with detailed change tracking, fabrication risk scoring, and explanations.
+    Returns structured data showing before/after for every change with confidence scores and risk assessment.
+    """
+
+    if MOCK_MODE:
+        # Return mock data with enhanced structure
+        optimized = resume.model_copy(deep=True)
+        if optimized.experience and len(optimized.experience) > 0:
+            first_exp = optimized.experience[0]
+            if first_exp.bullets and len(first_exp.bullets) > 0:
+                first_exp.bullets[0] = first_exp.bullets[0] + " - increased efficiency by 40%"
+
+        # Mock detailed changes
+        summary_change = SummaryChange(
+            originalSummary=resume.summary or "",
+            optimizedSummary=resume.summary or "",
+            changeType="enhanced",
+            explanation="Added keywords for better ATS matching",
+            keywordsAdded=["leadership", "data-driven"],
+            metricsAdded=[],
+            confidenceScore=85,
+            fabricationRisk="none",
+            reasoning="High confidence, no new facts added",
+            warningFlags=[]
+        )
+
+        experience_changes = []
+        metadata = OptimizationMetadata(
+            totalBulletsChanged=3,
+            totalKeywordsAdded=5,
+            averageConfidenceScore=82.0,
+            highRiskChanges=0,
+            mediumRiskChanges=1,
+            blockedChanges=0,
+            overallAuthenticityScore=88,
+            atsImprovementEstimate=15
+        )
+
+        return optimized, ["Mock changes applied"], summary_change, experience_changes, metadata
+
+    # Calculate context
+    years_experience = len(resume.experience)
+    current_role = resume.experience[0].role if resume.experience else "Not specified"
+    demonstrated_skills = list(set([skill.name for skill in resume.skills]))
+    industry = job_analysis.industry
+
+    # Step 1: Optimize Summary
+    summary_change = None
+    optimized_summary = resume.summary
+
+    if resume.summary:
+        try:
+            summary_prompt = structured_prompts.get_summary_optimization_prompt(
+                original_summary=resume.summary,
+                job_title=job_analysis.roleTitle,
+                company="",
+                must_have_skills=job_analysis.technicalSkills[:8],
+                key_requirements=job_analysis.coreResponsibilities[:5],
+                years_experience=years_experience,
+                current_role=current_role,
+                demonstrated_skills=demonstrated_skills,
+                industry=industry
+            )
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": ELITE_SYSTEM_PROMPT},
+                    {"role": "user", "content": summary_prompt}
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            summary_data = json.loads(response.choices[0].message.content)
+            summary_change = SummaryChange(**summary_data)
+
+            # Use optimized summary if not marked as KEEP_ORIGINAL
+            if summary_change.optimizedSummary != "KEEP_ORIGINAL":
+                optimized_summary = summary_change.optimizedSummary
+
+        except Exception as e:
+            print(f"Summary optimization error: {str(e)}")
+            # Keep original if optimization fails
+            pass
+
+    # Step 2: Optimize Experience Bullets
+    experience_changes_list = []
+    optimized_experience = []
+
+    for exp in resume.experience:
+        # Calculate role level
+        role_title_lower = exp.role.lower()
+        if any(word in role_title_lower for word in ['senior', 'lead', 'principal', 'staff']):
+            role_level = 'senior'
+        elif any(word in role_title_lower for word in ['junior', 'associate', 'entry']):
+            role_level = 'junior'
+        else:
+            role_level = 'mid'
+
+        # Calculate years in role
+        try:
+            from datetime import datetime
+            start = datetime.strptime(exp.startDate, "%m/%Y")
+            if exp.current:
+                end = datetime.now()
+            else:
+                end = datetime.strptime(exp.endDate, "%m/%Y")
+            years_in_role = (end - start).days / 365.25
+        except:
+            years_in_role = 1.0
+
+        try:
+            bullet_prompt = structured_prompts.get_bullet_optimization_prompt(
+                job_role=exp.role,
+                company=exp.company,
+                start_date=exp.startDate,
+                end_date=exp.endDate,
+                is_current=exp.current,
+                bullets=exp.bullets,
+                target_job_title=job_analysis.roleTitle,
+                must_have_skills=job_analysis.technicalSkills[:10],
+                key_responsibilities=job_analysis.coreResponsibilities[:5],
+                ats_keywords=job_analysis.atsKeywords[:15],
+                role_level=role_level,
+                years_in_role=years_in_role,
+                industry=industry
+            )
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": "system", "content": ELITE_SYSTEM_PROMPT},
+                    {"role": "user", "content": bullet_prompt}
+                ],
+                temperature=0.3,
+                response_format={"type": "json_object"}
+            )
+
+            bullets_data = json.loads(response.choices[0].message.content)
+            bullet_changes = [BulletChange(**b) for b in bullets_data]
+
+            # Build optimized bullets
+            optimized_bullets = []
+            for change in bullet_changes:
+                if change.optimizedBullet == "KEEP_ORIGINAL" or change.changeType == "no_change":
+                    optimized_bullets.append(change.originalBullet)
+                else:
+                    optimized_bullets.append(change.optimizedBullet)
+
+            # Store experience changes
+            exp_change = ExperienceChanges(
+                experienceId=exp.id,
+                experienceTitle=exp.role,
+                company=exp.company,
+                bulletChanges=bullet_changes
+            )
+            experience_changes_list.append(exp_change)
+
+            # Create optimized experience entry
+            optimized_exp = exp.model_copy(deep=True)
+            optimized_exp.bullets = optimized_bullets
+            optimized_experience.append(optimized_exp)
+
+        except Exception as e:
+            print(f"Bullet optimization error for {exp.company}: {str(e)}")
+            # Keep original if optimization fails
+            optimized_experience.append(exp.model_copy(deep=True))
+
+    # Step 3: Calculate Metadata
+    total_bullets_changed = sum(
+        len([bc for bc in exp.bulletChanges if bc.changeType != "no_change"])
+        for exp in experience_changes_list
+    )
+
+    all_bullet_changes = [bc for exp in experience_changes_list for bc in exp.bulletChanges]
+    total_keywords_added = sum(len(bc.keywordsAdded) for bc in all_bullet_changes)
+
+    if all_bullet_changes:
+        avg_confidence = sum(bc.confidenceScore for bc in all_bullet_changes) / len(all_bullet_changes)
+    else:
+        avg_confidence = 0.0
+
+    high_risk_count = sum(1 for bc in all_bullet_changes if bc.fabricationRisk == "high")
+    medium_risk_count = sum(1 for bc in all_bullet_changes if bc.fabricationRisk == "medium")
+    blocked_count = sum(1 for bc in all_bullet_changes if bc.fabricationRisk == "high" and bc.optimizedBullet == "KEEP_ORIGINAL")
+
+    # Estimate authenticity score (higher is better)
+    authenticity_score = 100
+    if high_risk_count > 0:
+        authenticity_score -= high_risk_count * 15
+    if medium_risk_count > 0:
+        authenticity_score -= medium_risk_count * 5
+    authenticity_score = max(0, min(100, authenticity_score))
+
+    # Estimate ATS improvement
+    ats_improvement = min(25, total_keywords_added * 2)
+
+    metadata = OptimizationMetadata(
+        totalBulletsChanged=total_bullets_changed,
+        totalKeywordsAdded=total_keywords_added,
+        averageConfidenceScore=round(avg_confidence, 1),
+        highRiskChanges=high_risk_count,
+        mediumRiskChanges=medium_risk_count,
+        blockedChanges=blocked_count,
+        overallAuthenticityScore=authenticity_score,
+        atsImprovementEstimate=ats_improvement
+    )
+
+    # Build optimized resume
+    optimized_resume = resume.model_copy(deep=True)
+    optimized_resume.summary = optimized_summary
+    optimized_resume.experience = optimized_experience
+
+    # Generate summary of changes (backwards compatible)
+    changes_summary = []
+    if summary_change and summary_change.changeType != "no_change":
+        changes_summary.append(f"Summary: {summary_change.changeType} - {len(summary_change.keywordsAdded)} keywords added")
+
+    for exp_change in experience_changes_list:
+        changed_bullets = [bc for bc in exp_change.bulletChanges if bc.changeType != "no_change"]
+        if changed_bullets:
+            changes_summary.append(
+                f"{exp_change.company}: {len(changed_bullets)} bullets optimized"
+            )
+
+    if metadata.totalKeywordsAdded > 0:
+        changes_summary.append(f"Total keywords added: {metadata.totalKeywordsAdded}")
+
+    if metadata.highRiskChanges > 0:
+        changes_summary.append(f"⚠️ {metadata.highRiskChanges} high-risk changes flagged for review")
+
+    return optimized_resume, changes_summary, summary_change, experience_changes_list, metadata
 
 
 async def optimize_resume_structure(resume: StructuredResume, job_analysis: JobAnalysis):

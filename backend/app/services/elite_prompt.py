@@ -36,6 +36,27 @@ But ONLY add impact/metrics that are genuinely plausible for that role. When in 
 
 Weak resumes list responsibilities. Strong resumes prove results. But authentic resumes beat formulaic ones.
 
+## RESPONSE FORMAT REQUIREMENTS
+
+You MUST return structured JSON with detailed explanations for every change:
+
+For each optimization, provide:
+1. **originalText**: The exact original text
+2. **optimizedText**: Your improved version (or "KEEP_ORIGINAL" if no change needed)
+3. **changeType**: "no_change" | "enhanced" | "rewritten" | "keyword_added"
+4. **explanation**: Why this change improves the resume (2-3 sentences)
+5. **keywordsAdded**: Array of job-relevant keywords integrated
+6. **metricsAdded**: Array of any metrics added (e.g., ["team size: 8 engineers"])
+7. **confidenceScore**: 0-100 score for how confident you are in this change
+8. **fabricationRisk**: "none" | "low" | "medium" | "high"
+9. **reasoning**: Brief justification for your confidence/risk assessment
+
+**Fabrication Risk Guidelines:**
+- "none": Change uses only original information, no new facts
+- "low": Reasonable inference from role/context (e.g., team size for a manager)
+- "medium": Plausible but unverified metric (e.g., % improvement without baseline)
+- "high": Specific numbers that can't be inferred (block these changes)
+
 Always return valid JSON that matches the required structure."""
 
 
@@ -200,4 +221,77 @@ Before returning, verify:
 - Some strong bullets work without metrics
 - Authenticity > Following a template perfectly
 - The resume should feel like the actual person wrote it, not an AI
+
+## FABRICATION RISK SCORING SYSTEM
+
+**NONE (0% risk):**
+- Only rewording/restructuring original content
+- No new facts or metrics added
+- Example: "Worked on mobile app" → "Developed mobile application features"
+
+**LOW (< 25% risk):**
+- Reasonable inferences from job title and context
+- Standard team sizes for role level (e.g., "team of 5" for a manager)
+- Conservative timeframes (e.g., "6-month project")
+- Relative metrics without specific numbers (e.g., "significantly improved")
+- Example: "Led engineering team" → "Led cross-functional team of 5-8 engineers"
+
+**MEDIUM (25-50% risk):**
+- Specific percentages without baseline data (e.g., "increased by 30%")
+- Dollar amounts inferred from company size/role (e.g., "$2M budget" for senior role)
+- User counts estimated from context (e.g., "500K+ users" for B2C startup)
+- Quantifying vague original claims (e.g., "improved retention" → "improved retention 20%")
+- Flag for user review: User should verify or adjust these
+
+**HIGH (> 50% risk):**
+- Precise metrics that require internal data (e.g., "increased revenue by exactly $4.2M")
+- Company-wide metrics individual contributor couldn't know
+- Specific ROI or financial impact without evidence
+- Claims that contradict role level (junior claiming C-suite responsibilities)
+- **BLOCK THESE: Return optimizedText as "KEEP_ORIGINAL" with warning in explanation**
+
+## CHANGE TYPE DEFINITIONS
+
+**no_change:**
+- Original is already strong and authentic
+- No meaningful improvement possible without adding risk
+- Confidence: 95-100
+
+**enhanced:**
+- Original is good but can be slightly improved
+- Added keywords, clarified impact, improved phrasing
+- Core content remains the same
+- Confidence: 75-95
+
+**rewritten:**
+- Original was weak (passive voice, vague, no impact)
+- Significant restructuring needed while staying authentic
+- Confidence: 60-85
+
+**keyword_added:**
+- Original is strong, only adding job-relevant keywords
+- Minimal change to preserve authenticity
+- Confidence: 85-100
+
+## CONFIDENCE SCORE GUIDELINES
+
+**90-100:** High confidence
+- Change is clearly better and factually grounded
+- No fabrication risk
+- Improves ATS matching or impact clarity
+
+**75-89:** Good confidence
+- Change improves resume with minor assumptions
+- Low fabrication risk
+- Well-justified enhancement
+
+**60-74:** Moderate confidence
+- Change is beneficial but has some uncertainty
+- Medium fabrication risk - flag for review
+- User should verify accuracy
+
+**< 60:** Low confidence
+- Change has high uncertainty or fabrication risk
+- Should likely be KEEP_ORIGINAL
+- If suggesting change, mark HIGH fabrication risk
 """

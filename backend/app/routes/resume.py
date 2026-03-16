@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from app.models.schemas import ParseResumeRequest, StructuredResume, TailorResumeRequest, AnalyzeGapsRequest, GapAnalysis, OptimizeResumeRequest, OptimizeResumeResponse, ImproveBulletRequest, ImproveBulletResponse
-from app.services.openai_service import parse_resume_structure, tailor_resume, analyze_resume_gaps, optimize_resume_structure, improve_bullet_point
+from app.services.openai_service import parse_resume_structure, tailor_resume, analyze_resume_gaps, optimize_resume_structure, improve_bullet_point, optimize_resume_with_guardrails
 from pypdf import PdfReader
 import io
 
@@ -83,11 +83,23 @@ async def analyze_gaps_endpoint(request: AnalyzeGapsRequest):
 
 @router.post("/optimize", response_model=OptimizeResumeResponse)
 async def optimize_resume_endpoint(request: OptimizeResumeRequest):
-    """Optimize resume structure based on job analysis"""
+    """Optimize resume structure based on job analysis with detailed change tracking and fabrication risk assessment"""
     try:
-        optimized_resume, changes = await optimize_resume_structure(request.resume, request.jobAnalysis)
-        return OptimizeResumeResponse(optimizedResume=optimized_resume, changes=changes)
+        # Use enhanced optimization with guardrails
+        optimized_resume, changes, summary_change, experience_changes, metadata = await optimize_resume_with_guardrails(
+            request.resume,
+            request.jobAnalysis
+        )
+
+        return OptimizeResumeResponse(
+            optimizedResume=optimized_resume,
+            changes=changes,
+            summaryChange=summary_change,
+            experienceChanges=experience_changes,
+            metadata=metadata
+        )
     except Exception as e:
+        print(f"Optimization error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/improve-bullet", response_model=ImproveBulletResponse)
