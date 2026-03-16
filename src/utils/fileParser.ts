@@ -2,8 +2,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { parsePDFAPI } from '../services/api';
 
-// Configure PDF.js worker - use cdnjs (more reliable than unpkg)
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
+// Configure PDF.js worker - use local copy for reliability
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 // Detect if user is on mobile device
 function isMobileDevice(): boolean {
