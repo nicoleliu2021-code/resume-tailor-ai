@@ -11,10 +11,25 @@ import type {
 import type { MasterResume, MasterExperience, MasterSkill } from '../types/masterResume';
 import { getMasterResume } from './masterResume';
 
-const openai = new OpenAI({
-  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true,
-});
+const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+
+// Lazy initialization - only create client when needed
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!apiKey || apiKey === 'your-api-key-here') {
+    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
+  }
+
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true,
+    });
+  }
+
+  return openai;
+}
 
 /**
  * AI Selection Engine
@@ -141,7 +156,8 @@ Return a JSON array with this structure:
 ]`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
         {
@@ -245,7 +261,8 @@ Return JSON array:
 ]`;
 
     try {
-      const response = await openai.chat.completions.create({
+      const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
@@ -389,7 +406,8 @@ Write a summary that:
 Return only the summary text, no other commentary.`;
 
   try {
-    const response = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const response = await client.chat.completions.create({
       model: 'gpt-4-turbo-preview',
       messages: [
         {

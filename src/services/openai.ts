@@ -3,13 +3,26 @@ import OpenAI from 'openai';
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
 if (!apiKey || apiKey === 'your-api-key-here') {
-  console.error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env.local file');
+  console.warn('OpenAI API key is not configured. Client-side AI features will not work.');
 }
 
-const openai = new OpenAI({
-  apiKey: apiKey,
-  dangerouslyAllowBrowser: true // Note: In production, use a backend server
-});
+// Lazy initialization - only create client when needed
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!apiKey || apiKey === 'your-api-key-here') {
+    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
+  }
+
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true // Note: In production, use a backend server
+    });
+  }
+
+  return openai;
+}
 
 export interface JobAnalysis {
   roleTitle: string;
@@ -56,7 +69,8 @@ Job description:
 ${jobDescription}`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const completion = await client.chat.completions.create({
       model: 'gpt-4',
       messages: [
         {
@@ -123,7 +137,8 @@ INSTRUCTIONS:
 Provide ONLY the tailored resume text in a clean, professional format. Do not include any explanations or meta-commentary.`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const completion = await client.chat.completions.create({
       model: 'gpt-4',
       messages: [
         {

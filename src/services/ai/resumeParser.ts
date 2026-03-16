@@ -3,10 +3,23 @@ import type { StructuredResume } from '../../types/resume';
 
 const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
 
-const openai = new OpenAI({
-  apiKey: apiKey,
-  dangerouslyAllowBrowser: true
-});
+// Lazy initialization - only create client when needed
+let openai: OpenAI | null = null;
+
+function getOpenAIClient(): OpenAI {
+  if (!apiKey || apiKey === 'your-api-key-here') {
+    throw new Error('OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your environment variables.');
+  }
+
+  if (!openai) {
+    openai = new OpenAI({
+      apiKey: apiKey,
+      dangerouslyAllowBrowser: true
+    });
+  }
+
+  return openai;
+}
 
 export async function parseResumeStructure(resumeText: string): Promise<StructuredResume> {
   if (!apiKey || apiKey === 'your-api-key-here') {
@@ -64,7 +77,8 @@ Return a JSON object with this structure:
 Generate unique IDs for each item. Extract all relevant information accurately.`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const client = getOpenAIClient();
+    const completion = await client.chat.completions.create({
       model: 'gpt-4',
       messages: [
         {
