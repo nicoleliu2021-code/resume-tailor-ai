@@ -229,9 +229,9 @@ export function OptimizerNew() {
         durationSeconds,
       });
 
-      // Move to template selection
-      setCurrentStep(3);
-      trackFunnelStep('template_selection', 3);
+      // Skip template selection, go directly to download
+      setCurrentStep(4);
+      trackFunnelStep('download_step', 4);
 
       console.log('[Optimizer] Optimization complete!', optimizeData.changes);
     } catch (err) {
@@ -337,13 +337,13 @@ export function OptimizerNew() {
       <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-3">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-gray-700">Step {currentStep} of 4</span>
-            <span className="text-xs text-gray-500">{Math.round((currentStep / 4) * 100)}% Complete</span>
+            <span className="text-sm font-semibold text-gray-700">Step {currentStep > 2 ? 3 : currentStep} of 3</span>
+            <span className="text-xs text-gray-500">{Math.round(((currentStep > 2 ? 3 : currentStep) / 3) * 100)}% Complete</span>
           </div>
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-500 ease-out"
-              style={{ width: `${(currentStep / 4) * 100}%` }}
+              style={{ width: `${((currentStep > 2 ? 3 : currentStep) / 3) * 100}%` }}
             />
           </div>
         </div>
@@ -353,7 +353,7 @@ export function OptimizerNew() {
       <div className="flex-1 overflow-hidden relative">
         <div
           className="flex h-full transition-transform duration-500 ease-in-out"
-          style={{ transform: `translateX(-${(currentStep - 1) * 100}%)` }}
+          style={{ transform: `translateX(-${(currentStep === 4 ? 2 : currentStep - 1) * 100}%)` }}
         >
           {/* Step 1: Upload Resume */}
           <div className="min-w-full h-full overflow-y-auto p-4 sm:p-8">
@@ -496,106 +496,7 @@ export function OptimizerNew() {
             </div>
           </div>
 
-          {/* Step 3: Template Selection */}
-          <div className="min-w-full h-full overflow-y-auto p-4 sm:p-8">
-            <div className="max-w-5xl mx-auto">
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 mb-4 shadow-lg">
-                  <CheckCircle2 className="w-8 h-8 text-white" />
-                </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Pick Your Professional Look</h2>
-                <p className="text-gray-600">All templates are ATS-friendly and recruiter-approved</p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {RESUME_TEMPLATES.slice(0, 6).map((template) => (
-                  <div
-                    key={template.id}
-                    className={`group relative bg-white rounded-xl border-2 overflow-hidden cursor-pointer transition-all hover:shadow-lg ${
-                      selectedTemplateId === template.id
-                        ? 'border-indigo-600 ring-4 ring-indigo-100'
-                        : 'border-gray-200 hover:border-indigo-300 hover:-translate-y-1'
-                    }`}
-                    style={{ height: '420px' }}
-                  >
-                    {selectedTemplateId === template.id && (
-                      <div className="absolute top-3 right-3 z-10 w-10 h-10 bg-indigo-600 rounded-full flex items-center justify-center shadow-lg">
-                        <Check className="w-6 h-6 text-white" />
-                      </div>
-                    )}
-
-                    {/* Template Preview - Cropped top 35% - Click to open modal */}
-                    <div
-                      className="relative group/preview"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPreviewModalTemplate(template);
-                      }}
-                    >
-                      <TemplatePreview template={template} height={300} cropPercent={0.35} />
-
-                      {/* Hover overlay with preview button */}
-                      <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/40 transition-all flex items-center justify-center">
-                        <button
-                          className="opacity-0 group-hover/preview:opacity-100 transition-opacity px-4 py-2 bg-white text-gray-900 rounded-lg font-semibold text-sm flex items-center gap-2 shadow-lg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setPreviewModalTemplate(template);
-                          }}
-                        >
-                          <Eye className="w-4 h-4" />
-                          Full Preview
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Template Info - Click to select */}
-                    <div
-                      className="p-4"
-                      onClick={() => setSelectedTemplateId(template.id)}
-                    >
-                      <h3 className="font-bold text-gray-900 mb-1.5 text-base">{template.name}</h3>
-                      <p className="text-xs text-gray-600 mb-3 line-clamp-2 leading-relaxed">{template.description}</p>
-
-                      <div className="flex items-center gap-2 text-xs flex-wrap">
-                        <span className={`px-2.5 py-1 rounded-md font-semibold ${
-                          template.atsSafetyTier === 'excellent'
-                            ? 'bg-green-100 text-green-700'
-                            : template.atsSafetyTier === 'good'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          ATS {template.atsSafetyTier.toUpperCase()}
-                        </span>
-                        {template.tier === 'premium' && (
-                          <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-md font-semibold">Premium</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setCurrentStep(2)}
-                  className="flex items-center gap-2 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5" />
-                  Back
-                </button>
-                <button
-                  onClick={handleTemplateSelected}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-bold shadow-lg hover:shadow-xl transition-all"
-                >
-                  Continue to Download
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Step 4: Download */}
+          {/* Step 3 (formerly 4): Download */}
           <div className="min-w-full h-full flex overflow-hidden">
             {/* Left Sidebar - Success Info & Actions */}
             <div className="w-full md:w-2/5 lg:w-1/3 overflow-y-auto p-6 border-r border-gray-200 bg-white">

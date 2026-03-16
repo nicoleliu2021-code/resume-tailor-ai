@@ -325,10 +325,8 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
                 letterSpacing: '0.05em',
                 marginBottom: '10px',
                 color: style.primaryColor,
-                borderBottom: style.sectionTitleStyle.includes('border') || style.sectionTitleStyle.includes('underline')
-                  ? `${style.sectionTitleStyle === 'bold-border' ? '3px' : '2px'} solid ${style.accentColor}`
-                  : 'none',
-                paddingBottom: style.sectionTitleStyle.includes('border') || style.sectionTitleStyle.includes('underline') ? '4px' : '0',
+                borderBottom: 'none',
+                paddingBottom: '0',
                 background: style.sectionTitleStyle.includes('background') ? `${style.accentColor}15` : 'transparent',
                 padding: style.sectionTitleStyle.includes('background') ? '6px 12px' : '0',
                 marginLeft: style.sectionTitleStyle.includes('background') ? '-12px' : '0',
