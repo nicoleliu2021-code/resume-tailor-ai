@@ -22,6 +22,9 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
         transformOrigin: 'top left',
         padding: '54px', // 0.75 inches
         fontFamily: style.fontFamily,
+        display: 'block',
+        overflow: 'visible',
+        boxSizing: 'border-box',
       }}
     >
       {/* Header */}
@@ -102,7 +105,14 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
           case 'experience':
             if (resume.experience && resume.experience.length > 0) {
               content = resume.experience.map((exp, idx) => (
-                <div key={idx} style={{ marginBottom: '14px' }}>
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: '14px',
+                    breakInside: 'avoid',
+                    pageBreakInside: 'avoid',
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '4px' }}>
                     <div>
                       <h3
@@ -170,7 +180,14 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
           case 'education':
             if (resume.education && resume.education.length > 0) {
               content = resume.education.map((edu, idx) => (
-                <div key={idx} style={{ marginBottom: '12px' }}>
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: '12px',
+                    breakInside: 'avoid',
+                    pageBreakInside: 'avoid',
+                  }}
+                >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                     <div>
                       <h3
@@ -224,7 +241,14 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
           case 'projects':
             if (resume.projects && resume.projects.length > 0) {
               content = resume.projects.map((project, idx) => (
-                <div key={idx} style={{ marginBottom: '12px' }}>
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: '12px',
+                    breakInside: 'avoid',
+                    pageBreakInside: 'avoid',
+                  }}
+                >
                   <h3 style={{ fontSize: `${style.fontSize.body}px`, fontWeight: '600', margin: '0', color: style.primaryColor }}>
                     {project.name}
                     {project.url && (
@@ -274,7 +298,14 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
         if (!content) return null;
 
         return (
-          <div key={section.id} style={{ marginBottom: '20px' }}>
+          <div
+            key={section.id}
+            style={{
+              marginBottom: '20px',
+              breakInside: 'avoid',
+              pageBreakInside: 'avoid',
+            }}
+          >
             <h2
               style={{
                 fontSize: `${style.fontSize.sectionTitle}px`,
@@ -291,6 +322,8 @@ export function ResumeRenderer({ resume, template, scale = 1, className = '' }: 
                 padding: style.sectionTitleStyle.includes('background') ? '6px 12px' : '0',
                 marginLeft: style.sectionTitleStyle.includes('background') ? '-12px' : '0',
                 marginRight: style.sectionTitleStyle.includes('background') ? '-12px' : '0',
+                breakAfter: 'avoid',
+                pageBreakAfter: 'avoid',
               }}
             >
               {section.title}
