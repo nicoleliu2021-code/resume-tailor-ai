@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testAPI()">Test API Connection</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function testAPI() {
+            const output = document.getElementById('output');
+            output.textContent = 'Testing...\n';
+
+            try {
+                const apiUrl = 'https://resume-tailor-ai-production-1944.up.railway.app/api/resume/parse';
+
+                output.textContent += `\nAPI URL: ${apiUrl}\n`;
+                output.textContent += `\nSending POST request...\n`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ resumeText: 'Test Resume\nJohn Doe\nSoftware Engineer' })
+                });
+
+                output.textContent += `\nResponse Status: ${response.status} ${response.statusText}\n`;
+                output.textContent += `\nResponse Headers:\n`;
+                for (const [key, value] of response.headers.entries()) {
+                    output.textContent += `  ${key}: ${value}\n`;
+                }
+
+                const data = await response.text();
+                output.textContent += `\nResponse Body:\n${data}\n`;
+
+                if (response.ok) {
+                    output.textContent += `\n✅ SUCCESS!\n`;
+                } else {
+                    output.textContent += `\n❌ FAILED!\n`;
+                }
+            } catch (error) {
+                output.textContent += `\n❌ ERROR: ${error.message}\n`;
+                output.textContent += `\nStack: ${error.stack}\n`;
+            }
+        }
+    </script>
+</body>
+</html>
