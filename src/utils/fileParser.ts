@@ -64,16 +64,24 @@ export async function parsePDF(file: File): Promise<string> {
 export async function parseDOCX(file: File): Promise<string> {
   try {
     console.log('[DOCX Parser] Starting DOCX parse, file size:', file.size);
+    console.log('[DOCX Parser] File name:', file.name, 'File type:', file.type);
     const arrayBuffer = await file.arrayBuffer();
     console.log('[DOCX Parser] ArrayBuffer created, size:', arrayBuffer.byteLength);
+
     const result = await mammoth.extractRawText({ arrayBuffer });
-    console.log('[DOCX Parser] Text extracted, length:', result.value.length);
+    console.log('[DOCX Parser] Mammoth result:', result);
+    console.log('[DOCX Parser] Text extracted, length:', result.value?.length);
+    console.log('[DOCX Parser] Text preview:', result.value?.substring(0, 200));
+
     if (!result.value || result.value.trim().length === 0) {
-      throw new Error('The document appears to be empty or could not be read.');
+      console.error('[DOCX Parser] Empty text extracted from DOCX');
+      throw new Error('The document appears to be empty or could not be read. Please ensure it contains text.');
     }
+
     return result.value.trim();
   } catch (error) {
-    console.error('[DOCX Parser] Error:', error);
+    console.error('[DOCX Parser] Error details:', error);
+    console.error('[DOCX Parser] Error stack:', error instanceof Error ? error.stack : 'No stack');
     throw new Error('Failed to parse DOCX file. Please ensure it is a valid DOCX format (not legacy .doc format).');
   }
 }

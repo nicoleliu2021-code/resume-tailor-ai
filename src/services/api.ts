@@ -5,6 +5,8 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-p
 export async function parseResumeAPI(resumeText: string): Promise<StructuredResume> {
   console.log('[API] parseResumeAPI called, URL:', `${API_BASE_URL}/api/resume/parse`);
   console.log('[API] Using API_BASE_URL:', API_BASE_URL);
+  console.log('[API] import.meta.env.VITE_API_URL:', import.meta.env.VITE_API_URL);
+  console.log('[API] Environment mode:', import.meta.env.MODE);
   console.log('[API] Resume text length:', resumeText.length);
   console.log('[API] Resume text preview:', resumeText.substring(0, 100));
 
