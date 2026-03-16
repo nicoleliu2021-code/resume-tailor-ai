@@ -426,8 +426,8 @@ def get_bullet_optimization_prompt(
     return BULLET_OPTIMIZATION_PROMPT.format(
         job_role=job_role,
         company=company,
-        start_date=start_date,
-        end_date=end_date if not is_current else "Present",
+        start_date=start_date or "Date TBD",
+        end_date=(end_date or "Present") if not is_current else "Present",
         is_current=is_current,
         bullets_json=bullets_json,
         target_job_title=target_job_title,

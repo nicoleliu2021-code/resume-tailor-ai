@@ -5,8 +5,8 @@ class Experience(BaseModel):
     id: str
     company: str
     role: str
-    startDate: str
-    endDate: str
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None
     current: bool
     bullets: List[str]
 

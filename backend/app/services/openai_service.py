@@ -48,8 +48,8 @@ Return a JSON object with this structure:
       "id": "unique-id",
       "company": "Company Name",
       "role": "Job Title",
-      "startDate": "MM/YYYY",
-      "endDate": "MM/YYYY or Present",
+      "startDate": "MM/YYYY or null if not present",
+      "endDate": "MM/YYYY or Present or null if not present",
       "current": boolean,
       "bullets": ["Achievement 1", "Achievement 2"]
     }}
@@ -60,8 +60,8 @@ Return a JSON object with this structure:
       "school": "University Name",
       "degree": "Degree Type",
       "field": "Field of Study",
-      "startDate": "MM/YYYY",
-      "endDate": "MM/YYYY",
+      "startDate": "MM/YYYY or null if not present",
+      "endDate": "MM/YYYY or null if not present",
       "gpa": "3.8 (optional)"
     }}
   ],
@@ -686,7 +686,7 @@ async def optimize_resume_structure(resume: StructuredResume, job_analysis: JobA
 **Professional Experience:**
 {chr(10).join([f'''
 {exp.role} at {exp.company}
-{exp.startDate} - {exp.endDate if not exp.current else "Present"}
+{(exp.startDate or "Start Date TBD") + " - " + (exp.endDate if not exp.current else "Present") if not exp.current else (exp.startDate or "Start Date TBD") + " - Present"}
 Current bullets:
 {chr(10).join(['• ' + b for b in exp.bullets])}
 ''' for exp in resume.experience])}
@@ -939,7 +939,7 @@ async def get_job_recommendations(
     # Extract user's top skills and experience
     top_skills = [skill.name for skill in resume.skills[:15]]
     experience_summary = "\n".join([
-        f"- {exp.role} at {exp.company} ({exp.startDate} - {exp.endDate})"
+        f"- {exp.role} at {exp.company} ({(exp.startDate or 'TBD')} - {(exp.endDate or 'Present') if not exp.current else 'Present'})"
         for exp in resume.experience[:3]
     ])
 
