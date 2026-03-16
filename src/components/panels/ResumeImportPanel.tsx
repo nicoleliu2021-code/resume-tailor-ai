@@ -71,7 +71,21 @@ export function ResumeImportPanel({ onComplete }: Props) {
       onComplete?.();
     } catch (err) {
       console.error('[ResumeImport] Error:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to parse resume';
+      console.error('[ResumeImport] Error stack:', err instanceof Error ? err.stack : 'No stack trace');
+
+      let errorMessage = 'Failed to parse resume';
+
+      if (err instanceof Error) {
+        errorMessage = err.message;
+
+        // Provide more helpful messages for common errors
+        if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network error')) {
+          errorMessage = 'Network error: Could not connect to resume parsing service. Please check your internet connection and try again.';
+        } else if (errorMessage.includes('404') || errorMessage.toLowerCase().includes('not found')) {
+          errorMessage = 'Service unavailable: The resume parsing service could not be reached. Please try again in a few moments.';
+        }
+      }
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);

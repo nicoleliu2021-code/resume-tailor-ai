@@ -4,27 +4,47 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://resume-tailor-ai-p
 
 export async function parseResumeAPI(resumeText: string): Promise<StructuredResume> {
   console.log('[API] parseResumeAPI called, URL:', `${API_BASE_URL}/api/resume/parse`);
+  console.log('[API] Using API_BASE_URL:', API_BASE_URL);
   console.log('[API] Resume text length:', resumeText.length);
+  console.log('[API] Resume text preview:', resumeText.substring(0, 100));
 
-  const response = await fetch(`${API_BASE_URL}/api/resume/parse`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ resumeText }),
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/resume/parse`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ resumeText }),
+    });
 
-  console.log('[API] Response status:', response.status, response.ok);
+    console.log('[API] Response status:', response.status, response.ok);
+    console.log('[API] Response headers:', Object.fromEntries(response.headers.entries()));
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    console.error('[API] Error response:', error);
-    throw new Error(error.detail || 'Failed to parse resume');
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[API] Error response text:', errorText);
+
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { detail: errorText || `Server error: ${response.status} ${response.statusText}` };
+      }
+
+      console.error('[API] Parsed error:', error);
+      throw new Error(error.detail || error.message || 'Failed to parse resume');
+    }
+
+    const data = await response.json();
+    console.log('[API] Success! Received data:', data);
+    return data;
+  } catch (error) {
+    console.error('[API] Network or parsing error:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Network error: Could not connect to resume parsing service');
   }
-
-  const data = await response.json();
-  console.log('[API] Success! Received data:', data);
-  return data;
 }
 
 export async function analyzeJobAPI(jobDescription: string): Promise<JobAnalysis> {
