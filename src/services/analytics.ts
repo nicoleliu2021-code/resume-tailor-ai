@@ -13,25 +13,29 @@ export function initializeAnalytics() {
     return;
   }
 
-  // Load gtag script
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
-  document.head.appendChild(script);
-
-  // Initialize gtag
+  // Initialize dataLayer and gtag function
   (window as any).dataLayer = (window as any).dataLayer || [];
   function gtag(...args: any[]) {
     (window as any).dataLayer.push(args);
   }
   (window as any).gtag = gtag;
 
-  gtag('js', new Date());
-  gtag('config', GA_MEASUREMENT_ID, {
-    send_page_view: true,
-  });
+  // Load gtag script
+  const script = document.createElement('script');
+  script.async = true;
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`;
 
-  console.log('[Analytics] Google Analytics initialized');
+  // Configure GA after script loads
+  script.onload = () => {
+    gtag('js', new Date());
+    gtag('config', GA_MEASUREMENT_ID, {
+      send_page_view: true,
+    });
+    console.log('[Analytics] Google Analytics initialized and configured');
+  };
+
+  document.head.appendChild(script);
+  console.log('[Analytics] Google Analytics loading...');
 }
 
 // Track custom events
