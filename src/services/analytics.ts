@@ -27,8 +27,9 @@ export function initializeAnalytics() {
 
   // Configure GA after script loads
   script.onload = () => {
-    gtag('js', new Date());
-    gtag('config', GA_MEASUREMENT_ID, {
+    // Use window.gtag to call the real GA function, not our stub
+    (window as any).gtag('js', new Date());
+    (window as any).gtag('config', GA_MEASUREMENT_ID, {
       send_page_view: true,
     });
     console.log('[Analytics] Google Analytics initialized and configured');
